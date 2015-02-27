@@ -17,7 +17,6 @@ develop-eggs
 .installed.cfg
 lib
 lib64
-__pycache__
 
 # Installer logs
 pip-log.txt
@@ -25,7 +24,10 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+.coverage
+.coverage.*
 nosetests.xml
+htmlcov
 
 # Translations
 *.mo
@@ -34,3 +36,19 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.idea
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+docs/_build
+
+.DS_Store
+*~
+.*.sw[po]
+.build
+.ve
+.bootstrap
+*.bak
