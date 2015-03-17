@@ -1,6 +1,5 @@
-===============================
 Don't Forget
-===============================
+============
 
 | |docs| |travis| |appveyor| |coveralls| |landscape| |scrutinizer|
 | |version| |downloads| |wheel| |supported-versions| |supported-implementations|
@@ -42,14 +41,33 @@ Don't Forget
     :target: https://pypi.python.org/pypi/dontforget
 
 .. |supported-implementations| image:: https://pypip.in/implementation/dontforget/badge.png?style=flat
-    :alt: Supported imlementations
+    :alt: Supported implementations
     :target: https://pypi.python.org/pypi/dontforget
 
 .. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/wagnerandreoli/dontforget/master.png?style=flat
-    :alt: Scrtinizer Status
+    :alt: Scrutinizer Status
     :target: https://scrutinizer-ci.com/g/wagnerandreoli/dontforget/
 
-A to-do list with recurring dates and reminders, so you never again will forget to do something important
+A to-do list with recurring dates and reminders, so you never again will forget to do something important.
+
+The application consists of *tasks* and *reminders* for them.
+
+A *task* can be anything you need to do, with or without due date, with or without repetition:
+- a bill (recurring or one time);
+- house chores you need to perform regularly;
+- a personal identification document you have to renew (driver's license, passport);
+- some food with its expiration date;
+- a product you bought, with a due warranty period;
+- some gig/concert/show you need to buy tickets to, before some time.
+
+You can create your custom types of task, and define default reminders and snooze times for each type.
+
+A *reminder* can be:
+- set for any task above, one of multiple times;
+- snoozed: it will be shown again after the desired time, without changing the task's status;
+- skipped: the current iteration of the repeating task will be marked as skipped;
+- completed: the current iteration of the repeating task will be marked as completed;
+- finished: the whole series of repeating tasks will be finished, and no more iterations will occur.
 
 * Free software: BSD license
 
