@@ -1,21 +1,33 @@
+# -*- encoding: utf-8 -*-
+"""Main module."""
 from datetime import timedelta
 
 __version__ = "0.1.0"
 
 
 class Task:
+
     """A task."""
+
     def __init__(self, name, description=None):
+        """Init object.
+
+        :param name: Task name.
+        :param description: Task description.
+        :return:
+        """
         self.name = name
         self.description = description
 
 
 class Every:
+
     """Base class for all recurrence patterns."""
+
     _next_dt = None
 
     def __init__(self, dt=None, days=None):
-        """Constructor.
+        """Init object.
 
         :param dt: A datetime object.
         :param days: Number of days for this recurrence.
@@ -43,6 +55,14 @@ class Every:
 
 
 class Daily(Every):
+
     """Daily recurrence."""
+
     def __init__(self, dt=None, days=1):
+        """Init object.
+
+        :param dt: A datetime object.
+        :param days: Number of days for this recurrence.
+        :return:
+        """
         super(Daily, self).__init__(dt, days)

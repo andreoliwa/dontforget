@@ -1,13 +1,17 @@
+# -*- encoding: utf-8 -*-
+"""Tests for the main module."""
 from dontforget.__main__ import main
 from dontforget import Task, Daily, Every
 from datetime import datetime
 
 
 def test_main():
+    """Main CLI function."""
     assert main([]) == 0
 
 
 def test_task():
+    """Task."""
     t = Task('Some name')
     assert t.name == 'Some name'
     assert t.description is None
@@ -18,6 +22,7 @@ def test_task():
 
 
 def test_daily():
+    """Daily recurrence possibilities."""
     d = Daily()
     assert d.next() is None
     d.dt = datetime(1938, 8, 2)
