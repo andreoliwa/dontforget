@@ -1,52 +1,6 @@
+============
 Don't Forget
 ============
-
-| |docs| |travis| |appveyor| |coveralls| |landscape| |scrutinizer|
-| |version| |downloads| |wheel| |supported-versions| |supported-implementations|
-
-.. |docs| image:: https://readthedocs.org/projects/dontforget/badge/?style=flat
-    :target: https://readthedocs.org/projects/dontforget
-    :alt: Documentation Status
-
-.. |travis| image:: http://img.shields.io/travis/wagnerandreoli/dontforget/master.png?style=flat
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/wagnerandreoli/dontforget
-
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/wagnerandreoli/dontforget?branch=master
-    :alt: AppVeyor Build Status
-    :target: https://ci.appveyor.com/project/wagnerandreoli/dontforget
-
-.. |coveralls| image:: http://img.shields.io/coveralls/wagnerandreoli/dontforget/master.png?style=flat
-    :alt: Coverage Status
-    :target: https://coveralls.io/r/wagnerandreoli/dontforget
-
-.. |landscape| image:: https://landscape.io/github/wagnerandreoli/dontforget/master/landscape.svg?style=flat
-    :target: https://landscape.io/github/wagnerandreoli/dontforget/master
-    :alt: Code Quality Status
-
-.. |version| image:: http://img.shields.io/pypi/v/dontforget.png?style=flat
-    :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/dontforget
-
-.. |downloads| image:: http://img.shields.io/pypi/dm/dontforget.png?style=flat
-    :alt: PyPI Package monthly downloads
-    :target: https://pypi.python.org/pypi/dontforget
-
-.. |wheel| image:: https://pypip.in/wheel/dontforget/badge.png?style=flat
-    :alt: PyPI Wheel
-    :target: https://pypi.python.org/pypi/dontforget
-
-.. |supported-versions| image:: https://pypip.in/py_versions/dontforget/badge.png?style=flat
-    :alt: Supported versions
-    :target: https://pypi.python.org/pypi/dontforget
-
-.. |supported-implementations| image:: https://pypip.in/implementation/dontforget/badge.png?style=flat
-    :alt: Supported implementations
-    :target: https://pypi.python.org/pypi/dontforget
-
-.. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/wagnerandreoli/dontforget/master.png?style=flat
-    :alt: Scrutinizer Status
-    :target: https://scrutinizer-ci.com/g/wagnerandreoli/dontforget/
 
 A to-do list with recurring dates and reminders, so you never again will forget to do something important.
 
@@ -69,23 +23,77 @@ A *reminder* can be:
 - completed: the current iteration of the repeating task will be marked as completed;
 - finished: the whole series of repeating tasks will be finished, and no more iterations will occur.
 
-* Free software: BSD license
 
-Installation
-============
+Quickstart
+----------
+
+First, set your app's secret key as an environment variable. For example, example add the following to ``.bashrc`` or ``.bash_profile``.
+
+.. code-block:: bash
+
+    export DONTFORGET_SECRET='something-really-secret'
+
+
+Then run the following commands to bootstrap your environment.
+
 
 ::
 
-    pip install dontforget
+    git clone https://github.com/andreoliw/dontforget
+    cd dontforget
+    pip install -r requirements/dev.txt
+    python manage.py server
 
-Documentation
-=============
+You will see a pretty welcome screen.
 
-https://dontforget.readthedocs.org/
+Once you have installed your DBMS, run the following to create your app's database tables and perform the initial migration:
 
-Development
-===========
+::
 
-To run the all tests run::
+    python manage.py db init
+    python manage.py db migrate
+    python manage.py db upgrade
+    python manage.py server
 
-    tox
+
+
+Deployment
+----------
+
+In your production environment, make sure the ``DONTFORGET_ENV`` environment variable is set to ``"prod"``.
+
+
+Shell
+-----
+
+To open the interactive shell, run ::
+
+    python manage.py shell
+
+By default, you will have access to ``app``, ``db``, and the ``User`` model.
+
+
+Running Tests
+-------------
+
+To run all tests, run ::
+
+    python manage.py test
+
+
+Migrations
+----------
+
+Whenever a database migration needs to be made. Run the following commands:
+::
+
+    python manage.py db migrate
+
+This will generate a new migration script. Then run:
+::
+
+    python manage.py db upgrade
+
+To apply the migration.
+
+For a full migration command reference, run ``python manage.py db --help``.

@@ -1,13 +1,8 @@
 # -*- encoding: utf-8 -*-
 """Tests for the main module."""
-from dontforget.__main__ import main
-from dontforget import Task, Daily, Every
 from datetime import datetime
 
-
-def test_main():
-    """Main CLI function."""
-    assert main([]) == 0
+from dontforget.models import Daily, Every, Task
 
 
 def test_task():
@@ -40,7 +35,6 @@ def test_daily():
 
     d = Daily(datetime(1910, 9, 26), 2)
     assert d.next(3) == [datetime(1910, 9, 28), datetime(1910, 9, 30), datetime(1910, 10, 2)]
-
 
 # TODO
 # def test_due_date():

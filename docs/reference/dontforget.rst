@@ -1,5 +1,0 @@
-dontforget
-=============================
-
-.. automodule:: dontforget
-    :members:

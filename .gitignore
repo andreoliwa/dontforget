@@ -42,9 +42,14 @@ htmlcov
 output/*.html
 output/*/index.html
 
+# Virtualenvs
+env/
+.venv
+
 # Sphinx
 docs/_build
 
+.webassets-cache
 .DS_Store
 *~
 .*.sw[po]
@@ -52,3 +57,5 @@ docs/_build
 .ve
 .bootstrap
 *.bak
+*.db
+.cache
