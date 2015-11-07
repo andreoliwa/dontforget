@@ -4,13 +4,12 @@ import datetime as dt
 
 from flask_login import UserMixin
 
-from dontforget.database import (Column, Model, ReferenceCol, SurrogatePK, db,
-                                 relationship)
+from dontforget.database import Column, Model, ReferenceCol, SurrogatePK, db, relationship
 from dontforget.extensions import bcrypt
 
 
 class Role(SurrogatePK, Model):
-    """Role for a user."""
+    """A role for a user."""
 
     __tablename__ = 'roles'
     name = Column(db.String(80), unique=True, nullable=False)
@@ -22,12 +21,12 @@ class Role(SurrogatePK, Model):
         db.Model.__init__(self, name=name, **kwargs)
 
     def __repr__(self):
-        """Represent the instance."""
+        """Represent instance as a unique string."""
         return '<Role({name})>'.format(name=self.name)
 
 
 class User(UserMixin, SurrogatePK, Model):
-    """A user."""
+    """A user of the app."""
 
     __tablename__ = 'users'
     username = Column(db.String(80), unique=True, nullable=False)
@@ -41,7 +40,7 @@ class User(UserMixin, SurrogatePK, Model):
     is_admin = Column(db.Boolean(), default=False)
 
     def __init__(self, username, email, password=None, **kwargs):
-        """Create an instance."""
+        """Create instance."""
         db.Model.__init__(self, username=username, email=email, **kwargs)
         if password:
             self.set_password(password)
@@ -59,8 +58,8 @@ class User(UserMixin, SurrogatePK, Model):
     @property
     def full_name(self):
         """Full user name."""
-        return "{0} {1}".format(self.first_name, self.last_name)
+        return '{0} {1}'.format(self.first_name, self.last_name)
 
     def __repr__(self):
-        """Represent a user."""
+        """Represent instance as a unique string."""
         return '<User({username!r})>'.format(username=self.username)

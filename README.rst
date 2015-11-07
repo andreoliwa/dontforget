@@ -39,7 +39,7 @@ Then run the following commands to bootstrap your environment.
 
 ::
 
-    git clone https://github.com/andreoliw/dontforget
+    git clone https://github.com/andreoliw/python-dontforget
     cd dontforget
     pip install -r requirements/dev.txt
     python manage.py server

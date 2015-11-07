@@ -14,12 +14,12 @@ class LoginForm(Form):
     password = PasswordField('Password', validators=[DataRequired()])
 
     def __init__(self, *args, **kwargs):
-        """Create form instance."""
+        """Create instance."""
         super(LoginForm, self).__init__(*args, **kwargs)
         self.user = None
 
     def validate(self):
-        """Validate form."""
+        """Validate the form."""
         initial_validation = super(LoginForm, self).validate()
         if not initial_validation:
             return False

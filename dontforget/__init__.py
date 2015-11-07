@@ -1,1 +1,1 @@
-"""Main module."""
+"""Main application package."""

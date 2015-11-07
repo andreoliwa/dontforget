@@ -21,7 +21,7 @@ class CRUDMixin(object):
 
     def update(self, commit=True, **kwargs):
         """Update specific fields of a record."""
-        for attr, value in kwargs.iteritems():
+        for attr, value in kwargs.items():
             setattr(self, attr, value)
         return commit and self.save() or self
 
@@ -55,7 +55,7 @@ class SurrogatePK(object):
 
     @classmethod
     def get_by_id(cls, id):
-        """Return a record by the ID."""
+        """Get record by ID."""
         if any(
                 (isinstance(id, basestring) and id.isdigit(),
                  isinstance(id, (int, float))),
@@ -64,7 +64,7 @@ class SurrogatePK(object):
         return None
 
 
-def ReferenceCol(tablename, nullable=False, pk_name='id', **kwargs):
+def ReferenceCol(tablename, nullable=False, pk_name='id', **kwargs):  # noqa
     """Column that adds primary key foreign key reference.
 
     Usage: ::
@@ -73,5 +73,5 @@ def ReferenceCol(tablename, nullable=False, pk_name='id', **kwargs):
         category = relationship('Category', backref='categories')
     """
     return db.Column(
-        db.ForeignKey("{0}.{1}".format(tablename, pk_name)),
+        db.ForeignKey('{0}.{1}'.format(tablename, pk_name)),
         nullable=nullable, **kwargs)

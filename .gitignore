@@ -6,7 +6,6 @@
 # Packages
 *.egg
 *.egg-info
-dist
 build
 eggs
 parts
@@ -24,10 +23,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
-.coverage
-.coverage.*
 nosetests.xml
-htmlcov
 
 # Translations
 *.mo
@@ -36,26 +32,16 @@ htmlcov
 .mr.developer.cfg
 .project
 .pydevproject
-.idea
 
 # Complexity
 output/*.html
 output/*/index.html
 
-# Virtualenvs
-env/
-.venv
-
 # Sphinx
 docs/_build
 
 .webassets-cache
-.DS_Store
-*~
-.*.sw[po]
-.build
-.ve
-.bootstrap
-*.bak
 *.db
-.cache
+
+# Virtualenvs
+env/
