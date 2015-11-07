@@ -7,34 +7,34 @@ from dontforget.models import Daily, Every, Task
 
 def test_task():
     """Task."""
-    t = Task('Some name')
-    assert t.name == 'Some name'
-    assert t.description is None
+    task = Task('Some name')
+    assert task.name == 'Some name'
+    assert task.description is None
 
-    t = Task(description='Some text', name='Another')
-    assert t.name == 'Another'
-    assert t.description == 'Some text'
+    task = Task(description='Some text', name='Another')
+    assert task.name == 'Another'
+    assert task.description == 'Some text'
 
 
 def test_daily():
     """Daily recurrence possibilities."""
-    d = Daily()
-    assert d.next() is None
-    d.dt = datetime(1938, 8, 2)
-    assert d.next() == datetime(1938, 8, 3)
+    daily = Daily()
+    assert daily.next_date() is None
+    daily.date_time = datetime(1938, 8, 2)
+    assert daily.next_date() == datetime(1938, 8, 3)
 
-    d = Daily(datetime(1943, 5, 23))
-    e = Every(days=1, dt=datetime(1943, 5, 23))
+    daily = Daily(datetime(1943, 5, 23))
+    every = Every(days=1, date_time=datetime(1943, 5, 23))
 
-    assert d.dt == datetime(1943, 5, 23)
-    assert d.next() == datetime(1943, 5, 24)
-    assert e.next() == d.next()
+    assert daily.date_time == datetime(1943, 5, 23)
+    assert daily.next_date() == datetime(1943, 5, 24)
+    assert every.next_date() == daily.next_date()
 
-    assert d.next(1) == datetime(1943, 5, 24)
-    assert d.next(3) == [datetime(1943, 5, 24), datetime(1943, 5, 25), datetime(1943, 5, 26)]
+    assert daily.next_date(1) == datetime(1943, 5, 24)
+    assert daily.next_date(3) == [datetime(1943, 5, 24), datetime(1943, 5, 25), datetime(1943, 5, 26)]
 
-    d = Daily(datetime(1910, 9, 26), 2)
-    assert d.next(3) == [datetime(1910, 9, 28), datetime(1910, 9, 30), datetime(1910, 10, 2)]
+    daily = Daily(datetime(1910, 9, 26), 2)
+    assert daily.next_date(3) == [datetime(1910, 9, 28), datetime(1910, 9, 30), datetime(1910, 10, 2)]
 
 # TODO
 # def test_due_date():

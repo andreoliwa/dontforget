@@ -9,13 +9,13 @@ from dontforget.user.forms import RegisterForm
 from dontforget.user.models import User
 from dontforget.utils import flash_errors
 
-blueprint = Blueprint('public', __name__, static_folder='../static')
+blueprint = Blueprint('public', __name__, static_folder='../static')  # pylint: disable=invalid-name
 
 
 @login_manager.user_loader
-def load_user(id):
+def load_user(user_id):
     """Load user by ID."""
-    return User.get_by_id(int(id))
+    return User.get_by_id(int(user_id))
 
 
 @blueprint.route('/', methods=['GET', 'POST'])

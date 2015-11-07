@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=no-self-use,no-member,invalid-name,unused-argument
 """Test forms."""
 
 from dontforget.public.forms import LoginForm

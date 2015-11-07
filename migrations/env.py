@@ -1,4 +1,5 @@
 """Alembic migrations main module."""
+# pylint: disable=no-member
 from __future__ import with_statement
 
 import logging
@@ -11,19 +12,19 @@ from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config
+config = context.config  # pylint: disable=invalid-name
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
-logger = logging.getLogger('alembic.env')
+logger = logging.getLogger('alembic.env')  # pylint: disable=invalid-name
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 config.set_main_option('sqlalchemy.url',
                        current_app.config.get('SQLALCHEMY_DATABASE_URI'))
-target_metadata = current_app.extensions['migrate'].db.metadata
+target_metadata = current_app.extensions['migrate'].db.metadata  # pylint: disable=invalid-name
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -55,10 +56,11 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    # this callback is used to prevent an auto-migration from being generated
-    # when there are no changes to the schema
-    # reference: http://alembic.readthedocs.org/en/latest/cookbook.html
-    def process_revision_directives(context, revision, directives):
+    def process_revision_directives(context_, revision, directives):  # pylint: disable=unused-argument
+        """Used to prevent an auto-migration from being generated when there are no changes to the schema.
+
+        Reference: http://alembic.readthedocs.org/en/latest/cookbook.html
+        """
         if getattr(config.cmd_opts, 'autogenerate', False):
             script = directives[0]
             if script.upgrade_ops.is_empty():
