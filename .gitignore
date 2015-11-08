@@ -40,8 +40,12 @@ output/*/index.html
 # Sphinx
 docs/_build
 
+# Temporary files
 .webassets-cache
-*.db
+.cache
 
 # Virtualenvs
 env/
+
+# Database
+*.sqlite

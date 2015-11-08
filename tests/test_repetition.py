@@ -1,23 +1,12 @@
-# -*- encoding: utf-8 -*-
-"""Tests for the main module."""
+# -*- coding: utf-8 -*-
+"""Tests for the repetition module."""
 from datetime import datetime
 
-from dontforget.models import Daily, Every, Task
-
-
-def test_task():
-    """Task."""
-    task = Task('Some name')
-    assert task.name == 'Some name'
-    assert task.description is None
-
-    task = Task(description='Some text', name='Another')
-    assert task.name == 'Another'
-    assert task.description == 'Some text'
+from dontforget.repetition import Daily, Every
 
 
 def test_daily():
-    """Daily recurrence possibilities."""
+    """Daily repetition possibilities."""
     daily = Daily()
     assert daily.next_date() is None
     daily.date_time = datetime(1938, 8, 2)
@@ -38,7 +27,7 @@ def test_daily():
 
 # TODO
 # def test_due_date():
-#     t = Task('Some task')
+#     t = Chore('Do something')
 #     t.due_date('2015-03-15 23:30', Daily())
 #     t.reminder('2015-03-15 08:30')
 #     t.reminder('2015-03-15 15:30', Hourly())

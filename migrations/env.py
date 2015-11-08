@@ -10,6 +10,10 @@ from alembic import context
 from flask import current_app
 from sqlalchemy import engine_from_config, pool
 
+# add your model's MetaData object here
+# for 'autogenerate' support
+import dontforget.models  # noqa # pylint: disable=unused-import
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config  # pylint: disable=invalid-name
@@ -19,9 +23,6 @@ config = context.config  # pylint: disable=invalid-name
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')  # pylint: disable=invalid-name
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
 config.set_main_option('sqlalchemy.url',
                        current_app.config.get('SQLALCHEMY_DATABASE_URI'))
 target_metadata = current_app.extensions['migrate'].db.metadata  # pylint: disable=invalid-name

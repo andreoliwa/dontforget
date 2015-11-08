@@ -1,66 +1,45 @@
-# -*- encoding: utf-8 -*-
-"""Main module."""
-from datetime import timedelta
+# -*- coding: utf-8 -*-
+"""Database models."""
+from sqlalchemy import or_
 
-__version__ = '0.1.0'
+from .database import Model, SurrogatePK
+from .extensions import db
 
 
-class Task(object):
-    """A task."""
+class Chore(SurrogatePK, Model):
+    """Anything you need to do, with or without due date, with or without repetition."""
 
-    def __init__(self, name, description=None):
-        """Init object.
+    __tablename__ = 'chore'
+    title = db.Column(db.String(), unique=True, nullable=False)
 
-        :param name: Task name.
-        :param description: Task description.
-        :return:
+    # TODO Uncomment columns when they are needed.
+    # description = db.Column(db.String())
+    # labels = db.Column(db.String())
+    # repetition = db.Column(db.String())
+    # alarm_start = db.Column(db.DateTime(), nullable=False)
+    # alarm_end = db.Column(db.DateTime())
+    # next_at
+    # created_at
+    # modified_at
+    # alarms = relationship('Alarm', backref='alarms')
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return '<Chore {!r}>'.format(self.title)
+
+    def search_similar(self, min_chars: int=3):
+        """Search for similar chores, using the title for comparison.
+
+        Every word with at least ``min_chars`` will be considered and queried with a LIKE statement.
+        It's kind of heavy for the database, but we don't expect a huge list of chores anyway.
+
+        This is a simple algorithm right now, it can certainly evolve and improve if needed.
+
+        :param min_chars: Minimum number of characters for a word to be considered in the search.
+        :return: A list of chores that were found, or an empty list.
+        :rtype: list[Chore]
         """
-        self.name = name
-        self.description = description
-
-
-class Every(object):
-    """Base class for all recurrence patterns."""
-
-    def __init__(self, date_time=None, days=None):
-        """Init object.
-
-        :param date_time: A datetime object.
-        :param days: Number of days for this recurrence.
-        :return:
-        """
-        self._next_date_time = None
-        self.date_time = date_time
-        self.days = days
-
-    def next_date(self, count=1):
-        """Return the next date(s) for this recurrence.
-
-        :param count: Number of next dates to return (default is 1).
-        :return: Next date or a list of dates (if more than one).
-        """
-        if not self.date_time:
-            return None
-
-        self._next_date_time = self.date_time
-
-        def calculate_next():
-            """Calculate the next date time."""
-            self._next_date_time = self._next_date_time + timedelta(days=self.days)
-            return self._next_date_time
-
-        dates_list = [calculate_next() for _ in range(count)]
-        return dates_list if len(dates_list) > 1 else dates_list[0]
-
-
-class Daily(Every):
-    """Daily recurrence."""
-
-    def __init__(self, dt=None, days=1):
-        """Init object.
-
-        :param dt: A datetime object.
-        :param days: Number of days for this recurrence.
-        :return:
-        """
-        super(Daily, self).__init__(dt, days)
+        like_expressions = [Chore.title.ilike('%{}%'.format(term.lower()))
+                            for term in self.title.split(' ') if len(term) >= min_chars]
+        query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
+        return query.all()

@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=unnecessary-lambda
 """Factories to help in tests."""
-from factory import PostGenerationMethodCall, Sequence
+from factory import LazyAttribute, PostGenerationMethodCall, Sequence
 from factory.alchemy import SQLAlchemyModelFactory
+from faker import Faker
 
 from dontforget.database import db
+from dontforget.models import Chore
 from dontforget.user.models import User
+
+fake = Faker()  # pylint: disable=invalid-name
+fake.seed(666)
 
 
 class BaseFactory(SQLAlchemyModelFactory):
@@ -30,3 +35,14 @@ class UserFactory(BaseFactory):
         """Factory configuration."""
 
         model = User
+
+
+class ChoreFactory(BaseFactory):
+    """Chore factory."""
+
+    title = LazyAttribute(lambda x: ' '.join(fake.words(4)))
+
+    class Meta:
+        """Factory configuration."""
+
+        model = Chore

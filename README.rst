@@ -4,9 +4,9 @@ Don't Forget
 
 A to-do list with recurring dates and reminders, so you never again will forget to do something important.
 
-The application consists of *tasks* and *reminders* for them.
+The application consists of *chores* and *alarms* for them.
 
-A *task* can be anything you need to do, with or without due date, with or without repetition:
+A *chore* can be anything you need to do, with or without due date, with or without repetition:
 - a bill (recurring or one time);
 - house chores you need to perform regularly;
 - a personal identification document you have to renew (driver's license, passport);
@@ -14,14 +14,12 @@ A *task* can be anything you need to do, with or without due date, with or witho
 - a product you bought, with a due warranty period;
 - some gig/concert/show you need to buy tickets to, before some time.
 
-You can create your custom types of task, and define default reminders and snooze times for each type.
-
-A *reminder* can be:
-- set for any task above, one of multiple times;
-- snoozed: it will be shown again after the desired time, without changing the task's status;
-- skipped: the current iteration of the repeating task will be marked as skipped;
-- completed: the current iteration of the repeating task will be marked as completed;
-- finished: the whole series of repeating tasks will be finished, and no more iterations will occur.
+An *alarm* can be:
+- set for any chore above, one of multiple times;
+- snoozed: it will be shown again after the desired time, without changing the chore's status;
+- skipped: the current iteration of the repeating chore will be marked as skipped;
+- completed: the current iteration of the repeating chore will be marked as completed;
+- finished: the whole series of repeating chores will be finished, and no more iterations will occur.
 
 
 Quickstart
