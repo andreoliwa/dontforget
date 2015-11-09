@@ -39,7 +39,7 @@ class Chore(SurrogatePK, Model):
         :return: A list of chores that were found, or an empty list.
         :rtype: list[Chore]
         """
-        like_expressions = [Chore.title.ilike('%{}%'.format(term.lower()))
+        like_expressions = [Chore.title.ilike('%{0}%'.format(term.lower()))
                             for term in self.title.split(' ') if len(term) >= min_chars]
         query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
         return query.all()

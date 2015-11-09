@@ -34,5 +34,5 @@ def add_required_column(  # pylint: disable=too-many-arguments
     if not column_exists:
         add_column(sa.Column(column_name, column_type, nullable=True))
     if not batch_operation:
-        execute('UPDATE "{}" SET "{}" = {}'.format(table_name, column_name, default_value))
+        execute('UPDATE "{0}" SET "{1}" = {2}'.format(table_name, column_name, default_value))
     alter_column(column_name, nullable=False)
