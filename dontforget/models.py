@@ -2,8 +2,8 @@
 """Database models."""
 from sqlalchemy import or_
 
-from .database import Model, SurrogatePK
-from .extensions import db
+from dontforget.database import Model, ReferenceCol, SurrogatePK, relationship
+from dontforget.extensions import db
 
 
 class Chore(SurrogatePK, Model):
@@ -11,17 +11,17 @@ class Chore(SurrogatePK, Model):
 
     __tablename__ = 'chore'
     title = db.Column(db.String(), unique=True, nullable=False)
+    alarm_start = db.Column(db.DateTime(), nullable=False)
+    alarm_end = db.Column(db.DateTime())
+
+    alarms = relationship('Alarm')
 
     # TODO Uncomment columns when they are needed.
     # description = db.Column(db.String())
     # labels = db.Column(db.String())
     # repetition = db.Column(db.String())
-    # alarm_start = db.Column(db.DateTime(), nullable=False)
-    # alarm_end = db.Column(db.DateTime())
-    # next_at
     # created_at
     # modified_at
-    # alarms = relationship('Alarm', backref='alarms')
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -43,3 +43,30 @@ class Chore(SurrogatePK, Model):
                             for term in self.title.split(' ') if len(term) >= min_chars]
         query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
         return query.all()
+
+
+class AlarmState(object):
+    """Possible states for an alarm."""
+
+    UNSEEN = 'unseen'
+    SKIPPED = 'skipped'
+    SNOOZED = 'snoozed'
+    DONE = 'done'
+
+ALARM_STATE_ENUM = db.Enum(
+    AlarmState.UNSEEN, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.DONE, name='alarm_state_enum')
+
+
+class Alarm(SurrogatePK, Model):
+    """An alarm for a chore."""
+
+    __tablename__ = 'alarm'
+    current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
+    next_at = db.Column(db.DateTime(), nullable=False)
+    chore_id = ReferenceCol('chore')
+
+    chore = relationship('Chore')
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return '<Alarm {!r} at {!r}>'.format(self.current_state, self.next_at)
