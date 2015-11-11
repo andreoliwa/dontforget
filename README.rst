@@ -2,11 +2,26 @@
 Don't Forget
 ============
 
-A to-do list with recurring dates and reminders, so you never again will forget to do something important.
+|waffle| |travis| |quantifiedcode|
+
+.. |waffle| image:: https://badge.waffle.io/andreoliw/python-dontforget.svg?label=ready&title=Ready
+    :target: https://waffle.io/andreoliw/python-dontforget
+    :alt: 'Stories in Ready'
+
+.. |travis| image:: https://travis-ci.org/andreoliw/python-dontforget.svg
+    :target: https://travis-ci.org/andreoliw/python-dontforget/builds
+    :alt: 'Travis Builds'
+
+.. |quantifiedcode| image:: https://www.quantifiedcode.com/api/v1/project/5b4bdf674b4b4d7f853b2c840691ee0e/badge.svg
+  :target: https://www.quantifiedcode.com/app/project/5b4bdf674b4b4d7f853b2c840691ee0e
+  :alt: Code issues
+
+A to-do list with repeating dates and reminders; you will never again forget to do something important.
 
 The application consists of *chores* and *alarms* for them.
 
 A *chore* can be anything you need to do, with or without due date, with or without repetition:
+
 - a bill (recurring or one time);
 - house chores you need to perform regularly;
 - a personal identification document you have to renew (driver's license, passport);
@@ -15,6 +30,7 @@ A *chore* can be anything you need to do, with or without due date, with or with
 - some gig/concert/show you need to buy tickets to, before some time.
 
 An *alarm* can be:
+
 - set for any chore above, one of multiple times;
 - snoozed: it will be shown again after the desired time, without changing the chore's status;
 - skipped: the current iteration of the repeating chore will be marked as skipped;
