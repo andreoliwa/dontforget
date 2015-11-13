@@ -8,6 +8,12 @@ python:
   - 3.4
   - 3.5
 
-install: pip install -r requirements/dev.txt
+install:
+  - pip install codecov
+  - pip install -r requirements/dev.txt
 
-script: py.test tests
+script:
+  - py.test --cov dontforget --verbose
+
+after_success:
+  - codecov
