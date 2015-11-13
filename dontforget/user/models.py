@@ -4,7 +4,7 @@ import datetime as dt
 
 from flask_login import UserMixin
 
-from dontforget.database import Column, Model, ReferenceCol, SurrogatePK, db, relationship
+from dontforget.database import Model, SurrogatePK, db, reference_col
 from dontforget.extensions import bcrypt
 
 
@@ -12,9 +12,9 @@ class Role(SurrogatePK, Model):
     """A role for a user."""
 
     __tablename__ = 'roles'
-    name = Column(db.String(80), unique=True, nullable=False)
-    user_id = ReferenceCol('users', nullable=True)
-    user = relationship('User', backref='roles')
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    user_id = reference_col('users', nullable=True)
+    user = db.relationship('User', backref='roles')
 
     def __init__(self, name, **kwargs):
         """Create instance."""
@@ -29,15 +29,15 @@ class User(UserMixin, SurrogatePK, Model):
     """A user of the app."""
 
     __tablename__ = 'users'
-    username = Column(db.String(80), unique=True, nullable=False)
-    email = Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(80), unique=True, nullable=False)
     #: The hashed password
-    password = Column(db.String(128), nullable=True)
-    created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
-    first_name = Column(db.String(30), nullable=True)
-    last_name = Column(db.String(30), nullable=True)
-    active = Column(db.Boolean(), default=False)
-    is_admin = Column(db.Boolean(), default=False)
+    password = db.Column(db.String(128), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    first_name = db.Column(db.String(30), nullable=True)
+    last_name = db.Column(db.String(30), nullable=True)
+    active = db.Column(db.Boolean(), default=False)
+    is_admin = db.Column(db.Boolean(), default=False)
 
     def __init__(self, username, email, password=None, **kwargs):
         """Create instance."""

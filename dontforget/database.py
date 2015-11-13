@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 """Database module, including the SQLAlchemy database object and DB-related utilities."""
-from sqlalchemy.orm import relationship
-
 from .compat import basestring
 from .extensions import db
-
-# Alias common SQLAlchemy names
-Column = db.Column   # pylint: disable=invalid-name
-relationship = relationship   # pylint: disable=invalid-name
 
 
 class CRUDMixin(object):
@@ -64,12 +58,12 @@ class SurrogatePK(object):
         return None
 
 
-def ReferenceCol(tablename, nullable=False, pk_name='id', **kwargs):  # noqa # pylint: disable=invalid-name
+def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
     """Column that adds primary key foreign key reference.
 
     Usage: ::
 
-        category_id = ReferenceCol('category')
+        category_id = reference_col('category')
         category = relationship('Category', backref='categories')
     """
     return db.Column(

@@ -2,7 +2,7 @@
 """Database models."""
 from sqlalchemy import or_
 
-from dontforget.database import Model, ReferenceCol, SurrogatePK, relationship
+from dontforget.database import Model, SurrogatePK, reference_col
 from dontforget.extensions import db
 
 
@@ -14,7 +14,7 @@ class Chore(SurrogatePK, Model):
     alarm_start = db.Column(db.DateTime(), nullable=False)
     alarm_end = db.Column(db.DateTime())
 
-    alarms = relationship('Alarm')
+    alarms = db.relationship('Alarm')
 
     # TODO Uncomment columns when they are needed.
     # description = db.Column(db.String())
@@ -63,9 +63,9 @@ class Alarm(SurrogatePK, Model):
     __tablename__ = 'alarm'
     current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
     next_at = db.Column(db.DateTime(), nullable=False)
-    chore_id = ReferenceCol('chore')
+    chore_id = reference_col('chore')
 
-    chore = relationship('Chore')
+    chore = db.relationship('Chore')
 
     def __repr__(self):
         """Represent instance as a unique string."""
