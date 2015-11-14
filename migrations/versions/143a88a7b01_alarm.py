@@ -18,7 +18,8 @@ def upgrade():
     """Upgrade the database."""
     op.create_table('alarm',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('current_state', sa.Enum('unseen', 'skipped', 'snoozed', 'done', name='alarm_state_enum'),
+                    sa.Column('current_state',
+                              sa.Enum('unseen', 'displayed', 'skipped', 'snoozed', 'done', name='alarm_state_enum'),
                               nullable=False),
                     sa.Column('next_at', sa.DateTime(), nullable=False),
                     sa.Column('chore_id', sa.Integer(), nullable=False),

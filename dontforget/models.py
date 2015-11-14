@@ -49,12 +49,14 @@ class AlarmState(object):
     """Possible states for an alarm."""
 
     UNSEEN = 'unseen'
+    DISPLAYED = 'displayed'
     SKIPPED = 'skipped'
     SNOOZED = 'snoozed'
     DONE = 'done'
 
 ALARM_STATE_ENUM = db.Enum(
-    AlarmState.UNSEEN, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.DONE, name='alarm_state_enum')
+    AlarmState.UNSEEN, AlarmState.DISPLAYED, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.DONE,
+    name='alarm_state_enum')
 
 
 class Alarm(SurrogatePK, Model):

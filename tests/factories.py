@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=unnecessary-lambda
 """Factories to help in tests."""
-from factory import LazyAttribute, PostGenerationMethodCall, Sequence
+from factory import LazyAttribute, PostGenerationMethodCall, Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
 
 from dontforget.database import db
-from dontforget.models import Chore
+from dontforget.models import Alarm, Chore
 from dontforget.user.models import User
 
 fake = Faker()  # pylint: disable=invalid-name
@@ -47,3 +47,15 @@ class ChoreFactory(BaseFactory):
         """Factory configuration."""
 
         model = Chore
+
+
+class AlarmFactory(BaseFactory):
+    """Alarm factory."""
+
+    next_at = LazyAttribute(lambda x: fake.date_time_between('-5d', '-1d'))
+    chore = SubFactory(ChoreFactory)
+
+    class Meta:
+        """Factory configuration."""
+
+        model = Alarm
