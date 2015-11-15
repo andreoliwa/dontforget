@@ -5,6 +5,7 @@ import os
 from prettyconf import config
 
 UI_MODULE_NAME = config('UI_MODULE_NAME', default='cocoa_dialog')
+COCOA_DIALOG_PATH = config('COCOA_DIALOG_PATH', default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
 
 
 class Config(object):

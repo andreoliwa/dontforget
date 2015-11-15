@@ -1,6 +1,17 @@
 # -*- coding: utf-8 -*-
 """User interface."""
+from collections import namedtuple
 from importlib import import_module
+
+DialogResult = namedtuple('DialogResult', ('button', 'repetition'))
+
+
+class DialogButton(object):
+    """Available dialog buttons."""
+
+    SNOOZE = 'Snooze'
+    SKIP = 'Skip'
+    DONE = 'Done'
 
 
 def show_dialog(alarm):

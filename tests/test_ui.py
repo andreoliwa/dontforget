@@ -30,9 +30,12 @@ def test_display_windows_for_unseen_alarms(mocked_dialog, db):
         assert alarm.current_state == AlarmState.DISPLAYED
 
 
+@patch('subprocess.check_output', return_value=b'Snooze\n15 minutes of fame\n')
 @patch('dontforget.settings.UI_MODULE_NAME', return_value='cocoa_dialog')
-def test_valid_module(mocked_module_name, db):
+def test_valid_module(mocked_module_name, mocked_check_output, db):
     """Test a valid module name."""
+    assert mocked_check_output
+
     alarm = AlarmFactory()
     db.session.commit()
     assert alarm.current_state == AlarmState.UNSEEN
