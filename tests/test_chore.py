@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name,no-member
-"""Tests the chore model."""
+"""Test chores."""
 from datetime import datetime, timedelta
 
 from dontforget.cron import spawn_alarms

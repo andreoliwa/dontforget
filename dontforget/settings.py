@@ -2,6 +2,10 @@
 """Application configuration."""
 import os
 
+from prettyconf import config
+
+UI_MODULE_NAME = config('UI_MODULE_NAME', default='cocoa_dialog')
+
 
 class Config(object):
     """Base configuration."""
