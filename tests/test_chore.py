@@ -40,8 +40,8 @@ def test_create_alarms_for_active_chores(db):
     yesterday = today - timedelta(days=1)
 
     veggie = ChoreFactory(title='Buy vegetables', alarm_start=yesterday, alarm_end=yesterday)
-    coffee = ChoreFactory(title='Buy coffee', alarm_start=today, alarm_end=next_week)
-    chocolate = ChoreFactory(title='Buy chocolate', alarm_start=today)
+    coffee = ChoreFactory(title='Buy coffee', alarm_start=yesterday, alarm_end=next_week)
+    chocolate = ChoreFactory(title='Buy chocolate', alarm_start=yesterday)
     db.session.commit()
 
     assert spawn_alarms(today) == 2
@@ -52,12 +52,12 @@ def test_create_alarms_for_active_chores(db):
 
     assert len(coffee.alarms) == 1
     alarm = coffee.alarms[0]
-    assert alarm.next_at == today
+    assert alarm.next_at == coffee.alarm_start
     assert alarm.current_state == AlarmState.UNSEEN
 
     assert len(chocolate.alarms) == 1
     alarm = chocolate.alarms[0]
-    assert alarm.next_at == today
+    assert alarm.next_at == chocolate.alarm_start
     assert alarm.current_state == AlarmState.UNSEEN
 
     # Mark alarm as skipped, and spawn again.
@@ -70,9 +70,9 @@ def test_create_alarms_for_active_chores(db):
     assert len(veggie.alarms) == 0
     assert len(coffee.alarms) == 1
     assert len(chocolate.alarms) == 2
-    assert chocolate.alarms[0].next_at == today
+    assert chocolate.alarms[0].next_at == chocolate.alarm_start
     assert chocolate.alarms[0].current_state == AlarmState.SKIPPED
-    assert chocolate.alarms[1].next_at == today  # TODO + timedelta(days=1) # This will only work after repetition.
+    assert chocolate.alarms[1].next_at == chocolate.alarm_start  # TODO + timedelta(days=1)
     assert chocolate.alarms[1].current_state == AlarmState.UNSEEN
 
     # Nothing changed, so no spawn for you.

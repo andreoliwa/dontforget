@@ -25,7 +25,7 @@ def spawn_alarms(right_now=None):
         .filter(active_chores_now, Alarm.chore_id.is_(None))
     alarms_created = 0
     for chore in query.all():
-        alarm = Alarm(chore=chore, current_state=AlarmState.UNSEEN, next_at=right_now)
+        alarm = Alarm(chore=chore, current_state=AlarmState.UNSEEN, next_at=chore.alarm_start)
         db.session.add(alarm)
         alarms_created += 1
     if alarms_created:
