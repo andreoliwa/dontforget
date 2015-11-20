@@ -7,6 +7,10 @@ from dontforget.cron import spawn_alarms
 from dontforget.models import AlarmState, Chore
 from tests.factories import ChoreFactory
 
+TODAY = datetime.now()
+NEXT_WEEK = TODAY + timedelta(days=7)
+YESTERDAY = TODAY - timedelta(days=1)
+
 
 def test_search_similar(db):
     """Search for similar chores."""
@@ -35,16 +39,12 @@ def test_search_similar(db):
 
 def test_create_alarms_for_active_chores(db):
     """Create alarms for active chores."""
-    today = datetime.now()
-    next_week = today + timedelta(days=7)
-    yesterday = today - timedelta(days=1)
-
-    veggie = ChoreFactory(title='Buy vegetables', alarm_start=yesterday, alarm_end=yesterday)
-    coffee = ChoreFactory(title='Buy coffee', alarm_start=yesterday, alarm_end=next_week)
-    chocolate = ChoreFactory(title='Buy chocolate', alarm_start=yesterday)
+    veggie = ChoreFactory(title='Buy vegetables', alarm_start=YESTERDAY, alarm_end=YESTERDAY)
+    coffee = ChoreFactory(title='Buy coffee', alarm_start=YESTERDAY, alarm_end=NEXT_WEEK)
+    chocolate = ChoreFactory(title='Buy chocolate', alarm_start=YESTERDAY)
     db.session.commit()
 
-    assert spawn_alarms(today) == 2
+    assert spawn_alarms(TODAY) == 2
     db.session.commit()
 
     # No alarms for inactive chores, one alarm each for each active chore.
@@ -60,20 +60,64 @@ def test_create_alarms_for_active_chores(db):
     assert alarm.next_at == chocolate.alarm_start
     assert alarm.current_state == AlarmState.UNSEEN
 
-    # Mark alarm as skipped, and spawn again.
-    alarm.current_state = AlarmState.SKIPPED
-    alarm.save()
-    assert spawn_alarms(today) == 1
-    db.session.commit()
-
     # There should be one new alarm for chocolate.
     assert len(veggie.alarms) == 0
     assert len(coffee.alarms) == 1
-    assert len(chocolate.alarms) == 2
+    assert len(chocolate.alarms) == 1
     assert chocolate.alarms[0].next_at == chocolate.alarm_start
-    assert chocolate.alarms[0].current_state == AlarmState.SKIPPED
-    assert chocolate.alarms[1].next_at == chocolate.alarm_start  # TODO + timedelta(days=1)
-    assert chocolate.alarms[1].current_state == AlarmState.UNSEEN
+    assert chocolate.alarms[0].current_state == AlarmState.UNSEEN
 
     # Nothing changed, so no spawn for you.
-    assert spawn_alarms(today) == 0
+    assert spawn_alarms(TODAY) == 0
+
+
+def test_one_time_only_chore(db):
+    """Create chore without repetition and open end."""
+    chore = ChoreFactory(title='Buy house', repetition=None, alarm_start=YESTERDAY)
+    db.session.commit()
+
+    # Spawn one alarm.
+    assert spawn_alarms() == 1
+
+    # Mark as done.
+    chore.alarms[0].current_state = AlarmState.COMPLETED
+    chore.alarms[0].save()
+
+    # No alarm should be spawned.
+    assert spawn_alarms() == 0
+
+
+def test_daily_chore(db):
+    """Create chore with daily repetition and open end."""
+    chore = ChoreFactory(title='Drink coffee', repetition='Daily', alarm_start=YESTERDAY)
+    db.session.commit()
+
+    # Spawn one alarm.
+    assert spawn_alarms() == 1
+    assert chore.alarms[0].current_state == AlarmState.UNSEEN
+    assert chore.alarms[0].next_at == chore.alarm_start
+
+    # Mark as done.
+    chore.alarms[0].current_state = AlarmState.COMPLETED
+    chore.alarms[0].save()
+
+    # Spawn one alarm for the next day.
+    assert spawn_alarms() == 1
+    assert chore.alarms[1].current_state == AlarmState.UNSEEN
+    assert chore.alarms[1].next_at == chore.alarm_start + timedelta(days=1)
+
+    # Mark as done again.
+    chore.alarms[1].current_state = AlarmState.COMPLETED
+    chore.alarms[1].save()
+
+    # Spawn one alarm for the next day.
+    assert spawn_alarms() == 1
+    assert chore.alarms[2].current_state == AlarmState.UNSEEN
+    assert chore.alarms[2].next_at == chore.alarms[1].next_at + timedelta(days=1)
+
+    # Kill the chore.
+    chore.alarms[2].current_state = AlarmState.KILLED
+    chore.alarms[2].save()
+
+    # No alarm should be spawned.
+    assert spawn_alarms() == 0

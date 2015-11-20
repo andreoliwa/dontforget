@@ -3,9 +3,11 @@
 from datetime import datetime
 
 from sqlalchemy import and_, or_
+from sqlalchemy.sql import func
 
 from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
+from dontforget.repetition import guess_from_str
 
 
 def spawn_alarms(right_now=None):
@@ -20,14 +22,26 @@ def spawn_alarms(right_now=None):
     active_chores_now = and_(Chore.alarm_start <= right_now,
                              or_(right_now <= Chore.alarm_end, Chore.alarm_end.is_(None)))
     # pylint: disable=no-member
-    query = Chore.query.outerjoin(
-        Alarm, and_(Chore.id == Alarm.chore_id, Alarm.current_state == AlarmState.UNSEEN)) \
-        .filter(active_chores_now, Alarm.chore_id.is_(None))
+    query = db.session.query(
+        Chore.id, Chore.alarm_start, Chore.repetition, Alarm.current_state, func.max(Alarm.next_at)
+    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(active_chores_now)
+
     alarms_created = 0
-    for chore in query.all():
-        alarm = Alarm(chore=chore, current_state=AlarmState.UNSEEN, next_at=chore.alarm_start)
-        db.session.add(alarm)
-        alarms_created += 1
+    for chore_id, alarm_start, repetition, current_state, last_alarm in query.all():
+        next_at = None
+        if current_state is None:
+            # It's a new chore; let's create the first alarm with the chore alarm start.
+            next_at = alarm_start
+        elif repetition and current_state == AlarmState.COMPLETED:
+            # If the chore has a repetition and the last alarm is completed, create a new alarm.
+            # If the chore has no repetition, skip alarm creation.
+            next_at = guess_from_str(repetition).next_date(last_alarm)
+            # TODO right_now if repeat_from_done else last_alarm
+
+        if next_at is not None:
+            alarm = Alarm(chore_id=chore_id, current_state=AlarmState.UNSEEN, next_at=next_at)
+            db.session.add(alarm)
+            alarms_created += 1
     if alarms_created:
         db.session.commit()
     return alarms_created

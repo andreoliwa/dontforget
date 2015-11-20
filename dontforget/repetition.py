@@ -44,3 +44,15 @@ class Daily(Every):
         :param int days: Number of days for this repetition (default 1).
         """
         super(Daily, self).__init__(days=days)
+
+
+def guess_from_str(natural_language_repetition):
+    """Guess a class from a natural language repetition string.
+
+    :param str natural_language_repetition: A string like 'daily', 'every 3 days', 'once a month', etc.
+    :return: A repetition class that inherits from Every, or None if a class could not be matched.
+    :rtype: None|Every|Daily
+    """
+    if natural_language_repetition == 'Daily':
+        return Daily()
+    return None

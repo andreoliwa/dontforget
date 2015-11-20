@@ -13,13 +13,13 @@ class Chore(SurrogatePK, Model):
     title = db.Column(db.String(), unique=True, nullable=False)
     alarm_start = db.Column(db.DateTime(), nullable=False)
     alarm_end = db.Column(db.DateTime())
+    repetition = db.Column(db.String())
 
     alarms = db.relationship('Alarm')
 
     # TODO Uncomment columns when they are needed.
     # description = db.Column(db.String())
     # labels = db.Column(db.String())
-    # repetition = db.Column(db.String())
     # created_at
     # modified_at
 
@@ -27,7 +27,7 @@ class Chore(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return '<Chore {!r}>'.format(self.title)
 
-    def search_similar(self, min_chars: int=3):
+    def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.
 
         Every word with at least ``min_chars`` will be considered and queried with a LIKE statement.
@@ -35,7 +35,7 @@ class Chore(SurrogatePK, Model):
 
         This is a simple algorithm right now, it can certainly evolve and improve if needed.
 
-        :param min_chars: Minimum number of characters for a word to be considered in the search.
+        :param int min_chars: Minimum number of characters for a word to be considered in the search.
         :return: A list of chores that were found, or an empty list.
         :rtype: list[Chore]
         """
@@ -52,11 +52,13 @@ class AlarmState(object):
     DISPLAYED = 'displayed'
     SKIPPED = 'skipped'
     SNOOZED = 'snoozed'
-    DONE = 'done'
+    COMPLETED = 'completed'  # This repetition is done, but the chore is still active and will spawn alarms.
+    KILLED = 'killed'  # The chore is finished, no more alarms will be created.
+
 
 ALARM_STATE_ENUM = db.Enum(
-    AlarmState.UNSEEN, AlarmState.DISPLAYED, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.DONE,
-    name='alarm_state_enum')
+    AlarmState.UNSEEN, AlarmState.DISPLAYED, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.COMPLETED,
+    AlarmState.KILLED, name='alarm_state_enum')
 
 
 class Alarm(SurrogatePK, Model):
