@@ -79,7 +79,7 @@ def test_one_time_only_chore(db):
     # Spawn one alarm.
     assert spawn_alarms() == 1
 
-    # Mark as done.
+    # Mark as completed.
     chore.alarms[0].current_state = AlarmState.COMPLETED
     chore.alarms[0].save()
 
@@ -97,7 +97,7 @@ def test_daily_chore(db):
     assert chore.alarms[0].current_state == AlarmState.UNSEEN
     assert chore.alarms[0].next_at == chore.alarm_start
 
-    # Mark as done.
+    # Mark as completed.
     chore.alarms[0].current_state = AlarmState.COMPLETED
     chore.alarms[0].save()
 
@@ -106,7 +106,7 @@ def test_daily_chore(db):
     assert chore.alarms[1].current_state == AlarmState.UNSEEN
     assert chore.alarms[1].next_at == chore.alarm_start + timedelta(days=1)
 
-    # Mark as done again.
+    # Mark as completed again.
     chore.alarms[1].current_state = AlarmState.COMPLETED
     chore.alarms[1].save()
 
@@ -114,6 +114,45 @@ def test_daily_chore(db):
     assert spawn_alarms() == 1
     assert chore.alarms[2].current_state == AlarmState.UNSEEN
     assert chore.alarms[2].next_at == chore.alarms[1].next_at + timedelta(days=1)
+
+    # Kill the chore.
+    chore.alarms[2].current_state = AlarmState.KILLED
+    chore.alarms[2].save()
+
+    # No alarm should be spawned.
+    assert spawn_alarms() == 0
+
+
+def test_daily_chore_from_completed(db):
+    """Create chore with daily repetition, repeating from the completion date."""
+    chore = ChoreFactory(title='Buy coffee', repetition='Daily', alarm_start=YESTERDAY, repeat_from_completed=True)
+    db.session.commit()
+
+    # Spawn one alarm.
+    assert spawn_alarms() == 1
+    assert chore.alarms[0].current_state == AlarmState.UNSEEN
+    assert chore.alarms[0].next_at == chore.alarm_start
+
+    # Simulate as the chore were completed some time from now.
+    # Automated tests are too fast, the timestamps are almost the same, and that interferes with the results.
+    chore.alarms[0].current_state = AlarmState.COMPLETED
+    chore.alarms[0].updated_at = datetime.now() + timedelta(seconds=5)
+    chore.alarms[0].save()
+
+    # Spawn one alarm for the next day.
+    assert spawn_alarms() == 1
+    assert chore.alarms[1].current_state == AlarmState.UNSEEN
+    assert chore.alarms[1].next_at == chore.alarms[0].updated_at + timedelta(days=1)
+
+    # Simulate as the chore were completed again, some time from now.
+    chore.alarms[1].current_state = AlarmState.COMPLETED
+    chore.alarms[1].updated_at = datetime.now() + timedelta(seconds=10)
+    chore.alarms[1].save()
+
+    # Spawn one alarm for the next day.
+    assert spawn_alarms() == 1
+    assert chore.alarms[2].current_state == AlarmState.UNSEEN
+    assert chore.alarms[2].next_at == chore.alarms[1].updated_at + timedelta(days=1)
 
     # Kill the chore.
     chore.alarms[2].current_state = AlarmState.KILLED

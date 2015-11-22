@@ -17,26 +17,28 @@ def spawn_alarms(right_now=None):
     :return: Number of alarms created.
     :rtype: int
     """
-    if right_now is None:
+    if not right_now:
         right_now = datetime.now()
     active_chores_now = and_(Chore.alarm_start <= right_now,
                              or_(right_now <= Chore.alarm_end, Chore.alarm_end.is_(None)))
     # pylint: disable=no-member
     query = db.session.query(
-        Chore.id, Chore.alarm_start, Chore.repetition, Alarm.current_state, func.max(Alarm.next_at)
+        Chore.id, Chore.alarm_start, Chore.repetition, Chore.repeat_from_completed,
+        Alarm.current_state, Alarm.updated_at, func.max(Alarm.next_at)
     ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(active_chores_now)
 
     alarms_created = 0
-    for chore_id, alarm_start, repetition, current_state, last_alarm in query.all():
+    for chore_id, alarm_start, repetition, repeat_from_completed, current_state, updated_at, last_alarm in query.all():
         next_at = None
+        # It's a new chore; let's create the first alarm with the chore alarm start.
         if current_state is None:
-            # It's a new chore; let's create the first alarm with the chore alarm start.
             next_at = alarm_start
+        # If the chore has a repetition and the last alarm is completed, create a new alarm.
+        # If the chore has no repetition, skip alarm creation.
         elif repetition and current_state == AlarmState.COMPLETED:
-            # If the chore has a repetition and the last alarm is completed, create a new alarm.
-            # If the chore has no repetition, skip alarm creation.
-            next_at = guess_from_str(repetition).next_date(last_alarm)
-            # TODO right_now if repeat_from_done else last_alarm
+            # The next alarm date depends on the chore: it can be from the completed date or from the last alarm date.
+            reference_date = updated_at if repeat_from_completed else last_alarm
+            next_at = guess_from_str(repetition).next_date(reference_date)
 
         if next_at is not None:
             alarm = Alarm(chore_id=chore_id, current_state=AlarmState.UNSEEN, next_at=next_at)

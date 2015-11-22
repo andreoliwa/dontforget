@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Database models."""
 from sqlalchemy import or_
+from sqlalchemy.sql.functions import func
 
 from dontforget.database import Model, SurrogatePK, reference_col
 from dontforget.extensions import db
@@ -14,14 +15,9 @@ class Chore(SurrogatePK, Model):
     alarm_start = db.Column(db.DateTime(), nullable=False)
     alarm_end = db.Column(db.DateTime())
     repetition = db.Column(db.String())
+    repeat_from_completed = db.Column(db.Boolean(), nullable=False, default=False)
 
     alarms = db.relationship('Alarm')
-
-    # TODO Uncomment columns when they are needed.
-    # description = db.Column(db.String())
-    # labels = db.Column(db.String())
-    # created_at
-    # modified_at
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -68,9 +64,11 @@ class Alarm(SurrogatePK, Model):
     current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
     next_at = db.Column(db.DateTime(), nullable=False)
     chore_id = reference_col('chore')
+    updated_at = db.Column(db.DateTime(), nullable=False, onupdate=func.now(), default=func.now())
 
     chore = db.relationship('Chore')
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<Alarm {!r} at {!r}>'.format(self.current_state, self.next_at)
+        return '<Alarm {!r} at {!r} (id {!r} chore_id {!r})>'.format(
+            self.current_state, self.next_at, self.id, self.chore_id)
