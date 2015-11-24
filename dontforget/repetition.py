@@ -4,7 +4,22 @@ import re
 
 from dateutil.relativedelta import relativedelta
 
-REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)\s+(?P<number>\d+)\s+(?P<unit>.+)s?""", re.IGNORECASE)
+
+class Unit(object):
+    """Units of time used in repetitions."""
+
+    DAY = 'day'
+    WEEK = 'week'
+    MONTH = 'month'
+    YEAR = 'year'
+    HOUR = 'hour'
+
+REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)\s*(?P<number>\d*)\s*(?P<unit>.+)s?""", re.IGNORECASE)
+FREQUENCY_MAPPING = dict(
+    daily=(1, Unit.DAY), weekly=(1, Unit.WEEK), biweekly=(2, Unit.WEEK),
+    monthly=(1, Unit.MONTH), bimonthly=(2, Unit.MONTH), quarterly=(4, Unit.MONTH), semiannually=(6, Unit.MONTH),
+    yearly=(1, Unit.YEAR), hourly=(1, Unit.HOUR)
+)
 
 
 def normalise_unit(value):
@@ -16,6 +31,8 @@ def every(reference_date, count, number, unit):
     """Add a number of units to a reference date."""
     if not count or int(count) <= 0:
         count = 1
+    if not number or int(number) <= 0:
+        number = 1
 
     temp_date = reference_date
     results = []
@@ -37,8 +54,9 @@ def next_dates(natural_language_repetition, reference_date, count=1):
     if not natural_language_repetition:
         return None
 
-    if natural_language_repetition.lower() == 'daily':
-        return every(reference_date, count, 1, 'day')
+    mapping = FREQUENCY_MAPPING.get(natural_language_repetition.lower())
+    if mapping:
+        return every(reference_date, count, mapping[0], mapping[1])
 
     match = REGEX_EVERY.match(natural_language_repetition)
     if match:
