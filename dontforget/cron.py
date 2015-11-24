@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 
 from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
-from dontforget.repetition import guess_from_str
+from dontforget.repetition import next_dates
 
 
 def spawn_alarms(right_now=None):
@@ -38,7 +38,7 @@ def spawn_alarms(right_now=None):
         elif repetition and current_state == AlarmState.COMPLETED:
             # The next alarm date depends on the chore: it can be from the completed date or from the last alarm date.
             reference_date = updated_at if repeat_from_completed else last_alarm
-            next_at = guess_from_str(repetition).next_date(reference_date)
+            next_at = next_dates(repetition, reference_date)
 
         if next_at is not None:
             alarm = Alarm(chore_id=chore_id, current_state=AlarmState.UNSEEN, next_at=next_at)

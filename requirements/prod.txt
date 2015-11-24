@@ -3,6 +3,7 @@
 setuptools==18.5
 wheel==0.26.0
 prettyconf==1.2.0
+python-dateutil==2.4.2
 
 # Flask
 Flask==0.10.1
