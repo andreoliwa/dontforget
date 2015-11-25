@@ -34,6 +34,7 @@ def upgrade():
 
 def downgrade():
     """Downgrade the database."""
-    op.drop_column('chore', 'alarm_start')
-    op.drop_column('chore', 'alarm_end')
+    with op.batch_alter_table('chore') as batch_op:
+        batch_op.drop_column('alarm_start')
+        batch_op.drop_column('alarm_end')
     op.drop_table('alarm')
