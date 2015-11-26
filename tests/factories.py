@@ -10,7 +10,6 @@ from dontforget.models import Alarm, Chore
 from dontforget.user.models import User
 
 fake = Faker()  # pylint: disable=invalid-name
-fake.seed(666)
 
 
 class BaseFactory(SQLAlchemyModelFactory):
@@ -40,7 +39,7 @@ class UserFactory(BaseFactory):
 class ChoreFactory(BaseFactory):
     """Chore factory."""
 
-    title = LazyAttribute(lambda x: ' '.join(fake.words(4)))
+    title = LazyAttribute(lambda x: ' '.join(fake.words(10)))
     alarm_start = LazyAttribute(lambda x: fake.date_time_between('-30d', '-20d'))
 
     class Meta:

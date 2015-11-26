@@ -72,3 +72,7 @@ class Alarm(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return '<Alarm {!r} at {!r} (id {!r} chore_id {!r})>'.format(
             self.current_state, self.next_at, self.id, self.chore_id)
+
+    def complete(self):
+        """Mark as completed."""
+        self.update(current_state=AlarmState.COMPLETED)

@@ -21,7 +21,7 @@ def show_dialog(alarm):
             '--text', 'Snooze this alarm for:',
             '--button1', DialogButton.SNOOZE,
             '--button2', DialogButton.SKIP,
-            '--button3', DialogButton.DONE,
+            '--button3', DialogButton.COMPLETE,
             '--icon', 'finder', '--items'] + [item + ' (NOT WORKING YET)' for item in repetition_items]
     try:
         output = check_output(args)

@@ -7,6 +7,7 @@ import pytest
 
 from dontforget.cron import display_unseen_alarms
 from dontforget.models import AlarmState
+from dontforget.ui import DialogButton, DialogResult
 from tests.factories import AlarmFactory
 
 
@@ -66,3 +67,15 @@ def test_invalid_module(mocked_module_name, db):
     mocked_module_name.__str__.return_value = mocked_module_name.return_value
     with pytest.raises(ImportError):
         display_unseen_alarms()
+
+
+@patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.COMPLETE, ''))
+def test_alarm_completed(mocked_dialog, db):
+    """Test if the alarm is set as completed after a click on the button."""
+    alarm = AlarmFactory()
+    db.session.commit()
+    assert alarm.current_state == AlarmState.UNSEEN
+    assert display_unseen_alarms() == 1
+    assert mocked_dialog.call_count == 1
+    mocked_dialog.assert_called_once_with(alarm)
+    assert alarm.current_state == AlarmState.COMPLETED
