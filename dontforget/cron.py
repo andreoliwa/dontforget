@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Functions meant to be called several times, manually or with cron jobs."""
+from datetime import datetime
+
 from sqlalchemy.sql import func
 
 from dontforget.extensions import db
@@ -41,8 +43,8 @@ def spawn_alarms(right_now=None):
     return alarms_created
 
 
-def display_unseen_alarms():
-    """Display all unseen alarms in the database, and change their state to displayed.
+def display_unseen_alarms(right_now=None):
+    """Display unseen alarms from the past (before right now), and change their state to displayed.
 
     :return: Number of alarms displayed.
     :rtype: int
@@ -51,9 +53,13 @@ def display_unseen_alarms():
     # otherwise the module is loaded before its time.
     from dontforget.ui import show_dialog
 
+    if not right_now:
+        right_now = datetime.now()
+
     count = 0
     # pylint: disable=no-member
-    query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN).order_by(Alarm.id)
+    query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
+                               Alarm.next_at <= right_now).order_by(Alarm.id)
     for unseen_alarm in query.all():
         unseen_alarm.current_state = AlarmState.DISPLAYED
         db.session.add(unseen_alarm)

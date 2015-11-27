@@ -19,10 +19,14 @@ def show_dialog(alarm):
     args = [COCOA_DIALOG_PATH, 'dropdown', '--string-output',
             '--title', alarm.chore.title,
             '--text', 'Snooze this alarm for:',
+            '--icon', 'finder',
             '--button1', DialogButton.SNOOZE,
-            '--button2', DialogButton.SKIP,
-            '--button3', DialogButton.COMPLETE,
-            '--icon', 'finder', '--items'] + [item + ' (NOT WORKING YET)' for item in repetition_items]
+            '--button3', DialogButton.COMPLETE]
+    if alarm.chore.repetition and alarm.chore.active():
+        # Only show the skip button for active chores with repetition.
+        args.extend(['--button2', DialogButton.SKIP])
+
+    args.extend(['--items'] + [item + ' (NOT WORKING YET)' for item in repetition_items])
     try:
         output = check_output(args)
     except CalledProcessError as err:
