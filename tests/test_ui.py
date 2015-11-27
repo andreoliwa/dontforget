@@ -8,7 +8,7 @@ import pytest
 from dontforget.cron import display_unseen_alarms
 from dontforget.models import AlarmState
 from dontforget.ui import DialogButton, DialogResult
-from tests.factories import AlarmFactory
+from tests.factories import YESTERDAY, AlarmFactory
 
 
 @patch('dontforget.ui.show_dialog')
@@ -45,16 +45,34 @@ def test_valid_module(mocked_module_name, mocked_check_output, db):
     assert display_unseen_alarms() == 1
 
 
+def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_states):
+    """Assert alarm(s) were created with the expected state(s).
+
+    :param mocked_dialog: A mocked dialog window that simulates a clicked button.
+    :param expected_call_count: How many times the fake dialog is supposed to be shown.
+    :param db: Database.
+    :param alarm_dict: Fields to be used with the alarm factory.
+    :param list|str expected_states: A list or a single expected state for the alarms, after displaying them.
+    """
+    alarm = AlarmFactory(**alarm_dict)
+    db.session.commit()
+    assert alarm.current_state == AlarmState.UNSEEN
+
+    assert display_unseen_alarms() == 1
+    assert mocked_dialog.call_count == expected_call_count
+    mocked_dialog.assert_called_with(alarm)
+
+    if not isinstance(expected_states, list):
+        expected_states = [expected_states]
+    assert len(alarm.chore.alarms) == len(expected_states)
+    for index, expected_state in enumerate(expected_states):
+        assert alarm.chore.alarms[index].current_state == expected_state
+
+
 @patch('dontforget.ui.cocoa_dialog.show_dialog')
 def test_dialog_is_shown(mocked_dialog, db):
     """Test if a dialog is shown for an alarm."""
-    alarm = AlarmFactory()
-    db.session.commit()
-    assert alarm.current_state == AlarmState.UNSEEN
-    assert display_unseen_alarms() == 1
-    assert mocked_dialog.call_count == 1
-    mocked_dialog.assert_called_once_with(alarm)
-    assert alarm.current_state == AlarmState.DISPLAYED
+    assert_state(mocked_dialog, 1, db, dict(), AlarmState.DISPLAYED)
 
 
 @patch('dontforget.settings.UI_MODULE_NAME', return_value='some_non_existent_module')
@@ -71,11 +89,17 @@ def test_invalid_module(mocked_module_name, db):
 
 @patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.COMPLETE, ''))
 def test_alarm_completed(mocked_dialog, db):
-    """Test if the alarm is set as completed after a click on the button."""
-    alarm = AlarmFactory()
-    db.session.commit()
-    assert alarm.current_state == AlarmState.UNSEEN
-    assert display_unseen_alarms() == 1
-    assert mocked_dialog.call_count == 1
-    mocked_dialog.assert_called_once_with(alarm)
-    assert alarm.current_state == AlarmState.COMPLETED
+    """Complete chores."""
+    assert_state(mocked_dialog, 1, db, dict(chore__repetition=None), AlarmState.COMPLETED)
+    assert_state(mocked_dialog, 2, db, dict(chore__repetition='Daily', chore__alarm_end=YESTERDAY),
+                 AlarmState.COMPLETED)
+    assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), [AlarmState.COMPLETED, AlarmState.UNSEEN])
+
+
+@patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.SKIP, ''))
+def test_alarm_skipped(mocked_dialog, db):
+    """Skip chores."""
+    assert_state(mocked_dialog, 1, db, dict(chore__repetition=None), AlarmState.SKIPPED)
+    assert_state(mocked_dialog, 2, db, dict(chore__repetition='Daily', chore__alarm_end=YESTERDAY),
+                 AlarmState.SKIPPED)
+    assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), [AlarmState.SKIPPED, AlarmState.UNSEEN])

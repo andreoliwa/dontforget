@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=unnecessary-lambda
 """Factories to help in tests."""
+from datetime import datetime, timedelta
+
 from factory import LazyAttribute, PostGenerationMethodCall, Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
@@ -10,6 +12,10 @@ from dontforget.models import Alarm, Chore
 from dontforget.user.models import User
 
 fake = Faker()  # pylint: disable=invalid-name
+
+TODAY = datetime.now()
+NEXT_WEEK = TODAY + timedelta(days=7)
+YESTERDAY = TODAY - timedelta(days=1)
 
 
 class BaseFactory(SQLAlchemyModelFactory):

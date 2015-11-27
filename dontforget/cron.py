@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """Functions meant to be called several times, manually or with cron jobs."""
-from datetime import datetime
-
-from sqlalchemy import and_, or_
 from sqlalchemy.sql import func
 
 from dontforget.extensions import db
@@ -17,15 +14,11 @@ def spawn_alarms(right_now=None):
     :return: Number of alarms created.
     :rtype: int
     """
-    if not right_now:
-        right_now = datetime.now()
-    active_chores_now = and_(Chore.alarm_start <= right_now,
-                             or_(right_now <= Chore.alarm_end, Chore.alarm_end.is_(None)))
     # pylint: disable=no-member
     query = db.session.query(
         Chore.id, Chore.alarm_start, Chore.repetition, Chore.repeat_from_completed,
         Alarm.current_state, Alarm.updated_at, func.max(Alarm.next_at)
-    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(active_chores_now)
+    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(Chore.active_expression(right_now))
 
     alarms_created = 0
     for chore_id, alarm_start, repetition, repeat_from_completed, current_state, updated_at, last_alarm in query.all():
@@ -41,8 +34,7 @@ def spawn_alarms(right_now=None):
             next_at = next_dates(repetition, reference_date)
 
         if next_at is not None:
-            alarm = Alarm(chore_id=chore_id, current_state=AlarmState.UNSEEN, next_at=next_at)
-            db.session.add(alarm)
+            Alarm.create_unseen(chore_id, next_at)
             alarms_created += 1
     if alarms_created:
         db.session.commit()

@@ -21,7 +21,13 @@ def show_dialog(alarm):
 
     dialog_result = module.show_dialog(alarm)
     """:type: DialogResult"""
-    if dialog_result.button == DialogButton.COMPLETE:
-        alarm.complete()
+
+    method_mapping = {
+        DialogButton.COMPLETE: alarm.complete,
+        DialogButton.SKIP: alarm.skip
+    }
+    change_alarm = method_mapping.get(dialog_result.button)
+    if change_alarm:
+        change_alarm()
 
     return dialog_result

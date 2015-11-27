@@ -5,11 +5,7 @@ from datetime import datetime, timedelta
 
 from dontforget.cron import spawn_alarms
 from dontforget.models import AlarmState, Chore
-from tests.factories import ChoreFactory
-
-TODAY = datetime.now()
-NEXT_WEEK = TODAY + timedelta(days=7)
-YESTERDAY = TODAY - timedelta(days=1)
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 
 def test_search_similar(db):
