@@ -23,11 +23,15 @@ def show_dialog(alarm):
     """:type: DialogResult"""
 
     method_mapping = {
-        DialogButton.COMPLETE: alarm.complete,
-        DialogButton.SKIP: alarm.skip
+        DialogButton.SNOOZE: alarm.snooze,
+        DialogButton.SKIP: alarm.skip,
+        DialogButton.COMPLETE: alarm.complete
     }
-    change_alarm = method_mapping.get(dialog_result.button)
-    if change_alarm:
-        change_alarm()
+    method = method_mapping.get(dialog_result.button)
+    if method:
+        if dialog_result.button == DialogButton.SNOOZE:
+            method(dialog_result.repetition)
+        else:
+            method()
 
     return dialog_result

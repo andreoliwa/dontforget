@@ -8,7 +8,7 @@ import pytest
 from dontforget.cron import display_unseen_alarms
 from dontforget.models import AlarmState
 from dontforget.ui import DialogButton, DialogResult
-from tests.factories import NEXT_WEEK, YESTERDAY, AlarmFactory
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory
 
 
 @patch('dontforget.ui.show_dialog')
@@ -34,7 +34,7 @@ def test_display_windows_for_unseen_alarms(mocked_dialog, db):
         assert alarm.current_state == AlarmState.UNSEEN
 
 
-@patch('subprocess.check_output', return_value=b'Snooze\n15 minutes of fame\n')
+@patch('subprocess.check_output', return_value=b'Snooze\n15 minutes\n')
 @patch('dontforget.settings.UI_MODULE_NAME', return_value='cocoa_dialog')
 def test_valid_module(mocked_module_name, mocked_check_output, db):
     """Test a valid module name."""
@@ -56,6 +56,7 @@ def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_st
     :param db: Database.
     :param alarm_dict: Fields to be used with the alarm factory.
     :param list|str expected_states: A list or a single expected state for the alarms, after displaying them.
+    :return: List of created alarms.
     """
     alarm = AlarmFactory(**alarm_dict)
     db.session.commit()
@@ -70,6 +71,7 @@ def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_st
     assert len(alarm.chore.alarms) == len(expected_states)
     for index, expected_state in enumerate(expected_states):
         assert alarm.chore.alarms[index].current_state == expected_state
+    return alarm.chore.alarms
 
 
 @patch('dontforget.ui.cocoa_dialog.show_dialog')
@@ -106,3 +108,17 @@ def test_alarm_skipped(mocked_dialog, db):
     assert_state(mocked_dialog, 2, db, dict(chore__repetition='Daily', chore__alarm_end=YESTERDAY),
                  AlarmState.SKIPPED)
     assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), [AlarmState.SKIPPED, AlarmState.UNSEEN])
+
+
+@patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.SNOOZE, '28 days'))
+def test_alarm_snoozed(mocked_dialog, db):
+    """Snooze chores: repetition doesn't matter, new alarms are always spawned."""
+    expected = [AlarmState.SNOOZED, AlarmState.UNSEEN]
+    alarms = assert_state(mocked_dialog, 1, db, dict(chore__repetition=None), expected)
+    assert (alarms[1].next_at - TODAY).days == 28
+
+    alarms = assert_state(mocked_dialog, 2, db, dict(chore__repetition='Daily', chore__alarm_end=YESTERDAY), expected)
+    assert (alarms[1].next_at - TODAY).days == 28
+
+    alarms = assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), expected)
+    assert (alarms[1].next_at - TODAY).days == 28

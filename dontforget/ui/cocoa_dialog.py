@@ -14,11 +14,10 @@ def show_dialog(alarm):
     """
     if not COCOA_DIALOG_PATH:
         raise RuntimeError('Cocoa Dialog path is not configured')
-    repetition_items = ['5 minutes', '10 minutes', '15 minutes', 'Half an hour', '1 hour', '2 hours', '4 hours',
-                        '12 hours', '1 day']  # TODO: This is only an example
-    args = [COCOA_DIALOG_PATH, 'dropdown', '--string-output',
+    args = [COCOA_DIALOG_PATH, 'inputbox', '--string-output',
             '--title', alarm.chore.title,
-            '--text', 'Snooze this alarm for:',
+            '--text', '1 hour',
+            '--informative-text', 'Snooze this alarm for:',
             '--icon', 'finder',
             '--button1', DialogButton.SNOOZE,
             '--button3', DialogButton.COMPLETE]
@@ -26,7 +25,6 @@ def show_dialog(alarm):
         # Only show the skip button for active chores with repetition.
         args.extend(['--button2', DialogButton.SKIP])
 
-    args.extend(['--items'] + [item + ' (NOT WORKING YET)' for item in repetition_items])
     try:
         output = check_output(args)
     except CalledProcessError as err:

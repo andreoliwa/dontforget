@@ -118,7 +118,7 @@ class Alarm(SurrogatePK, Model):
         """
         return cls.create(commit=False, chore_id=chore_id, next_at=next_at, current_state=AlarmState.UNSEEN)
 
-    def repeat(self, desired_state):
+    def repeat(self, desired_state, manual_repetition=None):
         """Set the desired state and create a new unseen alarm, based on the repetition settings in the related chore.
 
         An unseen alarm will only be created if there is a repetition, and if the chore is active.
@@ -128,17 +128,28 @@ class Alarm(SurrogatePK, Model):
         :rtype: Alarm
         """
         rv = self.update(commit=False, current_state=desired_state)
-        if self.chore.repetition and self.chore.active():
+
+        next_at = None
+        if manual_repetition:
+            next_at = next_dates(manual_repetition, datetime.now())
+        elif self.chore.repetition and self.chore.active():
             reference_date = self.updated_at if self.chore.repeat_from_completed else self.next_at
             next_at = next_dates(self.chore.repetition, reference_date)
+
+        if next_at:
             rv = self.create_unseen(self.chore_id, next_at)
+
         db.session.commit()
         return rv
 
-    def complete(self):
-        """Mark as completed."""
-        return self.repeat(AlarmState.COMPLETED)
+    def snooze(self, repetition):
+        """Snooze this alarm using the desired repetition."""
+        return self.repeat(AlarmState.SNOOZED, 'Every ' + repetition)
 
     def skip(self):
         """Skip this alarm."""
         return self.repeat(AlarmState.SKIPPED)
+
+    def complete(self):
+        """Mark as completed."""
+        return self.repeat(AlarmState.COMPLETED)
