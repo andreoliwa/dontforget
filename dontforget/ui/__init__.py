@@ -12,6 +12,7 @@ class DialogButton(object):
     SNOOZE = 'Snooze'
     SKIP = 'Skip'
     COMPLETE = 'Complete'
+    TIMEOUT = 'timeout'
 
 
 def show_dialog(alarm):
@@ -25,7 +26,8 @@ def show_dialog(alarm):
     method_mapping = {
         DialogButton.SNOOZE: alarm.snooze,
         DialogButton.SKIP: alarm.skip,
-        DialogButton.COMPLETE: alarm.complete
+        DialogButton.COMPLETE: alarm.complete,
+        DialogButton.TIMEOUT: alarm.reset_unseen
     }
     method = method_mapping.get(dialog_result.button)
     if method:

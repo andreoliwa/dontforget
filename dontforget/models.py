@@ -153,3 +153,7 @@ class Alarm(SurrogatePK, Model):
     def complete(self):
         """Mark as completed."""
         return self.repeat(AlarmState.COMPLETED)
+
+    def reset_unseen(self):
+        """Mark as unseen again."""
+        return self.update(current_state=AlarmState.UNSEEN)

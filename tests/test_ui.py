@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name,no-member
+# pylint: disable=invalid-name,no-member,too-many-arguments
 """Test user interface."""
 from unittest.mock import call, patch
 
@@ -48,7 +48,7 @@ def test_valid_module(mocked_module_name, mocked_check_output, db):
     assert display_unseen_alarms() == 1
 
 
-def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_states):
+def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_states, expected_unseen_alarms=1):
     """Assert alarm(s) were created with the expected state(s).
 
     :param mocked_dialog: A mocked dialog window that simulates a clicked button.
@@ -56,13 +56,14 @@ def assert_state(mocked_dialog, expected_call_count, db, alarm_dict, expected_st
     :param db: Database.
     :param alarm_dict: Fields to be used with the alarm factory.
     :param list|str expected_states: A list or a single expected state for the alarms, after displaying them.
+    :param int expected_unseen_alarms: Expected quantity of unseen alarms.
     :return: List of created alarms.
     """
     alarm = AlarmFactory(**alarm_dict)
     db.session.commit()
     assert alarm.current_state == AlarmState.UNSEEN
 
-    assert display_unseen_alarms() == 1
+    assert display_unseen_alarms() == expected_unseen_alarms
     assert mocked_dialog.call_count == expected_call_count
     mocked_dialog.assert_called_with(alarm)
 
@@ -122,3 +123,17 @@ def test_alarm_snoozed(mocked_dialog, db):
 
     alarms = assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), expected)
     assert (alarms[1].next_at - TODAY).days == 28
+
+
+@patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.TIMEOUT, ''))
+def test_alarm_timeout(mocked_dialog, db):
+    """Reset alarm on timeout."""
+    assert_state(mocked_dialog, 1, db, dict(chore__repetition=None), AlarmState.UNSEEN)
+
+    mocked_dialog.reset_mock()
+    assert_state(mocked_dialog, 2, db, dict(chore__repetition='Daily', chore__alarm_end=YESTERDAY),
+                 AlarmState.UNSEEN, expected_unseen_alarms=2)
+
+    mocked_dialog.reset_mock()
+    assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), AlarmState.UNSEEN,
+                 expected_unseen_alarms=3)

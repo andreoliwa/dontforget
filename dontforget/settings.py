@@ -5,7 +5,10 @@ import os
 from prettyconf import config
 
 UI_MODULE_NAME = config('UI_MODULE_NAME', default='cocoa_dialog')
-COCOA_DIALOG_PATH = config('COCOA_DIALOG_PATH', default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
+UI_COCOA_DIALOG_PATH = config(
+    'UI_COCOA_DIALOG_PATH',
+    default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
+UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=10, cast=int)
 
 
 class Config(object):
