@@ -10,17 +10,19 @@ def test_simple_patterns_with_every_each():
     """Test simple repetition patterns using "every" and "each"."""
     base_date = datetime(1980, 9, 20, 8, 8, 8)
     mapping = {
-        'Each 1 day': datetime(1980, 9, 21, 8, 8, 8),
-        'Every 3 days': datetime(1980, 9, 23, 8, 8, 8),
-        'Every 1 month': datetime(1980, 10, 20, 8, 8, 8),
-        'Each 2 months': datetime(1980, 11, 20, 8, 8, 8),
-        'Every 2 years': datetime(1982, 9, 20, 8, 8, 8),
-        'EACH 6 WEEKS': datetime(1980, 11, 1, 8, 8, 8),
-        'Every1hour': datetime(1980, 9, 20, 9, 8, 8),
-        'every 15 minute': datetime(1980, 9, 20, 8, 23, 8)
+        datetime(1980, 9, 21, 8, 8, 8): ('Each 1 day', '1 day', '1d'),
+        datetime(1980, 9, 23, 8, 8, 8): ('Every 3 days', '3day', '3d'),
+        datetime(1980, 10, 20, 8, 8, 8): ('Every 1 month', '1 month', '1 m', '1mo'),
+        datetime(1980, 11, 20, 8, 8, 8): ('Each 2 months', '2monthS', '2m', '2 mo'),
+        datetime(1982, 9, 20, 8, 8, 8): ('Every 2 years', '2years', '2 y'),
+        datetime(1980, 11, 1, 8, 8, 8): ('EACH 6 WEEKS', '6WEEK', '6 w'),
+        datetime(1980, 9, 20, 9, 8, 8): ('Every1hour', '1hours', '1h'),
+        datetime(1980, 9, 20, 12, 8, 8): ('EACH 4 HOURS', '4hours', '4h'),
+        datetime(1980, 9, 20, 8, 23, 8): ('every 15 minute', '15 minute', '15 mi', '15 min')
     }
-    for natural_pattern, expected_date in mapping.items():
-        assert next_dates(natural_pattern, base_date) == expected_date
+    for expected_date, natural_patterns in mapping.items():
+        for natural_pattern in natural_patterns:
+            assert next_dates(natural_pattern, base_date) == expected_date
 
 
 def test_invalid_repetition():

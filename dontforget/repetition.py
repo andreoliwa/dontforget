@@ -14,18 +14,23 @@ class Unit(object):
     MONTH = 'month'
     YEAR = 'year'
     HOUR = 'hour'
+    MINUTE = 'minute'
 
-REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)\s*(?P<number>\d*)\s*(?P<unit>.+)s?""", re.IGNORECASE)
+REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)?\s*(?P<number>\d*)\s*(?P<unit>.+)s?""", re.IGNORECASE)
 FREQUENCY_MAPPING = dict(
     daily=(1, Unit.DAY), weekly=(1, Unit.WEEK), biweekly=(2, Unit.WEEK),
     monthly=(1, Unit.MONTH), bimonthly=(2, Unit.MONTH), quarterly=(4, Unit.MONTH), semiannually=(6, Unit.MONTH),
     yearly=(1, Unit.YEAR), hourly=(1, Unit.HOUR)
 )
+ABBREVIATIONS = dict(
+    d=Unit.DAY, m=Unit.MONTH, mo=Unit.MONTH, y=Unit.YEAR, w=Unit.WEEK, h=Unit.HOUR, mi=Unit.MINUTE, min=Unit.MINUTE
+)
 
 
 def normalise_unit(value):
     """Normalise a unit (day, month, year...) to conform to dateutil naming (mainly making it a plural word)."""
-    return value.lower().rstrip('s') + 's'
+    clean = value.lower().rstrip('s')
+    return ABBREVIATIONS.get(clean, clean) + 's'
 
 
 def every(reference_date, count, number, unit):
@@ -38,7 +43,10 @@ def every(reference_date, count, number, unit):
     temp_date = reference_date
     results = []
     for dummy in range(count):
-        temp_date = temp_date + relativedelta(**{normalise_unit(unit): int(number)})
+        try:
+            temp_date = temp_date + relativedelta(**{normalise_unit(unit): int(number)})
+        except TypeError:
+            return None
         results.append(temp_date)
     return results if len(results) > 1 else results[0]
 
