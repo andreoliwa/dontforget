@@ -137,3 +137,10 @@ def test_alarm_timeout(mocked_dialog, db):
     mocked_dialog.reset_mock()
     assert_state(mocked_dialog, 3, db, dict(chore__repetition='Daily'), AlarmState.UNSEEN,
                  expected_unseen_alarms=3)
+
+
+@patch('dontforget.ui.cocoa_dialog.show_dialog', return_value=DialogResult(DialogButton.SNOOZE, '8 years'))
+def test_last_snooze(mocked_dialog, db):
+    """Suggest snooze times for the next alarm."""
+    alarms = assert_state(mocked_dialog, 1, db, dict(), [AlarmState.SNOOZED, AlarmState.UNSEEN])
+    assert alarms[1].last_snooze == '8 years'

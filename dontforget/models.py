@@ -92,9 +92,10 @@ class Alarm(SurrogatePK, Model):
     """An alarm for a chore."""
 
     __tablename__ = 'alarm'
+    chore_id = reference_col('chore')
     current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
     next_at = db.Column(db.DateTime(), nullable=False)
-    chore_id = reference_col('chore')
+    last_snooze = db.Column(db.String())
     updated_at = db.Column(db.DateTime(), nullable=False, onupdate=func.now(), default=func.now())
 
     chore = db.relationship('Chore')
@@ -106,45 +107,48 @@ class Alarm(SurrogatePK, Model):
             self.current_state, self.next_at, self.id, self.chore_id)
 
     @classmethod
-    def create_unseen(cls, chore_id, next_at):
+    def create_unseen(cls, chore_id, next_at, last_snooze=None):
         """Factory method to create an unseen alarm instance.
 
         The instance will be added to the session, but no commit will be issued.
 
         :param chore_id: Chore ID of the new alarm.
         :param next_at: Next date/time for the new alarm.
+        :param str last_snooze: Last snooze time to be used as a suggestion for the new one.
         :return: An alarm.
         :rtype: Alarm
         """
-        return cls.create(commit=False, chore_id=chore_id, next_at=next_at, current_state=AlarmState.UNSEEN)
+        return cls.create(commit=False, chore_id=chore_id, next_at=next_at, current_state=AlarmState.UNSEEN,
+                          last_snooze=last_snooze)
 
-    def repeat(self, desired_state, manual_repetition=None):
+    def repeat(self, desired_state, snooze_repetition=None):
         """Set the desired state and create a new unseen alarm, based on the repetition settings in the related chore.
 
         An unseen alarm will only be created if there is a repetition, and if the chore is active.
 
         :param AlarmState desired_state: The desired state for the current alarm, before repetition.
+        :param str snooze_repetition: Snooze repetition chosen by the user.
         :return: The current alarm if none created, or the newly created (and unseen) alarm instance.
         :rtype: Alarm
         """
         rv = self.update(commit=False, current_state=desired_state)
 
         next_at = None
-        if manual_repetition:
-            next_at = next_dates(manual_repetition, datetime.now())
+        if snooze_repetition:
+            next_at = next_dates(snooze_repetition, datetime.now())
         elif self.chore.repetition and self.chore.active():
             reference_date = self.updated_at if self.chore.repeat_from_completed else self.next_at
             next_at = next_dates(self.chore.repetition, reference_date)
 
         if next_at:
-            rv = self.create_unseen(self.chore_id, next_at)
+            rv = self.create_unseen(self.chore_id, next_at, snooze_repetition)
 
         db.session.commit()
         return rv
 
-    def snooze(self, repetition):
+    def snooze(self, snooze_repetition):
         """Snooze this alarm using the desired repetition."""
-        return self.repeat(AlarmState.SNOOZED, 'Every ' + repetition)
+        return self.repeat(AlarmState.SNOOZED, snooze_repetition)
 
     def skip(self):
         """Skip this alarm."""

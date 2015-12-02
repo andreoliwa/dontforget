@@ -9,6 +9,7 @@ UI_COCOA_DIALOG_PATH = config(
     'UI_COCOA_DIALOG_PATH',
     default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
 UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=10, cast=int)
+UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
 
 
 class Config(object):
