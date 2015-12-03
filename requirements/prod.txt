@@ -1,14 +1,15 @@
 # Everything needed in production
 
-setuptools==18.5
+setuptools==18.7.1
 wheel==0.26.0
 prettyconf==1.2.0
 python-dateutil==2.4.2
+click==6.2
 
 # Flask
 Flask==0.10.1
 MarkupSafe==0.23
-Werkzeug==0.10.4
+Werkzeug==0.11.2
 Jinja2==2.8
 itsdangerous==0.24
 

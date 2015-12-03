@@ -8,8 +8,8 @@ WebTest==2.0.20
 factory-boy==2.6.0
 fake-factory==0.5.3
 ipdb==0.8.1
-ipython==4.0.0
-coverage==4.0.2
+ipython==4.0.1
+coverage==4.0.3
 pytest-cov==2.2.0
 
 # Management script
@@ -19,9 +19,9 @@ Flask-Script==2.0.5
 flake8==2.5.0
 flake8-blind-except==0.1.0
 flake8-debugger==1.4.0
-flake8-docstrings==0.2.1.post1
+flake8-docstrings==0.2.1.post1  # flake8-docstrings==0.2.4 didn't work, the D203 message is triggered in pep257
 flake8-isort==0.2
 flake8-quotes==0.1.1
 isort==4.2.2
 pep8-naming==0.3.3
-pylint==1.4.4
+pylint==1.5.1
