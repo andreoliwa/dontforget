@@ -4,12 +4,14 @@
 import os
 from glob import glob
 from subprocess import call
+from time import sleep
 
 from flask_migrate import MigrateCommand
 from flask_script import Command, Manager, Option, Server, Shell
 from flask_script.commands import Clean, ShowUrls
 
 from dontforget.app import create_app
+from dontforget.cron import display_unseen_alarms, spawn_alarms
 from dontforget.database import db
 from dontforget.settings import DevConfig, ProdConfig
 from dontforget.user.models import User
@@ -67,6 +69,30 @@ class Lint(Command):
         execute_tool('Checking code style', 'flake8')
         if use_pylint:
             execute_tool('Checking code style', 'pylint', '--rcfile=.pylintrc')
+
+
+@manager.command
+def display(daemon=False, seconds=10):
+    """Display unseen alarms."""
+    seconds = int(seconds)
+    if seconds <= 0:
+        seconds = 10
+
+    if daemon:
+        print('Running in daemon mode, checking alarms every {0} seconds...'.format(seconds))
+
+    while True:
+        display_unseen_alarms()
+        if not daemon:
+            return
+        sleep(seconds)
+
+
+@manager.command
+def spawn():
+    """Spawn alarms for chores."""
+    print('Spawning alarms for chores...')
+    spawn_alarms()
 
 
 manager.add_command('server', Server())
