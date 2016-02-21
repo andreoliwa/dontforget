@@ -24,7 +24,9 @@ class Chore(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<Chore {!r}>'.format(self.title)
+        return '<Chore {0!r} {1!r}, starting at {2}, repetition {3!r} from {4}>'.format(
+            self.id, self.title, self.alarm_start, self.repetition,
+            'completed' if self.repeat_from_completed else 'due date')
 
     def active(self, right_now=None):
         """Return True if the chore is active right now.
@@ -103,8 +105,8 @@ class Alarm(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<Alarm {!r} at {!r} (id {!r} chore_id {!r})>'.format(
-            self.current_state, self.next_at, self.id, self.chore_id)
+        return '<Alarm {!r} {!r} at {!r} (chore {!r})>'.format(
+            self.id, self.current_state, self.next_at, self.chore_id)
 
     @classmethod
     def create_unseen(cls, chore_id, next_at, last_snooze=None):

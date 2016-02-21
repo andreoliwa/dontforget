@@ -8,7 +8,7 @@ UI_MODULE_NAME = config('UI_MODULE_NAME', default='cocoa_dialog')
 UI_COCOA_DIALOG_PATH = config(
     'UI_COCOA_DIALOG_PATH',
     default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
-UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=10, cast=int)
+UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=30, cast=int)
 UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
 
 
@@ -31,7 +31,10 @@ class ProdConfig(Config):
 
     ENV = 'prod'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/example'  # TODO: Change me
+    DB_NAME = 'prod.sqlite'
+    # Put the db file in project root
+    DB_PATH = os.path.join(Config.PROJECT_ROOT, DB_NAME)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{0}'.format(DB_PATH)
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
 
 

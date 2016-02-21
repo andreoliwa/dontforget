@@ -4,16 +4,16 @@ Don't Forget
 
 |waffle| |travis| |coverage| |quantifiedcode|
 
-.. |waffle| image:: https://badge.waffle.io/andreoliw/python-dontforget.svg?label=ready&title=Ready
-    :target: https://waffle.io/andreoliw/python-dontforget
+.. |waffle| image:: https://badge.waffle.io/andreoliwa/python-dontforget.svg?label=ready&title=Ready
+    :target: https://waffle.io/andreoliwa/python-dontforget
     :alt: 'Stories in Ready'
 
-.. |travis| image:: https://travis-ci.org/andreoliw/python-dontforget.svg
-    :target: https://travis-ci.org/andreoliw/python-dontforget/builds
+.. |travis| image:: https://travis-ci.org/andreoliwa/python-dontforget.svg
+    :target: https://travis-ci.org/andreoliwa/python-dontforget/builds
     :alt: 'Travis Builds'
 
-.. |coverage| image:: https://codecov.io/github/andreoliw/python-dontforget/coverage.svg?branch=develop
-    :target: https://codecov.io/github/andreoliw/python-dontforget?branch=develop
+.. |coverage| image:: https://codecov.io/github/andreoliwa/python-dontforget/coverage.svg?branch=develop
+    :target: https://codecov.io/github/andreoliwa/python-dontforget?branch=develop
     :alt: 'Coverage'
 
 .. |quantifiedcode| image:: https://www.quantifiedcode.com/api/v1/project/5b4bdf674b4b4d7f853b2c840691ee0e/badge.svg
@@ -57,7 +57,7 @@ Then run the following commands to bootstrap your environment.
 
 ::
 
-    git clone https://github.com/andreoliw/python-dontforget
+    git clone https://github.com/andreoliwa/python-dontforget
     cd python-dontforget
     pip install -r requirements/dev.txt
     ./manage.py server

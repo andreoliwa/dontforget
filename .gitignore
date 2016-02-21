@@ -50,4 +50,4 @@ docs/_build
 env/
 
 # Database
-*.sqlite
+*.sqlite*

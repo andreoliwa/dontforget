@@ -92,7 +92,8 @@ def display(daemon=False, seconds=10):
 def spawn():
     """Spawn alarms for chores."""
     print('Spawning alarms for chores...')
-    spawn_alarms()
+    spawned = spawn_alarms()
+    print('{0} alarms spawned.'.format(spawned))
 
 
 manager.add_command('server', Server())

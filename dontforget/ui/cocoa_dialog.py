@@ -2,7 +2,7 @@
 """Cocoa dialog window for MacOS."""
 from subprocess import CalledProcessError, check_output
 
-from dontforget.settings import UI_COCOA_DIALOG_PATH, UI_DEFAULT_SNOOZE, UI_DIALOG_TIMEOUT
+from dontforget.settings import UI_COCOA_DIALOG_PATH, UI_DEFAULT_SNOOZE
 from dontforget.ui import DialogButton, DialogResult
 
 
@@ -20,7 +20,7 @@ def show_dialog(alarm):
             '--text', suggested_snooze,
             '--informative-text', 'Snooze this alarm for:',
             '--icon', 'finder',
-            '--timeout', str(UI_DIALOG_TIMEOUT),
+            # '--timeout', str(UI_DIALOG_TIMEOUT),
             '--button1', DialogButton.SNOOZE,
             '--button3', DialogButton.COMPLETE]
     if alarm.chore.repetition and alarm.chore.active():
