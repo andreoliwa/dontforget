@@ -1,0 +1,9 @@
+dontforget:
+  build: .
+  command: python manage.py display --daemon
+  volumes:
+    - .:/dontforget
+  ports:
+    - "8006:8000"
+  environment:
+    - UI_MODULE_NAME=telegram_bot  # TODO Docker won't work with Cocoa Dialog as UI; we need something like a Telegram Bot
