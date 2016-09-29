@@ -10,6 +10,7 @@ UI_COCOA_DIALOG_PATH = config(
     default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
 UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=30, cast=int)
 UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
+UI_TELEGRAM_BOT_TOKEN = config('UI_TELEGRAM_BOT_TOKEN')
 
 
 class Config(object):

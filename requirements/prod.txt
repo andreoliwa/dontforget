@@ -1,35 +1,35 @@
 # Everything needed in production
 
-setuptools==18.7.1
-wheel==0.26.0
-prettyconf==1.2.0
-python-dateutil==2.4.2
+setuptools==27.2.0
+wheel==0.29.0
+prettyconf==1.2.3
+python-dateutil==2.5.3
 
 # Flask
-Flask==0.10.1
+Flask==0.11.1
 MarkupSafe==0.23
-Werkzeug==0.11.2
+Werkzeug==0.11.11
 Jinja2==2.8
 itsdangerous==0.24
 
 # Database
 Flask-SQLAlchemy==2.1
-SQLAlchemy==1.0.9
+SQLAlchemy==1.0.15
 
 # Migrations
-Flask-Migrate==1.6.0
+Flask-Migrate==2.0.0
 
 # Forms
 Flask-WTF==0.12
-WTForms==2.0.2
+WTForms==2.1
 
 # Deployment
-gunicorn>=19.1.1
+gunicorn>=19.6.0
 
 # Assets
-Flask-Assets==0.11
+Flask-Assets==0.12
 cssmin>=0.2.0
-jsmin>=2.0.11
+jsmin>=2.2.1
 
 # Auth
 Flask-Login==0.3.2
@@ -40,3 +40,6 @@ Flask-Cache>=0.13.1
 
 # Debug toolbar
 Flask-DebugToolbar==0.10.0
+
+# UI
+python-telegram-bot==5.0.0
