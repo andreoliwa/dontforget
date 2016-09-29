@@ -5,7 +5,7 @@ from flask import Flask, render_template
 from dontforget import public, user
 from dontforget.assets import assets
 from dontforget.extensions import bcrypt, cache, db, debug_toolbar, login_manager, migrate
-from dontforget.settings import ProdConfig
+from dontforget.settings import UI_TELEGRAM_RUN_LOOP, ProdConfig
 
 
 def create_app(config_object=ProdConfig):
@@ -18,6 +18,13 @@ def create_app(config_object=ProdConfig):
     register_extensions(app)
     register_blueprints(app)
     register_errorhandlers(app)
+
+    if UI_TELEGRAM_RUN_LOOP:
+        from multiprocessing import Process
+        from dontforget.ui.telegram_bot import run_loop
+        process = Process(target=run_loop, args=(app,))
+        process.start()
+
     return app
 
 
