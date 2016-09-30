@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-from helpers.alembic import add_required_column
+from dontforget.utils import add_required_column
 
 revision = '3362b720863'
 down_revision = '143a88a7b01'

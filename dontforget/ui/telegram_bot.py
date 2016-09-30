@@ -31,7 +31,7 @@ def start(bot, update):
 
 
 def overdue(bot, update):
-    """Start the bot."""
+    """Overdue tasks."""
     right_now = datetime.now()
     with BOT_APP.app_context():
         # pylint: disable=no-member
@@ -79,6 +79,7 @@ def run_loop(app):
     dispatcher = updater.dispatcher
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+    # TODO: Remove dummy commands
     handlers = (
         CommandHandler('start', start),
         MessageHandler([Filters.text], echo),
