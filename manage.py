@@ -100,12 +100,7 @@ def spawn():
 def telegram():
     """Run Telegram bot loop together with Flask main loop."""
     from dontforget.ui.telegram_bot import run_loop
-
-    from multiprocessing import Process
-    process = Process(target=run_loop, args=(app,))
-    process.start()
-
-    app.run(host='0.0.0.0', port=8000)
+    run_loop(app)
 
 
 manager.add_command('shell', Shell(make_context=_make_context))

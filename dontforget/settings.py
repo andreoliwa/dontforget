@@ -11,7 +11,6 @@ UI_COCOA_DIALOG_PATH = config(
 UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=30, cast=int)
 UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
 UI_TELEGRAM_BOT_TOKEN = config('UI_TELEGRAM_BOT_TOKEN')
-UI_TELEGRAM_RUN_LOOP = config('UI_TELEGRAM_RUN_LOOP', default=False, cast=config.boolean)
 
 
 class Config(object):
