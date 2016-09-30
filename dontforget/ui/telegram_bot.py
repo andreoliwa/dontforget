@@ -72,6 +72,9 @@ def run_loop(app):
     global BOT_APP  # pylint: disable=global-statement
     BOT_APP = app
 
+    if not UI_TELEGRAM_BOT_TOKEN:
+        return
+
     updater = Updater(token=UI_TELEGRAM_BOT_TOKEN)
     dispatcher = updater.dispatcher
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)

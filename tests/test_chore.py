@@ -3,9 +3,10 @@
 """Test chores."""
 from datetime import datetime, timedelta
 
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
+
 from dontforget.cron import spawn_alarms
 from dontforget.models import AlarmState, Chore
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 
 def test_search_similar(db):

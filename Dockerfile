@@ -6,7 +6,7 @@ RUN pip install -U pip
 RUN mkdir /dontforget
 WORKDIR /dontforget
 
-ADD requirements/prod.txt requirements.txt
+ADD requirements.txt .
 RUN pip install -r requirements.txt
 
 ADD . /dontforget
