@@ -15,13 +15,15 @@ class DialogButton(object):
     TIMEOUT = 'timeout'
 
 
-def show_dialog(alarm):
+def show_dialog(alarm, **kwargs):
     """Show a dialog for an alarm, using the module name that was specified in settings."""
     from dontforget.settings import UI_MODULE_NAME
     module = import_module('.{0}'.format(UI_MODULE_NAME), __name__)
 
-    dialog_result = module.show_dialog(alarm)
+    dialog_result = module.show_dialog(alarm, **kwargs)
     """:type: DialogResult"""
+    if dialog_result is None:
+        return
 
     method_mapping = {
         DialogButton.SNOOZE: alarm.snooze,

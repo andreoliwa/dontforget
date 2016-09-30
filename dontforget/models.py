@@ -105,7 +105,7 @@ class Alarm(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<Alarm {!r} {!r} at {!r} (chore {!r})>'.format(
+        return "<Alarm {!r} {!r} at '{}' (chore {!r})>".format(
             self.id, self.current_state, self.next_at, self.chore_id)
 
     @classmethod

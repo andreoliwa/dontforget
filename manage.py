@@ -7,7 +7,7 @@ from subprocess import call
 from time import sleep
 
 from flask_migrate import MigrateCommand
-from flask_script import Command, Manager, Option, Server, Shell
+from flask_script import Command, Manager, Option, Shell
 from flask_script.commands import Clean, ShowUrls
 
 from dontforget.app import create_app
@@ -96,7 +96,13 @@ def spawn():
     print('{0} alarms spawned.'.format(spawned))
 
 
-manager.add_command('server', Server())
+@manager.command
+def telegram():
+    """Run Telegram bot loop together with Flask main loop."""
+    from dontforget.ui.telegram_bot import run_loop
+    run_loop(app)
+
+
 manager.add_command('shell', Shell(make_context=_make_context))
 manager.add_command('db', MigrateCommand)
 manager.add_command('urls', ShowUrls())
