@@ -99,8 +99,8 @@ def spawn():
 @manager.command
 def telegram():
     """Run Telegram bot loop together with Flask main loop."""
-    from dontforget.ui.telegram_bot import run_loop
-    run_loop(app)
+    from dontforget.ui.telegram_bot import TelegramBot
+    TelegramBot(app).run_loop()
 
 
 manager.add_command('shell', Shell(make_context=_make_context))
