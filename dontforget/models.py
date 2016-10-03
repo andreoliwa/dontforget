@@ -2,6 +2,7 @@
 """Database models."""
 from datetime import datetime
 
+import arrow
 from sqlalchemy import and_, or_
 from sqlalchemy.sql.functions import func
 
@@ -104,9 +105,16 @@ class Alarm(SurrogatePK, Model):
     """:type: dontforget.models.Chore"""
 
     def __repr__(self):
-        """Represent instance as a unique string."""
+        """Represent the alarm as a unique string."""
         return "<Alarm {!r} {!r} at '{}' (chore {!r})>".format(
             self.id, self.current_state, self.next_at, self.chore_id)
+
+    @property
+    def one_line(self):
+        """Represent the alarm in one line."""
+        next_at = arrow.get(self.next_at)
+        return '{title} (due {due}, {human})'.format(
+            title=self.chore.title, due=next_at.format('MMM DD, YYYY HH:SS'), human=next_at.humanize())
 
     @classmethod
     def create_unseen(cls, chore_id, next_at, last_snooze=None):

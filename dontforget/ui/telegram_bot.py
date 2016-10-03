@@ -84,14 +84,28 @@ class TelegramBot:
 
     @handler_callback
     def overdue(self):
-        """Overdue tasks."""
+        """Overdue chores, most recent first."""
         right_now = datetime.now()
         with self.app.app_context():
             # pylint: disable=no-member
             query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
-                                       Alarm.next_at <= right_now).order_by(Alarm.id)
-            all_alarms = [str(unseen_alarm) for unseen_alarm in query.all()]
-            self.send_message('Those are your overdue chores:\n{}'.format('\n'.join(all_alarms)))
+                                       Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
+            strings = []
+            buttons = []
+            pair = []
+            for index, unseen_alarm in enumerate(query.all()):
+                pair.append('Chore {}'.format(index + 1))
+                if (index + 1) % 3 == 0:
+                    buttons.append(pair)
+                    pair = []
+                strings.append('{}: {}'.format(index + 1, unseen_alarm.one_line))
+
+            # Remaining buttons.
+            if pair:
+                buttons.append(pair)
+
+            self.send_message('Those are your overdue chores:\n{}'.format('\n'.join(strings)),
+                              telegram.ReplyKeyboardMarkup(buttons))
 
     @handler_callback
     def unknown(self):
