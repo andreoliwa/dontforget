@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-# pylint: disable=invalid-name,no-member
 """Test chores."""
+# pylint: disable=invalid-name,no-member
 from datetime import datetime, timedelta
 
 from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
