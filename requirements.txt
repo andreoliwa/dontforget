@@ -14,13 +14,13 @@ itsdangerous==0.24
 
 # Database
 Flask-SQLAlchemy==2.1
-SQLAlchemy==1.0.15
+SQLAlchemy==1.1.0
 
 # Migrations
 Flask-Migrate==2.0.0
 
 # Forms
-Flask-WTF==0.13
+Flask-WTF==0.13.1
 WTForms==2.1
 
 # Deployment
@@ -64,7 +64,7 @@ Flask-Script==2.0.5
 flake8==3.0.4
 flake8-blind-except==0.1.1
 flake8-debugger==1.4.0
-flake8-docstrings==0.2.1.post1  # flake8-docstrings==0.2.4 didn't work, the D203 message is triggered in pep257
+flake8-docstrings==1.0.2
 flake8-isort==2.0.1
 flake8-quotes==0.8.1
 isort==4.2.5
