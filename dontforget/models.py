@@ -113,7 +113,7 @@ class Alarm(SurrogatePK, Model):
     def one_line(self):
         """Represent the alarm in one line."""
         next_at = arrow.get(self.next_at)
-        return '{title} (due {due}, {human})'.format(
+        return '{title} \u231b {due}, {human}'.format(
             title=self.chore.title, due=next_at.format('MMM DD, YYYY HH:SS'), human=next_at.humanize())
 
     @classmethod

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-# pylint: disable=invalid-name,no-member,too-many-arguments
 """Test user interface."""
+# pylint: disable=invalid-name,no-member,too-many-arguments
 from unittest.mock import call, patch
 
 import pytest
