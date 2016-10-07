@@ -4,7 +4,7 @@ sudo: false  # http://docs.travis-ci.com/user/migrating-from-legacy/
 language: python
 
 python:
-  - 3.3
+  #- 3.3 TODO Stupid isort is breaking on Travis CI
   - 3.4
   - 3.5
 
