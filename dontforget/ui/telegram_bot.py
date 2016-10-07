@@ -43,11 +43,19 @@ def bot_callback(method):
 class TelegramBot:
     """Telegram bot to answer commands."""
 
+    class Actions(Enum):
+        """Actions that can be performed on an alarm."""
+        SKIP = 'Skip'
+        SNOOZE = 'Snooze'
+        COMPLETE = 'Complete this'
+        STOP = 'Stop series'
+
+    ACTION_BUTTONS = [Actions.SKIP.value, Actions.SNOOZE.value, Actions.COMPLETE.value, Actions.STOP.value]
+
     class State(Enum):
         """States for the conversation."""
-        DETAILS = 1
-        ACTION = 2
-        OVERDUE = 3
+        CHOOSE_ALARM = 1
+        CHOOSE_ACTION = 2
 
     def __init__(self, app):
         """Init the instance of the bot.
@@ -63,72 +71,6 @@ class TelegramBot:
         self.text = None
         self.last_alarm_id = None
 
-    def send_message(self, text, reply_markup=None):
-        """Send a message to the Telegram chat.
-
-        :param text: Text to send.
-        :param reply_markup: Optional buttons/markup to the chat.
-        """
-        self.bot.send_message(chat_id=self.update.message.chat_id, text=text, reply_markup=reply_markup)
-
-    @bot_callback
-    def start(self):
-        """Start the bot with a friendly message."""
-        self.send_message("I'm a bot to help you with your chores.")
-
-    @bot_callback
-    def overdue(self):
-        """Overdue chores, most recent first."""
-        right_now = datetime.now()
-        # pylint: disable=no-member
-        query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
-                                   Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
-        strings = []
-        reply_keyboard = []
-        pair = []
-        for index, alarm in enumerate(query.all()):
-            short = '{}: {}'.format(alarm.id, alarm.chore.title[:30])
-            long = '\u2705 {}: {}'.format(alarm.id, alarm.one_line)  # :alarm_clock:
-            pair.append(short)
-            if (index + 1) % 2 == 0:
-                reply_keyboard.append(pair)
-                pair = []
-            strings.append(long)
-
-        # Remaining buttons.
-        if pair:
-            reply_keyboard.append(pair)
-
-        self.update.message.reply_text(
-            'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(strings)),
-            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
-        return self.State.DETAILS
-
-    @bot_callback
-    def show_alarm_details(self):
-        """Show options for a chore."""
-        self.last_alarm_id = int(self.text.split(':')[0])
-        alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
-        keyboard = [['Skip', 'Snooze'], ['Complete', 'Abort']]
-        self.update.message.reply_text(
-            'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
-            reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
-        return self.State.ACTION
-
-    @bot_callback
-    def choose_action(self):
-        """Choose an action for the alarm."""
-        self.update.message.reply_text('Chosen action was to {} the alarm {}'.format(self.text, self.last_alarm_id))
-        return self.State.OVERDUE
-
-    @bot_callback
-    def cancel(self):
-        """Cancel the conversation."""
-        user = self.update.message.from_user
-        self.update.message.reply_text('Bye! I hope we can talk again some day, {}.'.format(user.first_name))
-        return ConversationHandler.END
-
     def run_loop(self):
         """Run the main loop for the Telegram bot."""
         if not UI_TELEGRAM_BOT_TOKEN:
@@ -141,12 +83,13 @@ class TelegramBot:
 
         handler = ConversationHandler(
             entry_points=[
-                CommandHandler('start', self.start()),
-                CommandHandler('overdue', self.overdue())
+                CommandHandler('start', self.command_start()),
+                CommandHandler('overdue', self.command_overdue())
             ],
             states={
-                self.State.DETAILS: [MessageHandler([Filters.text], self.show_alarm_details())],
-                self.State.ACTION: [RegexHandler('^(Skip|Snooze|Complete|Abort)$', self.choose_action())],
+                self.State.CHOOSE_ALARM: [MessageHandler([Filters.text], self.show_alarm_details())],
+                self.State.CHOOSE_ACTION: [RegexHandler(
+                    '^({actions})$'.format(actions='|'.join(self.ACTION_BUTTONS)), self.execute_action())],
             },
             fallbacks=[CommandHandler('cancel', self.cancel())],
             allow_reentry=True
@@ -155,3 +98,86 @@ class TelegramBot:
 
         updater.start_polling()
         updater.idle()
+
+    def send_message(self, text, reply_markup=None):
+        """Send a message to the Telegram chat.
+
+        :param text: Text to send.
+        :param reply_markup: Optional buttons/markup to the chat.
+        """
+        self.bot.send_message(chat_id=self.update.message.chat_id, text=text, reply_markup=reply_markup)
+
+    @staticmethod
+    def arrange_keyboard(all_buttons: list, buttons_by_row: int) -> list:
+        """Arrange a keyboard, splitting buttons into rows."""
+        start = 0
+        rows = []
+        while start < len(all_buttons):
+            rows.append(all_buttons[start:start + buttons_by_row])
+            start += buttons_by_row
+        return rows
+
+    @bot_callback
+    def command_start(self):
+        """Start the bot with a friendly message."""
+        self.send_message("I'm a bot to help you with your chores.")
+
+    def show_overdue_alarms(self):
+        """Show overdues alarms on a chat message."""
+        right_now = datetime.now()
+        # pylint: disable=no-member
+        query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
+                                   Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
+        strings = []
+        buttons = []
+        for alarm in query.all():
+            buttons.append('{}: {}'.format(alarm.id, alarm.chore.title[:30]))
+            strings.append('\u2705 {}: {}'.format(alarm.id, alarm.one_line))
+
+        self.update.message.reply_text(
+            'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(strings)),
+            reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(buttons, 2), one_time_keyboard=True,
+                                             resize_keyboard=True))
+
+    @bot_callback
+    def command_overdue(self):
+        """Overdue chores, most recent first."""
+        self.show_overdue_alarms()
+        return self.State.CHOOSE_ALARM
+
+    @bot_callback
+    def show_alarm_details(self):
+        """Show options for a chore."""
+        self.last_alarm_id = int(self.text.split(':')[0])
+        alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
+        self.update.message.reply_text(
+            'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
+            reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(self.ACTION_BUTTONS, 2), one_time_keyboard=True,
+                                             resize_keyboard=True))
+        return self.State.CHOOSE_ACTION
+
+    @bot_callback
+    def execute_action(self):
+        """Choose an action for the alarm."""
+        function_map = {
+            self.Actions.COMPLETE.value: (Alarm.complete, 'This occurrence is completed.'),
+        }
+        tuple_value = function_map.get(self.text)
+        if not tuple_value:
+            self.update.message.reply_text(
+                'Chosen action was to {} the alarm {}'.format(self.text, self.last_alarm_id))
+        else:
+            function, message = tuple_value
+            alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
+            function(alarm)
+            self.update.message.reply_text('{}\n{}'.format(message, alarm.one_line))
+
+        self.show_overdue_alarms()
+        return self.State.CHOOSE_ALARM
+
+    @bot_callback
+    def cancel(self):
+        """Cancel the conversation."""
+        user = self.update.message.from_user
+        self.update.message.reply_text('Bye! I hope we can talk again some day, {}.'.format(user.first_name))
+        return ConversationHandler.END
