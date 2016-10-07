@@ -68,6 +68,7 @@ flake8-docstrings==0.2.5  # flake8-docstrings==1.0.2 is breaking locally and on 
 flake8-isort==2.0.1
 flake8-quotes==0.8.1
 isort==4.2.5
+pep8==1.7.0
 pep8-naming==0.4.1
 pylint==1.6.4
 pur==4.0.0
