@@ -13,6 +13,7 @@ class DialogButton(object):
     SKIP = 'Skip'
     COMPLETE = 'Complete'
     TIMEOUT = 'timeout'
+    STOP = 'Stop'
 
 
 def show_dialog(alarm, **kwargs):
