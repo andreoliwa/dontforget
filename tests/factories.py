@@ -15,6 +15,7 @@ fake = Faker()  # pylint: disable=invalid-name
 
 TODAY = datetime.now()
 NEXT_WEEK = TODAY + timedelta(days=7)
+LAST_WEEK = TODAY - timedelta(days=7)
 YESTERDAY = TODAY - timedelta(days=1)
 
 

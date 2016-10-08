@@ -111,8 +111,8 @@ def test_daily_chore(db):
     assert chore.alarms[2].next_at == chore.alarms[1].next_at + timedelta(days=1)
 
     # Kill the chore.
-    chore.alarms[2].current_state = AlarmState.KILLED
-    chore.alarms[2].save()
+    assert chore.alarms[2].stop() is chore.alarms[2]
+    assert chore.alarms[2].current_state == AlarmState.STOPPED
 
     # No alarm should be spawned.
     assert spawn_alarms() == 0
@@ -150,7 +150,7 @@ def test_daily_chore_from_completed(db):
     assert chore.alarms[2].next_at == chore.alarms[1].updated_at + timedelta(days=1)
 
     # Kill the chore.
-    chore.alarms[2].current_state = AlarmState.KILLED
+    chore.alarms[2].current_state = AlarmState.STOPPED
     chore.alarms[2].save()
 
     # No alarm should be spawned.

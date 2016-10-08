@@ -83,12 +83,12 @@ class AlarmState(object):
     SKIPPED = 'skipped'
     SNOOZED = 'snoozed'
     COMPLETED = 'completed'  # This repetition is done, but the chore is still active and will spawn alarms.
-    KILLED = 'killed'  # The chore is finished, no more alarms will be created.
+    STOPPED = 'killed'  # The chore is finished, no more alarms will be created. TODO Rename enum on database
 
 
 ALARM_STATE_ENUM = db.Enum(
     AlarmState.UNSEEN, AlarmState.DISPLAYED, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.COMPLETED,
-    AlarmState.KILLED, name='alarm_state_enum')
+    AlarmState.STOPPED, name='alarm_state_enum')
 
 
 class Alarm(SurrogatePK, Model):
@@ -113,8 +113,8 @@ class Alarm(SurrogatePK, Model):
     def one_line(self):
         """Represent the alarm in one line."""
         next_at = arrow.get(self.next_at)
-        return '{title} \u231b {due}, {human}'.format(
-            title=self.chore.title, due=next_at.format('MMM DD, YYYY HH:MM'), human=next_at.humanize())
+        return '{title} \u231b {due} ({human})'.format(
+            title=self.chore.title, due=next_at.format('ddd MMM DD, YYYY HH:MM'), human=next_at.humanize())
 
     @classmethod
     def create_unseen(cls, chore_id, next_at, last_snooze=None):
@@ -171,3 +171,7 @@ class Alarm(SurrogatePK, Model):
     def reset_unseen(self):
         """Mark as unseen again."""
         return self.update(current_state=AlarmState.UNSEEN)
+
+    def stop(self):
+        """Stop the series of alarms."""
+        return self.update(current_state=AlarmState.STOPPED)

@@ -45,12 +45,14 @@ class TelegramBot:
 
     class Actions(Enum):
         """Actions that can be performed on an alarm."""
-        SKIP = 'Skip'
+        COMPLETE = 'Complete'
         SNOOZE = 'Snooze'
-        COMPLETE = 'Complete this'
+        SKIP = 'Skip'
+        TRACK = 'Track'
         STOP = 'Stop series'
 
-    ACTION_BUTTONS = [Actions.SKIP.value, Actions.SNOOZE.value, Actions.COMPLETE.value, Actions.STOP.value]
+    ACTION_BUTTONS = [Actions.COMPLETE.value, Actions.SNOOZE.value, Actions.SKIP.value,
+                      Actions.TRACK.value, Actions.STOP.value]
 
     class State(Enum):
         """States for the conversation."""
@@ -79,7 +81,7 @@ class TelegramBot:
 
         updater = Updater(token=UI_TELEGRAM_BOT_TOKEN)
         dispatcher = updater.dispatcher
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
         handler = ConversationHandler(
             entry_points=[
@@ -128,16 +130,19 @@ class TelegramBot:
         # pylint: disable=no-member
         query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
                                    Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
-        strings = []
+        chores = []
         buttons = []
         for alarm in query.all():
             buttons.append('{}: {}'.format(alarm.id, alarm.chore.title[:30]))
-            strings.append('\u2705 {}: {}'.format(alarm.id, alarm.one_line))
+            chores.append('\u2705 {}: {}'.format(alarm.id, alarm.one_line))
 
-        self.update.message.reply_text(
-            'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(strings)),
-            reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(buttons, 2), one_time_keyboard=True,
-                                             resize_keyboard=True))
+        if not chores:
+            self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
+        else:
+            self.update.message.reply_text(
+                'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)),
+                reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(buttons, 2), one_time_keyboard=True,
+                                                 resize_keyboard=True))
 
     @bot_callback
     def command_overdue(self):
@@ -152,7 +157,7 @@ class TelegramBot:
         alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
         self.update.message.reply_text(
             'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
-            reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(self.ACTION_BUTTONS, 2), one_time_keyboard=True,
+            reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(self.ACTION_BUTTONS, 3), one_time_keyboard=True,
                                              resize_keyboard=True))
         return self.State.CHOOSE_ACTION
 
@@ -161,16 +166,17 @@ class TelegramBot:
         """Choose an action for the alarm."""
         function_map = {
             self.Actions.COMPLETE.value: (Alarm.complete, 'This occurrence is completed.'),
+            self.Actions.STOP.value: (Alarm.stop, 'This chore is stopped for now (no more alarms).'),
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
-            self.update.message.reply_text(
-                'Chosen action was to {} the alarm {}'.format(self.text, self.last_alarm_id))
-        else:
-            function, message = tuple_value
-            alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
-            function(alarm)
-            self.update.message.reply_text('{}\n{}'.format(message, alarm.one_line))
+            self.update.message.reply_text('NOT IMPLEMENTED YET!\nChosen action was {}'.format(self.text))
+            return self.State.CHOOSE_ACTION
+
+        function, message = tuple_value
+        alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
+        function(alarm)
+        self.update.message.reply_text('{}\n{}'.format(message, alarm.one_line))
 
         self.show_overdue_alarms()
         return self.State.CHOOSE_ALARM
