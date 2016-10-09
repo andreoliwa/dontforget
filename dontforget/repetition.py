@@ -22,8 +22,10 @@ FREQUENCY_MAPPING = dict(
     monthly=(1, Unit.MONTH), bimonthly=(2, Unit.MONTH), quarterly=(4, Unit.MONTH), semiannually=(6, Unit.MONTH),
     yearly=(1, Unit.YEAR), hourly=(1, Unit.HOUR)
 )
+
+# Using 'm' for minute, because it's more likely to be used than 'month'
 ABBREVIATIONS = dict(
-    d=Unit.DAY, m=Unit.MONTH, mo=Unit.MONTH, y=Unit.YEAR, w=Unit.WEEK, h=Unit.HOUR, mi=Unit.MINUTE, min=Unit.MINUTE
+    d=Unit.DAY, mo=Unit.MONTH, y=Unit.YEAR, w=Unit.WEEK, h=Unit.HOUR, m=Unit.MINUTE, mi=Unit.MINUTE, min=Unit.MINUTE
 )
 
 

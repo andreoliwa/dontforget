@@ -40,7 +40,7 @@ def bot_callback(method):
     return method_wrapper
 
 
-class TelegramBot:
+class TelegramBot:  # pylint: disable=too-many-instance-attributes
     """Telegram bot to answer commands."""
 
     class Actions(Enum):
@@ -53,11 +53,14 @@ class TelegramBot:
 
     ACTION_BUTTONS = [Actions.COMPLETE.value, Actions.SNOOZE.value, Actions.SKIP.value,
                       Actions.TRACK.value, Actions.STOP.value]
+    SUGGESTED_TIMES = ['5 min', '10 min', '15 min', '30 min', '1 hour', '2 hours', '4 hours', '8 hours', '12 hours',
+                       '1 day', '2 days', '4 days', '1 week', '2 weeks', '1 month']
 
     class State(Enum):
         """States for the conversation."""
         CHOOSE_ALARM = 1
         CHOOSE_ACTION = 2
+        CHOOSE_TIME = 3
 
     def __init__(self, app):
         """Init the instance of the bot.
@@ -72,6 +75,8 @@ class TelegramBot:
         self.args = None
         self.text = None
         self.last_alarm_id = None
+        self.last_function = None
+        self.last_message = None
 
     def run_loop(self):
         """Run the main loop for the Telegram bot."""
@@ -92,6 +97,7 @@ class TelegramBot:
                 self.State.CHOOSE_ALARM: [MessageHandler([Filters.text], self.show_alarm_details())],
                 self.State.CHOOSE_ACTION: [RegexHandler(
                     '^({actions})$'.format(actions='|'.join(self.ACTION_BUTTONS)), self.execute_action())],
+                self.State.CHOOSE_TIME: [MessageHandler([Filters.text], self.snooze_or_skip_alarm())],
             },
             fallbacks=[CommandHandler('cancel', self.cancel())],
             allow_reentry=True
@@ -165,18 +171,41 @@ class TelegramBot:
     def execute_action(self):
         """Choose an action for the alarm."""
         function_map = {
-            self.Actions.COMPLETE.value: (Alarm.complete, 'This occurrence is completed.'),
-            self.Actions.STOP.value: (Alarm.stop, 'This chore is stopped for now (no more alarms).'),
+            self.Actions.COMPLETE.value: (Alarm.complete, False, 'This occurrence is completed.'),
+            self.Actions.STOP.value: (Alarm.stop, False, 'This chore is stopped for now (no more alarms).'),
+            self.Actions.SNOOZE.value: (Alarm.snooze, True, 'Alarm snoozed for'),
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
             self.update.message.reply_text('NOT IMPLEMENTED YET!\nChosen action was {}'.format(self.text))
             return self.State.CHOOSE_ACTION
 
-        function, message = tuple_value
+        function, snooze_or_skip, message = tuple_value
+        if snooze_or_skip:
+            self.last_function = function
+            self.last_message = message
+            self.update.message.reply_text(
+                'Choose a time from the suggestions below, or write the desired time',
+                reply_markup=ReplyKeyboardMarkup(self.arrange_keyboard(self.SUGGESTED_TIMES, 5),
+                                                 one_time_keyboard=True, resize_keyboard=True))
+            return self.State.CHOOSE_TIME
+
         alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
         function(alarm)
         self.update.message.reply_text('{}\n{}'.format(message, alarm.one_line))
+
+        self.show_overdue_alarms()
+        return self.State.CHOOSE_ALARM
+
+    @bot_callback
+    def snooze_or_skip_alarm(self):
+        """Snooze or skip an alarm using the desired input time."""
+        if not (self.last_alarm_id and self.last_function):
+            self.send_message('No alarm is selected, choose one below')
+        else:
+            alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
+            self.last_function(alarm, self.text)
+            self.update.message.reply_text('{} {}\n{}'.format(self.last_message, self.text, alarm.one_line))
 
         self.show_overdue_alarms()
         return self.State.CHOOSE_ALARM
