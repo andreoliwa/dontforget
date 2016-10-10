@@ -75,7 +75,6 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
         self.args = None
         self.text = None
         self.last_alarm_id = None
-        self.last_function = None
         self.last_message = None
 
     def run_loop(self):
@@ -97,7 +96,7 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
                 self.State.CHOOSE_ALARM: [MessageHandler([Filters.text], self.show_alarm_details())],
                 self.State.CHOOSE_ACTION: [RegexHandler(
                     '^({actions})$'.format(actions='|'.join(self.ACTION_BUTTONS)), self.execute_action())],
-                self.State.CHOOSE_TIME: [MessageHandler([Filters.text], self.snooze_or_skip_alarm())],
+                self.State.CHOOSE_TIME: [MessageHandler([Filters.text], self.snooze_alarm())],
             },
             fallbacks=[CommandHandler('cancel', self.cancel())],
             allow_reentry=True
@@ -171,18 +170,19 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
     def execute_action(self):
         """Choose an action for the alarm."""
         function_map = {
-            self.Actions.COMPLETE.value: (Alarm.complete, False, 'This occurrence is completed.'),
-            self.Actions.STOP.value: (Alarm.stop, False, 'This chore is stopped for now (no more alarms).'),
-            self.Actions.SNOOZE.value: (Alarm.snooze, True, 'Alarm snoozed for'),
+            self.Actions.COMPLETE.value: (Alarm.complete, 'This occurrence is completed.'),
+            self.Actions.SNOOZE.value: (Alarm.snooze, 'Alarm snoozed for'),
+            self.Actions.SKIP.value: (Alarm.skip, 'Skipping this occurrence.'),
+            self.Actions.STOP.value: (Alarm.stop, 'This chore is stopped for now (no more alarms).'),
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
-            self.update.message.reply_text('NOT IMPLEMENTED YET!\nChosen action was {}'.format(self.text))
+            self.update.message.reply_text(
+                "I don't understand the action '{}'. Try one of the buttons below.".format(self.text))
             return self.State.CHOOSE_ACTION
 
-        function, snooze_or_skip, message = tuple_value
-        if snooze_or_skip:
-            self.last_function = function
+        function, message = tuple_value
+        if function == Alarm.snooze:
             self.last_message = message
             self.update.message.reply_text(
                 'Choose a time from the suggestions below, or write the desired time',
@@ -198,13 +198,13 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
         return self.State.CHOOSE_ALARM
 
     @bot_callback
-    def snooze_or_skip_alarm(self):
-        """Snooze or skip an alarm using the desired input time."""
-        if not (self.last_alarm_id and self.last_function):
+    def snooze_alarm(self):
+        """Snooze an alarm using the desired input time."""
+        if not self.last_alarm_id:
             self.send_message('No alarm is selected, choose one below')
         else:
             alarm = Alarm.query.get(self.last_alarm_id)  # pylint: disable=no-member
-            self.last_function(alarm, self.text)
+            alarm.snooze(self.text)
             self.update.message.reply_text('{} {}\n{}'.format(self.last_message, self.text, alarm.one_line))
 
         self.show_overdue_alarms()
