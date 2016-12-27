@@ -16,6 +16,7 @@ class Unit(object):
     HOUR = 'hour'
     MINUTE = 'minute'
 
+
 REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)?\s*(?P<number>\d*)\s*(?P<unit>.+)s?""", re.IGNORECASE)
 FREQUENCY_MAPPING = dict(
     daily=(1, Unit.DAY), weekly=(1, Unit.WEEK), biweekly=(2, Unit.WEEK),

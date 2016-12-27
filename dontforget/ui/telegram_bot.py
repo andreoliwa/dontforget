@@ -6,6 +6,9 @@ from functools import wraps
 
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, ConversationHandler, Filters, MessageHandler, RegexHandler, Updater
+from telepot import DelegatorBot
+from telepot.delegate import create_open, pave_event_space, per_chat_id
+from telepot.helper import ChatHandler
 
 from dontforget.models import Alarm, AlarmState
 from dontforget.settings import UI_TELEGRAM_BOT_TOKEN
@@ -45,6 +48,7 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
 
     class Actions(Enum):
         """Actions that can be performed on an alarm."""
+
         COMPLETE = 'Complete'
         SNOOZE = 'Snooze'
         SKIP = 'Skip'
@@ -58,6 +62,7 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
 
     class State(Enum):
         """States for the conversation."""
+
         CHOOSE_ALARM = 1
         CHOOSE_ACTION = 2
         CHOOSE_TIME = 3
@@ -216,3 +221,26 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
         user = self.update.message.from_user
         self.update.message.reply_text('Bye! I hope we can talk again some day, {}.'.format(user.first_name))
         return ConversationHandler.END
+
+
+class ChoreBot(ChatHandler):
+    """Chat bot to handle chores."""
+
+    def open(self, initial_msg, seed):  # pylint: disable=unused-argument
+        """Starting message."""
+        self.sender.sendMessage("I'm a bot to help you with your chores.")  # pylint: disable=no-member
+        return True  # prevent on_message() from being called on the initial message
+
+
+def main_loop(app, queue=None):  # pylint: disable=unused-argument
+    """Main loop of the bot.
+
+    :param app: Flask app.
+    :param queue: Update queue to be used as the source of updates instead of the Telegram API server. Used in tests.
+    """
+    bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
+        pave_event_space()(
+            per_chat_id(), create_open, ChoreBot, timeout=10),
+    ])
+    forever = False if queue else 'Listening...'
+    bot.message_loop(source=queue, run_forever=forever)
