@@ -6,7 +6,7 @@ from functools import wraps
 
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, ConversationHandler, Filters, MessageHandler, RegexHandler, Updater
-from telepot import DelegatorBot
+from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 
@@ -94,7 +94,6 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
 
         handler = ConversationHandler(
             entry_points=[
-                CommandHandler('start', self.command_start()),
                 CommandHandler('overdue', self.command_overdue())
             ],
             states={
@@ -128,11 +127,6 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
             rows.append(all_buttons[start:start + buttons_by_row])
             start += buttons_by_row
         return rows
-
-    @bot_callback
-    def command_start(self):
-        """Start the bot with a friendly message."""
-        self.send_message("I'm a bot to help you with your chores.")
 
     def show_overdue_alarms(self):
         """Show overdues alarms on a chat message."""
@@ -226,10 +220,24 @@ class TelegramBot:  # pylint: disable=too-many-instance-attributes
 class ChoreBot(ChatHandler):
     """Chat bot to handle chores."""
 
-    def open(self, initial_msg, seed):  # pylint: disable=unused-argument
-        """Starting message."""
-        self.sender.sendMessage("I'm a bot to help you with your chores.")  # pylint: disable=no-member
-        return True  # prevent on_message() from being called on the initial message
+    def on_chat_message(self, msg):
+        """Handle chat messages."""
+        # pylint: disable=no-member
+        content_type, chat_type, chat_id = glance(msg)  # pylint: disable=unused-variable
+
+        if content_type != 'text':
+            self.sender.sendMessage('I only understand text.')
+            return
+
+        if msg['text'] == '/start':
+            self.sender.sendMessage("I'm a bot to help you with your chores.")
+            return
+
+        if msg['text'] == '/overdue':
+            self.sender.sendMessage('Will show overdue chores.')
+            return
+
+        self.sender.sendMessage("I don't understand what you mean.")
 
 
 def main_loop(app, queue=None):  # pylint: disable=unused-argument
@@ -240,7 +248,7 @@ def main_loop(app, queue=None):  # pylint: disable=unused-argument
     """
     bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
         pave_event_space()(
-            per_chat_id(), create_open, ChoreBot, timeout=10),
+            per_chat_id(), create_open, ChoreBot, timeout=600),
     ])
     forever = False if queue else 'Listening...'
     bot.message_loop(source=queue, run_forever=forever)
