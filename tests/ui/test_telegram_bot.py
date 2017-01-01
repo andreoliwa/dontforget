@@ -5,8 +5,6 @@ from queue import Queue
 from unittest import mock
 from unittest.mock import call
 
-from flask import current_app
-
 from dontforget.ui.telegram_bot import main_loop
 
 
@@ -17,8 +15,10 @@ class TelegramAppMock:
     FIRST_UPDATE_ID = 756866280
     FIRST_MESSAGE_ID = 2144
 
-    def __init__(self):
+    def __init__(self, db):
         """Init instance."""
+        self.db = db
+        self.app = db.app
         self.update_queue = Queue()
         self.mocked_send_message = mock.patch('telepot.Bot.sendMessage')
         self.update_id = self.FIRST_UPDATE_ID
@@ -29,7 +29,7 @@ class TelegramAppMock:
         """Mock methods and run the main loop."""
         self.mocked_send_message.start()
 
-        main_loop(current_app, self.update_queue)
+        main_loop(self.app, self.update_queue)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -97,13 +97,16 @@ class TelegramAppMock:
         assert self.mocked_send_message.target.sendMessage.mock_calls == expected_calls
 
 
-def test_start_command():
+def test_start_command(db):
     """Start command."""
-    with TelegramAppMock() as telegram:
+    with TelegramAppMock(db) as telegram:
         telegram.type_command('start', "I'm a bot to help you with your chores.")
         telegram.type_text('xxx', "I don't understand what you mean.")
         telegram.type_command('start', "I'm a bot to help you with your chores.")
 
-# def test_overdue_command():
-#     """Overdue command."""
-#     with TelegramAppMock() as telegram:
+
+def test_overdue_command(db):
+    """Overdue command."""
+    with TelegramAppMock(db) as telegram:
+        telegram.type_command('overdue', 'You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
+    # TODO: Add test with some chores

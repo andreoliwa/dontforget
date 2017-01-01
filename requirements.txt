@@ -42,7 +42,6 @@ Flask-Cache>=0.13.1
 Flask-DebugToolbar==0.10.0
 
 # UI
-python-telegram-bot==5.3.0
 telepot==10.4
 
 # Everything the developer needs
