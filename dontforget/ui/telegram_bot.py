@@ -63,26 +63,24 @@ class ChoreBot(ChatHandler):
         self.text = msg['text']
         """:type: str"""
 
-        if self.text == '/start':
-            self.send_message("I'm a bot to help you with your chores.")
-            return
-
+        mapping = {
+            None: self.fallback_message,
+            '/start': self.show_welcome_message,
+            '/overdue': self.show_overdue_alarms,
+            self.Step.CHOOSE_ALARM: self.show_alarm_details,
+            self.Step.CHOOSE_ACTION: self.execute_action,
+            self.Step.CHOOSE_TIME: self.snooze_alarm,
+        }
+        function = mapping.get(self.text, mapping.get(self.next_step))
         with self.flask_app.app_context():
-            if self.text == '/overdue':
-                self.show_overdue_alarms()
-                return
+            self.next_step = function()
 
-            mapping = {
-                self.Step.CHOOSE_ALARM: self.show_alarm_details,
-                self.Step.CHOOSE_ACTION: self.execute_action,
-                self.Step.CHOOSE_TIME: self.snooze_alarm,
-            }
-            function = mapping.get(self.next_step)
-            if function:
-                function()  # TODO Functions should return the next step or None
-                return
+    def show_welcome_message(self):
+        """Show a welcome message."""
+        self.send_message("I'm a bot to help you with your chores.")
 
-        # Fallback message.
+    def fallback_message(self):
+        """Show a fallback message in case of an unknown command or text."""
         self.send_message("I don't understand what you mean.")
 
     def show_overdue_alarms(self):
@@ -98,22 +96,26 @@ class ChoreBot(ChatHandler):
 
         if not chores:
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
-            self.next_step = None
             return
 
         self.send_message(
             'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)),
             reply_markup=self.arrange_keyboard(buttons, 2))
-        self.next_step = self.Step.CHOOSE_ALARM
+        return self.Step.CHOOSE_ALARM
 
     def show_alarm_details(self):
         """Show details of an alarm."""
-        self.alarm_id = int(self.text.split(':')[0])
+        try:
+            self.alarm_id = int(self.text.split(':')[0])
+        except ValueError:
+            self.send_message("This doesn't look like a chore to me.")
+            return self.Step.CHOOSE_ALARM
+
         alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
         self.send_message(
             'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
             reply_markup=self.arrange_keyboard(self.ACTION_BUTTONS, 4))
-        self.next_step = self.Step.CHOOSE_ACTION
+        return self.Step.CHOOSE_ACTION
 
     @staticmethod
     def arrange_keyboard(all_buttons: list, buttons_by_row: int) -> list:
@@ -137,7 +139,7 @@ class ChoreBot(ChatHandler):
         if not tuple_value:
             self.send_message(
                 "I don't understand the action '{}'. Try one of the buttons below.".format(self.text))
-            return
+            return self.Step.CHOOSE_ACTION
 
         function, message = tuple_value
         if function == Alarm.snooze:
@@ -145,14 +147,13 @@ class ChoreBot(ChatHandler):
             self.send_message(
                 'Choose a time from the suggestions below, or write the desired time',
                 reply_markup=self.arrange_keyboard(self.SUGGESTED_TIMES, 5))
-            self.next_step = self.Step.CHOOSE_TIME
-            return
+            return self.Step.CHOOSE_TIME
 
         alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
         function(alarm)
         self.send_message('{}\n{}'.format(message, alarm.one_line))
 
-        self.show_overdue_alarms()
+        return self.show_overdue_alarms()
 
     def snooze_alarm(self):
         """Snooze an alarm using the desired input time."""
@@ -184,7 +185,7 @@ def main_loop(app, queue=None):
 
     bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
         pave_event_space()(
-            per_chat_id(), create_open, ChoreBot, timeout=6, flask_app=app),
+            per_chat_id(), create_open, ChoreBot, timeout=60, flask_app=app),
     ])
     forever = False if queue else 'Listening...'
     bot.message_loop(source=queue, run_forever=forever)
