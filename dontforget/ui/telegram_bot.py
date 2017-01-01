@@ -179,10 +179,6 @@ def main_loop(app, queue=None):
     :param flask.app.Flask app: Flask app.
     :param queue: Update queue to be used as the source of updates instead of the Telegram API server. Used in tests.
     """
-    if not UI_TELEGRAM_BOT_TOKEN:
-        print('Telegram bot token is not defined')
-        return
-
     bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
         pave_event_space()(
             per_chat_id(), create_open, ChoreBot, timeout=60, flask_app=app),
