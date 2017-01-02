@@ -13,7 +13,7 @@ from flask_script.commands import Clean, ShowUrls
 from dontforget.app import create_app
 from dontforget.cron import display_unseen_alarms, spawn_alarms
 from dontforget.database import db
-from dontforget.settings import DevConfig, ProdConfig
+from dontforget.settings import UI_TELEGRAM_BOT_TOKEN, DevConfig, ProdConfig
 from dontforget.user.models import User
 
 CONFIG = ProdConfig if os.environ.get('DONTFORGET_ENV') == 'prod' else DevConfig
@@ -99,8 +99,12 @@ def spawn():
 @manager.command
 def telegram():
     """Run Telegram bot loop together with Flask main loop."""
-    from dontforget.ui.telegram_bot import TelegramBot
-    TelegramBot(app).run_loop()
+    if not UI_TELEGRAM_BOT_TOKEN:
+        print('Telegram bot token is not defined (UI_TELEGRAM_BOT_TOKEN)')
+        return
+
+    from dontforget.ui.telegram_bot import main_loop
+    main_loop(app)
 
 
 manager.add_command('shell', Shell(make_context=_make_context))
