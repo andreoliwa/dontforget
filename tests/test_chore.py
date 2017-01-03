@@ -1,10 +1,12 @@
-"""Test chores."""
 # pylint: disable=invalid-name,no-member
+"""Test chores."""
 from datetime import datetime, timedelta
+
+import pytest
 
 from dontforget.cron import spawn_alarms
 from dontforget.models import AlarmState, Chore
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
 
 
 def test_search_similar(db):
@@ -155,3 +157,27 @@ def test_daily_chore_from_completed(db):
 
     # No alarm should be spawned.
     assert spawn_alarms() == 0
+
+
+@pytest.mark.xfail(reason='Bug not fixed yet')
+def test_snooze_from_original_due_date(db):
+    """When you snooze a chore and then complete it later, the original date should get the repetition."""
+    ten_oclock = TODAY.replace(hour=10, minute=0, second=0, microsecond=0)
+    chore = ChoreFactory(repetition='Daily', repeat_from_completed=False)
+    AlarmFactory(chore=chore, next_at=ten_oclock)
+    """:type: dontforget.models.Alarm"""
+    db.session.commit()
+
+    assert len(chore.alarms) == 1
+    last_alarm = chore.alarms[len(chore.alarms) - 1]
+    assert last_alarm.next_at == ten_oclock
+
+    last_alarm.snooze('5 minutes')
+    assert len(chore.alarms) == 2
+    last_alarm = chore.alarms[len(chore.alarms) - 1]
+
+    last_alarm.complete()
+    assert len(chore.alarms) == 3
+
+    # The next alarm should be the next day at 10:00, and not the snooze time
+    assert last_alarm.next_at == ten_oclock + timedelta(days=1)

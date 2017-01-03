@@ -136,7 +136,7 @@ class Alarm(SurrogatePK, Model):
 
         An unseen alarm will only be created if there is a repetition, and if the chore is active.
 
-        :param AlarmState desired_state: The desired state for the current alarm, before repetition.
+        :param str desired_state: The desired state for the current alarm, before repetition.
         :param str snooze_repetition: Snooze repetition chosen by the user.
         :return: The current alarm if none created, or the newly created (and unseen) alarm instance.
         :rtype: Alarm
