@@ -184,6 +184,7 @@ def test_snooze_from_original_due_date(db):
     # Skip one day.
     last_alarm.skip()
     last_alarm = get_last_alarm(5)
+    assert last_alarm.next_at == ten_oclock + timedelta(days=1)
 
     # Snooze again several times.
     for index, minutes in enumerate([10, 15, 30, 10]):
@@ -193,6 +194,4 @@ def test_snooze_from_original_due_date(db):
     # Finally complete the chore the next day.
     last_alarm.complete()
     last_alarm = get_last_alarm(10)
-
-    # The next alarm should be 2 days later at 10:00, and not the snooze time.
     assert last_alarm.next_at == ten_oclock + timedelta(days=2)
