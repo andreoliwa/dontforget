@@ -5,10 +5,10 @@ from enum import Enum
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
-from telepot.namedtuple import ReplyKeyboardMarkup
+from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.models import Alarm, AlarmState
-from dontforget.settings import UI_TELEGRAM_BOT_TOKEN
+from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
 
 
 class ChoreBot(ChatHandler):
@@ -170,7 +170,7 @@ class ChoreBot(ChatHandler):
         """Close the conversation when idle for some time."""
         if self.next_step:
             self.send_message("It looks like you're busy now. Let's talk later, {}.".format(
-                self.msg['from']['first_name']))
+                self.msg['from']['first_name']), reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
         self.close()  # pylint: disable=no-member
 
 
@@ -182,7 +182,7 @@ def main_loop(app, queue=None):
     """
     bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
         pave_event_space()(
-            per_chat_id(), create_open, ChoreBot, timeout=60, flask_app=app),
+            per_chat_id(), create_open, ChoreBot, timeout=UI_TELEGRAM_BOT_IDLE_TIMEOUT, flask_app=app),
     ])
     forever = False if queue else 'Listening...'
     bot.message_loop(source=queue, run_forever=forever)
