@@ -13,7 +13,7 @@ from dontforget.user.models import User
 
 fake = Faker()  # pylint: disable=invalid-name
 
-TODAY = datetime.now()
+TODAY = datetime.utcnow()
 NEXT_WEEK = TODAY + timedelta(days=7)
 LAST_WEEK = TODAY - timedelta(days=7)
 YESTERDAY = TODAY - timedelta(days=1)

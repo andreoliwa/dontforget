@@ -54,7 +54,7 @@ def display_unseen_alarms(right_now=None):
     from dontforget.ui import show_dialog
 
     if not right_now:
-        right_now = datetime.now()
+        right_now = datetime.utcnow()
 
     count = 0
     # pylint: disable=no-member

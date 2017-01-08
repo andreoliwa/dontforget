@@ -85,7 +85,7 @@ class ChoreBot(ChatHandler):
 
     def show_overdue_alarms(self):
         """Show overdue alarms on a chat message."""
-        right_now = datetime.now()
+        right_now = datetime.utcnow()
         query = Alarm.query.filter(  # pylint: disable=no-member
             Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
         chores = []
@@ -168,8 +168,9 @@ class ChoreBot(ChatHandler):
 
     def on__idle(self, event):
         """Close the conversation when idle for some time."""
-        self.send_message("It looks like you're busy now. I hope we can talk again some day, {}.".format(
-            self.msg['from']['first_name']))
+        if self.next_step:
+            self.send_message("It looks like you're busy now. Let's talk later, {}.".format(
+                self.msg['from']['first_name']))
         self.close()  # pylint: disable=no-member
 
 
