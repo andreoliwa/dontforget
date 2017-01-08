@@ -66,7 +66,7 @@ def next_dates(natural_language_repetition, reference_date=None, count=1):
     if not natural_language_repetition:
         return None
     if not reference_date:
-        reference_date = datetime.now()
+        reference_date = datetime.utcnow()
 
     mapping = FREQUENCY_MAPPING.get(natural_language_repetition.lower())
     if mapping:

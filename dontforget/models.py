@@ -41,7 +41,7 @@ class Chore(SurrogatePK, Model):
         :rtype: bool
         """
         if not right_now:
-            right_now = datetime.now()
+            right_now = datetime.utcnow()
         return self.alarm_start <= right_now and (self.alarm_end is None or right_now <= self.alarm_end)
 
     @classmethod
@@ -54,7 +54,7 @@ class Chore(SurrogatePK, Model):
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
         if not right_now:
-            right_now = datetime.now()
+            right_now = datetime.utcnow()
         return and_(cls.alarm_start <= right_now, or_(cls.alarm_end.is_(None), right_now <= cls.alarm_end))
 
     def search_similar(self, min_chars=3):
@@ -97,10 +97,14 @@ class Alarm(SurrogatePK, Model):
     __tablename__ = 'alarm'
     chore_id = reference_col('chore')
     current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
-    next_at = db.Column(db.DateTime(), nullable=False)
+    next_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
     last_snooze = db.Column(db.String())
-    updated_at = db.Column(db.DateTime(), nullable=False, onupdate=func.now(), default=func.now())
-    original_at = db.Column(db.DateTime(), nullable=True)
+
+    # func.now() is equivalent to CURRENT_TIMESTAMP in SQLite, which is always UTC (GMT).
+    # See https://www.sqlite.org/lang_datefunc.html
+    updated_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, onupdate=func.now(), default=func.now())
+
+    original_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
 
     chore = db.relationship('Chore')
     """:type: dontforget.models.Chore"""
@@ -149,7 +153,7 @@ class Alarm(SurrogatePK, Model):
 
         next_at = None
         if snooze_repetition:
-            next_at = next_dates(snooze_repetition, datetime.now())
+            next_at = next_dates(snooze_repetition, datetime.utcnow())
         elif self.chore.repetition and self.chore.active():
             if self.chore.repeat_from_completed:
                 # Repeat from the update date.

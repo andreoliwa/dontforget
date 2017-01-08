@@ -131,7 +131,7 @@ def test_daily_chore_from_completed(db):
     # Simulate as the chore were completed some time from now.
     # Automated tests are too fast, the timestamps are almost the same, and that interferes with the results.
     chore.alarms[0].current_state = AlarmState.COMPLETED
-    chore.alarms[0].updated_at = datetime.now() + timedelta(seconds=5)
+    chore.alarms[0].updated_at = datetime.utcnow() + timedelta(seconds=5)
     chore.alarms[0].save()
 
     # Spawn one alarm for the next day.
@@ -141,7 +141,7 @@ def test_daily_chore_from_completed(db):
 
     # Simulate as the chore were completed again, some time from now.
     chore.alarms[1].current_state = AlarmState.COMPLETED
-    chore.alarms[1].updated_at = datetime.now() + timedelta(seconds=10)
+    chore.alarms[1].updated_at = datetime.utcnow() + timedelta(seconds=10)
     chore.alarms[1].save()
 
     # Spawn one alarm for the next day.

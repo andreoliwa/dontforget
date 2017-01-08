@@ -85,7 +85,7 @@ class ChoreBot(ChatHandler):
 
     def show_overdue_alarms(self):
         """Show overdue alarms on a chat message."""
-        right_now = datetime.now()
+        right_now = datetime.utcnow()
         query = Alarm.query.filter(  # pylint: disable=no-member
             Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
         chores = []
