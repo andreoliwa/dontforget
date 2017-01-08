@@ -1,10 +1,10 @@
-"""Test chores."""
 # pylint: disable=invalid-name,no-member
+"""Test chores."""
 from datetime import datetime, timedelta
 
 from dontforget.cron import spawn_alarms
 from dontforget.models import AlarmState, Chore
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
 
 
 def test_search_similar(db):
@@ -155,3 +155,43 @@ def test_daily_chore_from_completed(db):
 
     # No alarm should be spawned.
     assert spawn_alarms() == 0
+
+
+def test_snooze_from_original_due_date(db):
+    """When you snooze a chore and then complete it later, the original date should get the repetition."""
+    ten_oclock = TODAY.replace(hour=10, minute=0, second=0, microsecond=0)
+    chore = ChoreFactory(repetition='Daily', repeat_from_completed=False)
+    AlarmFactory(chore=chore, next_at=ten_oclock)
+    """:type: dontforget.models.Alarm"""
+    db.session.commit()
+
+    def get_last_alarm(expected_len):
+        """Get the last alarm from the chore.
+
+        :rtype: dontforget.models.Alarm
+        """
+        assert len(chore.alarms) == expected_len
+        return chore.alarms[expected_len - 1]
+
+    last_alarm = get_last_alarm(1)
+    assert last_alarm.next_at == ten_oclock
+
+    # Snooze several times.
+    for index, minutes in enumerate([2, 1, 4]):
+        last_alarm.snooze('{} hours'.format(minutes))
+        last_alarm = get_last_alarm(2 + index)
+
+    # Skip one day.
+    last_alarm.skip()
+    last_alarm = get_last_alarm(5)
+    assert last_alarm.next_at == ten_oclock + timedelta(days=1)
+
+    # Snooze again several times.
+    for index, minutes in enumerate([10, 15, 30, 10]):
+        last_alarm.snooze('{} minutes'.format(minutes))
+        last_alarm = get_last_alarm(6 + index)
+
+    # Finally complete the chore the next day.
+    last_alarm.complete()
+    last_alarm = get_last_alarm(10)
+    assert last_alarm.next_at == ten_oclock + timedelta(days=2)
