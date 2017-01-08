@@ -117,9 +117,9 @@ class Alarm(SurrogatePK, Model):
     @property
     def one_line(self):
         """Represent the alarm in one line."""
-        next_at = arrow.get(self.next_at)
+        due_at = arrow.get(self.original_at or self.next_at).to('local')
         return '{title} \u231b {due} ({human})'.format(
-            title=self.chore.title, due=next_at.format('ddd MMM DD, YYYY HH:MM'), human=next_at.humanize())
+            title=self.chore.title, due=due_at.format('ddd MMM DD, YYYY HH:mm'), human=due_at.humanize())
 
     @classmethod
     def create_unseen(cls, chore_id, next_at, last_snooze=None, **kwargs):

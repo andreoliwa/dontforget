@@ -168,8 +168,9 @@ class ChoreBot(ChatHandler):
 
     def on__idle(self, event):
         """Close the conversation when idle for some time."""
-        self.send_message("It looks like you're busy now. I hope we can talk again some day, {}.".format(
-            self.msg['from']['first_name']))
+        if self.next_step:
+            self.send_message("It looks like you're busy now. Let's talk later, {}.".format(
+                self.msg['from']['first_name']))
         self.close()  # pylint: disable=no-member
 
 
