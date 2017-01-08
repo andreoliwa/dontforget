@@ -100,6 +100,7 @@ class Alarm(SurrogatePK, Model):
     next_at = db.Column(db.DateTime(), nullable=False)
     last_snooze = db.Column(db.String())
     updated_at = db.Column(db.DateTime(), nullable=False, onupdate=func.now(), default=func.now())
+    original_at = db.Column(db.DateTime(), nullable=True)
 
     chore = db.relationship('Chore')
     """:type: dontforget.models.Chore"""
@@ -117,7 +118,7 @@ class Alarm(SurrogatePK, Model):
             title=self.chore.title, due=next_at.format('ddd MMM DD, YYYY HH:MM'), human=next_at.humanize())
 
     @classmethod
-    def create_unseen(cls, chore_id, next_at, last_snooze=None):
+    def create_unseen(cls, chore_id, next_at, last_snooze=None, **kwargs):
         """Factory method to create an unseen alarm instance.
 
         The instance will be added to the session, but no commit will be issued.
@@ -129,7 +130,7 @@ class Alarm(SurrogatePK, Model):
         :rtype: Alarm
         """
         return cls.create(commit=False, chore_id=chore_id, next_at=next_at, current_state=AlarmState.UNSEEN,
-                          last_snooze=last_snooze)
+                          last_snooze=last_snooze, **kwargs)
 
     def repeat(self, desired_state, snooze_repetition=None):
         """Set the desired state and create a new unseen alarm, based on the repetition settings in the related chore.
@@ -143,15 +144,27 @@ class Alarm(SurrogatePK, Model):
         """
         rv = self.update(commit=False, current_state=desired_state)
 
+        # The original due date or the next alarm.
+        original_at = self.original_at or self.next_at
+
         next_at = None
         if snooze_repetition:
             next_at = next_dates(snooze_repetition, datetime.now())
         elif self.chore.repetition and self.chore.active():
-            reference_date = self.updated_at if self.chore.repeat_from_completed else self.next_at
+            if self.chore.repeat_from_completed:
+                # Repeat from the update date.
+                reference_date = self.updated_at
+            else:
+                # Repeat from the original date (before snoozing) or the next alarm date (if no snoozing)
+                reference_date = original_at
             next_at = next_dates(self.chore.repetition, reference_date)
 
         if next_at:
-            rv = self.create_unseen(self.chore_id, next_at, snooze_repetition)
+            # No original due date is saved when skipped or completed.
+            if desired_state in (AlarmState.SKIPPED, AlarmState.COMPLETED):
+                original_at = None
+
+            rv = self.create_unseen(self.chore_id, next_at, snooze_repetition, original_at=original_at)
 
         db.session.commit()
         return rv
