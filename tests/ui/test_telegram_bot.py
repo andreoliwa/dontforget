@@ -5,6 +5,7 @@ from queue import Queue
 from unittest import mock
 from unittest.mock import call
 
+from dontforget.models import Chore
 from dontforget.ui.telegram_bot import main_loop
 
 
@@ -73,12 +74,13 @@ class TelegramAppMock:
         """Put an update in the queue."""
         self.update_queue.put(dict(update_id=self.next_update_id(), **kwargs))
 
-    def type_command(self, command: str, expected_reply: str):
+    def type_command(self, command_plus_args: str, expected_reply: str):
         """Simulate the typing of a command in the Telegram App."""
-        clean_command = '/{}'.format(command.lstrip('/'))
+        clean = '/{}'.format(command_plus_args.lstrip('/'))
+        command = clean.split()[0]
         self.put_update(message=self.dict_message(
-            text=clean_command,
-            entities=[dict(type='bot_command', offset=0, length=len(clean_command))]
+            text=clean,
+            entities=[dict(type='bot_command', offset=0, length=len(command))]
         ))
         self.expected_replies.append(expected_reply)
 
@@ -110,3 +112,15 @@ def test_overdue_command(db):
     with TelegramAppMock(db) as telegram:
         telegram.type_command('overdue', 'You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
     # TODO: Add test with some chores
+
+
+def test_add_chore(db):
+    """Add a chore."""
+    assert Chore.query.count() == 0
+
+    with TelegramAppMock(db) as telegram:
+        telegram.type_command('add My first chore', 'The chore was added.')
+
+    assert Chore.query.count() == 1
+    chore = Chore.query.first()
+    assert chore.title == 'My first chore'
