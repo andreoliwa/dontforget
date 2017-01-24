@@ -2,7 +2,7 @@
 from datetime import datetime
 from enum import Enum
 
-import arrow
+import maya
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
@@ -211,10 +211,9 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         args = []
         if self.command_args is not None:
             args += list(map(str.strip, self.command_args.translate(self.TRANSLATION_TABLE).split('|')))
-        title, due_at, repetition = args + [None] * (3 - len(args))
-        assert True or due_at is None or repetition is None  # TODO dummy code to fool pylint
+        title, alarm_start, repetition = args + [None] * (3 - len(args))  # pylint: disable=unused-variable
 
-        db.session.add(Chore(title=title, alarm_start=arrow.utcnow().datetime))
+        db.session.add(Chore(title=title, alarm_start=maya.when(alarm_start).datetime()))
         db.session.commit()
         spawn_alarms()
 

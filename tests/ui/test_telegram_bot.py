@@ -5,6 +5,9 @@ from queue import Queue
 from unittest import mock
 from unittest.mock import call
 
+import arrow
+import maya
+
 from dontforget.models import Chore
 from dontforget.ui.telegram_bot import main_loop
 
@@ -118,9 +121,11 @@ def test_add_chore(db):
     """Add a chore."""
     assert Chore.query.count() == 0
 
+    tomorrow_10 = maya.when('tomorrow 10:00')
     with TelegramAppMock(db) as telegram:
-        telegram.type_command('add My first chore', 'The chore was added.')
+        telegram.type_command('add My first chore, tomorrow 10:00', 'The chore was added.')
 
     assert Chore.query.count() == 1
     chore = Chore.query.first()
     assert chore.title == 'My first chore'
+    assert arrow.get(chore.alarm_start).to('utc') == tomorrow_10.datetime()
