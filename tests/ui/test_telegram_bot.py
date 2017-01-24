@@ -117,8 +117,8 @@ def test_overdue_command(db):
     # TODO: Add test with some chores
 
 
-def test_add_chore(db):
-    """Add a chore."""
+def test_add_chore_with_alarm_start(db):
+    """Add a chore with an alarm start."""
     assert Chore.query.count() == 0
 
     tomorrow_10 = maya.when('tomorrow 10:00')
@@ -129,3 +129,17 @@ def test_add_chore(db):
     chore = Chore.query.first()
     assert chore.title == 'My first chore'
     assert arrow.get(chore.alarm_start).to('utc') == tomorrow_10.datetime()
+
+
+def test_add_chore_without_alarm_start(db):
+    """Add a chore without an alarm start."""
+    assert Chore.query.count() == 0
+
+    right_now = arrow.now()
+    with TelegramAppMock(db) as telegram:
+        telegram.type_command('add Do it now', 'The chore was added.')
+
+    assert Chore.query.count() == 1
+    chore = Chore.query.first()
+    assert chore.title == 'Do it now'
+    assert arrow.get(chore.alarm_start).to('utc').replace(microsecond=0) == right_now.replace(microsecond=0)

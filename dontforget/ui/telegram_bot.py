@@ -211,9 +211,11 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         args = []
         if self.command_args is not None:
             args += list(map(str.strip, self.command_args.translate(self.TRANSLATION_TABLE).split('|')))
-        title, alarm_start, repetition = args + [None] * (3 - len(args))  # pylint: disable=unused-variable
+        arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))  # pylint: disable=unused-variable
 
-        db.session.add(Chore(title=title, alarm_start=maya.when(alarm_start).datetime()))
+        alarm_start = maya.when(arg_alarm_start) if arg_alarm_start else maya.now()
+
+        db.session.add(Chore(title=arg_title, alarm_start=alarm_start.datetime()))
         db.session.commit()
         spawn_alarms()
 
