@@ -4,8 +4,6 @@ sudo: false  # http://docs.travis-ci.com/user/migrating-from-legacy/
 language: python
 
 python:
-#  - 3.3 TODO Stupid isort is breaking on Travis CI
-#  - 3.4 Leave only 3.5 for now, the tests finish quicker, so I can merge the PR faster
   - 3.5
 
 install:

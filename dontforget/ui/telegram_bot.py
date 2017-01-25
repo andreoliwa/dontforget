@@ -109,8 +109,6 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     def show_welcome_message(self):
         """Show a welcome message."""
         self.send_message("I'm a bot to help you with your chores.")
-        # TODO test is broken
-        # reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True)
 
     def fallback_message(self):
         """Show a fallback message in case of an unknown command or text."""

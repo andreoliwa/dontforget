@@ -114,7 +114,6 @@ def test_overdue_command(db):
     """Overdue command."""
     with TelegramAppMock(db) as telegram:
         telegram.type_command('overdue', 'You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
-    # TODO: Add test with some chores
 
 
 def test_add_chores(db):
