@@ -209,7 +209,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         args = []
         if self.command_args is not None:
             args += list(map(str.strip, self.command_args.translate(self.TRANSLATION_TABLE).split('|')))
-        arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))  # pylint: disable=unused-variable
+        arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))
 
         fields = dict(
             title=arg_title,
