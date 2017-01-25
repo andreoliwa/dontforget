@@ -96,8 +96,8 @@ class TelegramAppMock:
         """Assert that the bot answers with the expected replies."""
         expected_calls = [call(self.CHAT_ID, message) for message in self.expected_replies]
 
-        # Wait for the messages to be processed in another thread.
-        time.sleep(len(expected_calls) + 1)
+        # Wait for the messages to be processed in other threads.
+        time.sleep(len(expected_calls) + 1.5)
 
         assert self.mocked_send_message.target.sendMessage.mock_calls == expected_calls
 
@@ -117,29 +117,37 @@ def test_overdue_command(db):
     # TODO: Add test with some chores
 
 
-def test_add_chore_with_alarm_start(db):
-    """Add a chore with an alarm start."""
-    assert Chore.query.count() == 0
-
-    tomorrow_10 = maya.when('tomorrow 10:00')
-    with TelegramAppMock(db) as telegram:
-        telegram.type_command('add My first chore, tomorrow 10:00', 'The chore was added.')
-
-    assert Chore.query.count() == 1
-    chore = Chore.query.first()
-    assert chore.title == 'My first chore'
-    assert arrow.get(chore.alarm_start).to('utc') == tomorrow_10.datetime()
-
-
-def test_add_chore_without_alarm_start(db):
-    """Add a chore without an alarm start."""
+def test_add_chores(db):
+    """Add some chores."""
     assert Chore.query.count() == 0
 
     right_now = arrow.now()
-    with TelegramAppMock(db) as telegram:
-        telegram.type_command('add Do it now', 'The chore was added.')
+    tomorrow_10 = maya.when('tomorrow 10:00')
+    yesterday_9am = maya.when('yesterday 9am')
+    yesterday_2pm = maya.when('yesterday 2pm')
 
-    assert Chore.query.count() == 1
-    chore = Chore.query.first()
-    assert chore.title == 'Do it now'
-    assert arrow.get(chore.alarm_start).to('utc').replace(microsecond=0) == right_now.replace(microsecond=0)
+    with TelegramAppMock(db) as telegram:
+        telegram.type_command('add My first chore   , tomorrow 10:00', 'The chore was added.')
+        telegram.type_command('add Do it now', 'The chore was added.')
+        telegram.type_command('add Wash clothes , yesterday 9am , weekly ', 'The chore was added.')
+        telegram.type_command('add Shopping , yesterday 2pm , every 2 months ', 'The chore was added.')
+
+    assert Chore.query.count() == 4
+    first, do_it, wash, shopping = Chore.query.all()
+
+    assert first.title == 'My first chore'
+    assert arrow.get(first.alarm_start).to('utc') == tomorrow_10.datetime()
+    assert first.repetition is None
+
+    assert do_it.title == 'Do it now'
+    # Both dates should have less than 10 seconds difference (the time of the test).
+    assert (arrow.get(do_it.alarm_start).to('utc') - right_now).seconds < 10
+    assert do_it.repetition is None
+
+    assert wash.title == 'Wash clothes'
+    assert arrow.get(wash.alarm_start).to('utc') == yesterday_9am.datetime()
+    assert wash.repetition == 'weekly'
+
+    assert shopping.title == 'Shopping'
+    assert arrow.get(shopping.alarm_start).to('utc') == yesterday_2pm.datetime()
+    assert shopping.repetition == 'every 2 months'
