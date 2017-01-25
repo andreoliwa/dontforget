@@ -118,8 +118,13 @@ class Alarm(SurrogatePK, Model):
     def one_line(self):
         """Represent the alarm in one line."""
         due_at = arrow.get(self.original_at or self.next_at).to('local')
-        return '{title} \u231b {due} ({human})'.format(
-            title=self.chore.title, due=due_at.format('ddd MMM DD, YYYY HH:mm'), human=due_at.humanize())
+        return '{title} \u231b {due} ({human}) \u21ba {repetition} {completed}'.format(
+            title=self.chore.title,
+            due=due_at.format('ddd MMM DD, YYYY HH:mm'),
+            human=due_at.humanize(),
+            repetition=self.chore.repetition or 'Once',
+            completed='(from completed)' if self.chore.repeat_from_completed else ''
+        )
 
     @classmethod
     def create_unseen(cls, chore_id, next_at, last_snooze=None, **kwargs):

@@ -2,16 +2,19 @@
 from datetime import datetime
 from enum import Enum
 
+import maya
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-from dontforget.models import Alarm, AlarmState
+from dontforget.cron import spawn_alarms
+from dontforget.extensions import db
+from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
 
 
-class ChoreBot(ChatHandler):
+class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     """Chat bot to handle chores."""
 
     class Step(Enum):
@@ -33,6 +36,9 @@ class ChoreBot(ChatHandler):
     SUGGESTED_TIMES = ['5 min', '10 min', '15 min', '30 min', '1 hour', '2 hours', '4 hours', '8 hours', '12 hours',
                        '1 day', '2 days', '4 days', '1 week', '2 weeks', '1 month']
 
+    SEPARATORS = '\n,;'
+    TRANSLATION_TABLE = str.maketrans(SEPARATORS, '|' * len(SEPARATORS))
+
     def __init__(self, *args, flask_app=None, **kwargs):
         """Init instance."""
         self.flask_app = flask_app
@@ -42,6 +48,12 @@ class ChoreBot(ChatHandler):
         self.msg = None
         self.text = None
         """:type: str"""
+
+        self.command = None
+        """:type: str"""
+        self.command_args = None
+        """:type: str"""
+
         self.alarm_id = None
         """:type: int"""
         self.action_message = None
@@ -63,15 +75,34 @@ class ChoreBot(ChatHandler):
         self.text = msg['text']
         """:type: str"""
 
+        # Get the first command in the list of entities.
+        self.command = None
+        self.command_args = None
+        if 'entities' in msg:
+            self.command, self.command_args = min(
+                [(self.text[entity['offset']:entity['length']], self.text[entity['length'] + 1:])
+                 for entity in msg['entities'] if entity['type'] == 'bot_command'])
+
+            # Set an explicit None in case the message only contains the command.
+            if self.command == self.text:
+                self.command_args = None
+
         mapping = {
-            None: self.fallback_message,
             '/start': self.show_welcome_message,
             '/overdue': self.show_overdue_alarms,
+            '/add': self.add_chore,
             self.Step.CHOOSE_ALARM: self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
         }
-        function = mapping.get(self.text, mapping.get(self.next_step))
+        function = None
+        for value in (self.next_step, self.text, self.command):
+            function = mapping.get(value)
+            if function:
+                break
+        if not function:
+            function = self.fallback_message
+
         with self.flask_app.app_context():
             self.next_step = function()
 
@@ -172,6 +203,24 @@ class ChoreBot(ChatHandler):
             self.send_message("It looks like you're busy now. Let's talk later, {}.".format(
                 self.msg['from']['first_name']), reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
         self.close()  # pylint: disable=no-member
+
+    def add_chore(self):
+        """Add a chore."""
+        args = []
+        if self.command_args is not None:
+            args += list(map(str.strip, self.command_args.translate(self.TRANSLATION_TABLE).split('|')))
+        arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))
+
+        fields = dict(
+            title=arg_title,
+            alarm_start=(maya.when(arg_alarm_start) if arg_alarm_start else maya.now()).datetime(),
+            repetition=arg_repetition,
+        )
+        db.session.add(Chore(**fields))
+        db.session.commit()
+        spawn_alarms()
+
+        self.send_message('The chore was added.')
 
 
 def main_loop(app, queue=None):

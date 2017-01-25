@@ -5,6 +5,10 @@ from queue import Queue
 from unittest import mock
 from unittest.mock import call
 
+import arrow
+import maya
+
+from dontforget.models import Chore
 from dontforget.ui.telegram_bot import main_loop
 
 
@@ -73,12 +77,13 @@ class TelegramAppMock:
         """Put an update in the queue."""
         self.update_queue.put(dict(update_id=self.next_update_id(), **kwargs))
 
-    def type_command(self, command: str, expected_reply: str):
+    def type_command(self, command_plus_args: str, expected_reply: str):
         """Simulate the typing of a command in the Telegram App."""
-        clean_command = '/{}'.format(command.lstrip('/'))
+        clean = '/{}'.format(command_plus_args.lstrip('/'))
+        command = clean.split()[0]
         self.put_update(message=self.dict_message(
-            text=clean_command,
-            entities=[dict(type='bot_command', offset=0, length=len(clean_command))]
+            text=clean,
+            entities=[dict(type='bot_command', offset=0, length=len(command))]
         ))
         self.expected_replies.append(expected_reply)
 
@@ -91,8 +96,8 @@ class TelegramAppMock:
         """Assert that the bot answers with the expected replies."""
         expected_calls = [call(self.CHAT_ID, message) for message in self.expected_replies]
 
-        # Wait for the messages to be processed in another thread.
-        time.sleep(len(expected_calls) + 1)
+        # Wait for the messages to be processed in other threads.
+        time.sleep(len(expected_calls) + 1.5)
 
         assert self.mocked_send_message.target.sendMessage.mock_calls == expected_calls
 
@@ -109,4 +114,39 @@ def test_overdue_command(db):
     """Overdue command."""
     with TelegramAppMock(db) as telegram:
         telegram.type_command('overdue', 'You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
-    # TODO: Add test with some chores
+
+
+def test_add_chores(db):
+    """Add some chores."""
+    assert Chore.query.count() == 0
+
+    right_now = arrow.now()
+    tomorrow_10 = maya.when('tomorrow 10:00')
+    yesterday_9am = maya.when('yesterday 9am')
+    yesterday_2pm = maya.when('yesterday 2pm')
+
+    with TelegramAppMock(db) as telegram:
+        telegram.type_command('add My first chore   , tomorrow 10:00', 'The chore was added.')
+        telegram.type_command('add Do it now', 'The chore was added.')
+        telegram.type_command('add Wash clothes , yesterday 9am , weekly ', 'The chore was added.')
+        telegram.type_command('add Shopping , yesterday 2pm , every 2 months ', 'The chore was added.')
+
+    assert Chore.query.count() == 4
+    first, do_it, wash, shopping = Chore.query.all()
+
+    assert first.title == 'My first chore'
+    assert arrow.get(first.alarm_start).to('utc') == tomorrow_10.datetime()
+    assert first.repetition is None
+
+    assert do_it.title == 'Do it now'
+    # Both dates should have less than 10 seconds difference (the time of the test).
+    assert (arrow.get(do_it.alarm_start).to('utc') - right_now).seconds < 10
+    assert do_it.repetition is None
+
+    assert wash.title == 'Wash clothes'
+    assert arrow.get(wash.alarm_start).to('utc') == yesterday_9am.datetime()
+    assert wash.repetition == 'weekly'
+
+    assert shopping.title == 'Shopping'
+    assert arrow.get(shopping.alarm_start).to('utc') == yesterday_2pm.datetime()
+    assert shopping.repetition == 'every 2 months'
