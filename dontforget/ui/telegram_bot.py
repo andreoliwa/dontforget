@@ -23,6 +23,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         CHOOSE_ALARM = 1
         CHOOSE_ACTION = 2
         CHOOSE_TIME = 3
+        TYPE_CHORE_INFO = 4
 
     class Actions(Enum):
         """Actions that can be performed on an alarm."""
@@ -90,10 +91,12 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         mapping = {
             '/start': self.show_welcome_message,
             '/overdue': self.show_overdue_alarms,
-            '/add': self.add_chore,
+            '/add': self.add_command,
+            '/new': self.add_command,
             self.Step.CHOOSE_ALARM: self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
+            self.Step.TYPE_CHORE_INFO: self.type_chore_info,
         }
         function = None
         for value in (self.next_step, self.text, self.command):
@@ -204,11 +207,29 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 self.msg['from']['first_name']), reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
         self.close()  # pylint: disable=no-member
 
-    def add_chore(self):
+    def add_command(self):
         """Add a chore."""
-        args = []
-        if self.command_args is not None:
-            args += list(map(str.strip, self.command_args.translate(self.TRANSLATION_TABLE).split('|')))
+        if self.command_args is None:
+            self.send_message('To add a new chore, enter the following info (one per line or comma separated):\n'
+                              '\u2022 Title\n'
+                              '\u2022 (optional) First alarm. E.g.: today 10am, tomorrow 9pm, 20 Jan 2017...\n'
+                              '\u2022 (optional) Repetition. E.g.: once, weekly, every 3 days...\n'
+                              'Or choose /cancel to stop adding a new chore.')
+            return self.Step.TYPE_CHORE_INFO
+
+        self._parse_chore_info(self.command_args)
+
+    def type_chore_info(self):
+        """Accept the chore info typed by the user."""
+        self._parse_chore_info(self.text)
+
+    def _parse_chore_info(self, info: str):
+        """Parse chore info from the message."""
+        if self.command == '/cancel':
+            self.send_message('Okay, no new chore then.')
+            return
+
+        args = list(map(str.strip, info.translate(self.TRANSLATION_TABLE).split('|')))
         arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))
 
         fields = dict(
