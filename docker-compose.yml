@@ -1,6 +1,6 @@
 flask:
   build: .
-  command: python manage.py runserver --host 0.0.0.0 --port 5000 --debug --reload
+  command: echo python manage.py runserver --host 0.0.0.0 --port 5000 --debug --reload
   volumes:
     - .:/dontforget
   ports:
@@ -12,5 +12,5 @@ telegram:
   volumes:
     - .:/dontforget
   environment:
-    - DONTFORGET_ENV=dev
+    - DONTFORGET_ENV=prod
     - UI_MODULE_NAME=telegram_bot  # Docker doesn't work with Cocoa Dialog as UI

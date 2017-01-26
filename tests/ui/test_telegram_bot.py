@@ -131,8 +131,20 @@ def test_add_chores(db):
         telegram.type_command('add Wash clothes , yesterday 9am , weekly ', 'The chore was added.')
         telegram.type_command('add Shopping , yesterday 2pm , every 2 months ', 'The chore was added.')
 
-    assert Chore.query.count() == 4
-    first, do_it, wash, shopping = Chore.query.all()
+        # Add in 2 steps.
+        help_message = 'To add a new chore, enter the following info (one per line or comma separated):\n' \
+                       '\u2022 Title\n' \
+                       '\u2022 (optional) First alarm. E.g.: today 10am, tomorrow 9pm, 20 Jan 2017...\n' \
+                       '\u2022 (optional) Repetition. E.g.: once, weekly, every 3 days...\n' \
+                       'Or choose /cancel to stop adding a new chore.'
+        telegram.type_command('add', help_message)
+        telegram.type_text('Christmas;25 Dec 2016,yearly', 'The chore was added.')
+
+        telegram.type_command('add', help_message)
+        telegram.type_command('cancel', 'Okay, no new chore then.')
+
+    assert Chore.query.count() == 5
+    first, do_it, wash, shopping, christmas = Chore.query.all()
 
     assert first.title == 'My first chore'
     assert arrow.get(first.alarm_start).to('utc') == tomorrow_10.datetime()
@@ -150,3 +162,7 @@ def test_add_chores(db):
     assert shopping.title == 'Shopping'
     assert arrow.get(shopping.alarm_start).to('utc') == yesterday_2pm.datetime()
     assert shopping.repetition == 'every 2 months'
+
+    assert christmas.title == 'Christmas'
+    assert arrow.get(christmas.alarm_start).to('utc') == maya.when('25 Dec 2016').datetime()
+    assert christmas.repetition == 'yearly'
