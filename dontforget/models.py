@@ -48,14 +48,16 @@ class Chore(SurrogatePK, Model):
     def active_expression(cls, right_now=None):
         """Return a SQL expression to check if the chore is active right now.
 
-        Use the same logic as ``active()`` above.
+        Use almost the the same logic as ``active()`` above.
+        One addition: also returns new chores which still don't have any alarm.
 
         :param datetime right_now: A reference date. If not provided (default), assumes the current date/time.
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
         if not right_now:
             right_now = datetime.utcnow()
-        return and_(cls.alarm_start <= right_now, or_(cls.alarm_end.is_(None), right_now <= cls.alarm_end))
+        return and_(or_(Alarm.id.is_(None), cls.alarm_start <= right_now),
+                    or_(cls.alarm_end.is_(None), right_now <= cls.alarm_end))
 
     def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.
