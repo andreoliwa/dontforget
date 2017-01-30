@@ -2,8 +2,10 @@
 """Test chores."""
 from datetime import datetime, timedelta
 
+import arrow
+
 from dontforget.cron import spawn_alarms
-from dontforget.models import AlarmState, Chore
+from dontforget.models import Alarm, AlarmState, Chore
 from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
 
 
@@ -195,3 +197,13 @@ def test_snooze_from_original_due_date(db):
     last_alarm.complete()
     last_alarm = get_last_alarm(10)
     assert last_alarm.next_at == ten_oclock + timedelta(days=2)
+
+
+def test_spawn_alarm_for_future_chores(db):
+    """Spawn alarms for future chores."""
+    next_week = arrow.utcnow().shift(weeks=1).datetime
+    ChoreFactory(title='Start a diet', alarm_start=next_week)
+    db.session.commit()
+
+    assert spawn_alarms() == 1
+    assert Alarm.query.first().next_at == next_week.replace(tzinfo=None)

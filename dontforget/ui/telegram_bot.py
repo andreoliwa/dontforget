@@ -61,8 +61,19 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         super(ChoreBot, self).__init__(*args, **kwargs)
 
-        # Alias to the sendMessage() function, also to avoid pylint annoying messages.
-        self.send_message = self.sender.sendMessage   # pylint: disable=no-member
+    def send_message(self, *args, **kwargs):
+        """Send a message. Show a marker for debug purposes, when in the development environment."""
+        if self.flask_app.config.get('ENV') != 'dev':
+            return self.sender.sendMessage(*args, **kwargs)  # pylint: disable=no-member
+
+        if 'text' in kwargs:
+            text = kwargs.pop('text', '')
+            remaining_args = args
+        else:
+            text = args[0]
+            remaining_args = args[1:]
+        text += ' (DEV)'
+        return self.sender.sendMessage(*remaining_args, text=text, **kwargs)  # pylint: disable=no-member
 
     def on_chat_message(self, msg):
         """Handle chat messages."""
@@ -119,6 +130,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_overdue_alarms(self):
         """Show overdue alarms on a chat message."""
+        spawn_alarms()
+
         right_now = datetime.utcnow()
         query = Alarm.query.filter(  # pylint: disable=no-member
             Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
@@ -239,7 +252,6 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         )
         db.session.add(Chore(**fields))
         db.session.commit()
-        spawn_alarms()
 
         self.send_message('The chore was added.')
 
@@ -254,5 +266,5 @@ def main_loop(app, queue=None):
         pave_event_space()(
             per_chat_id(), create_open, ChoreBot, timeout=UI_TELEGRAM_BOT_IDLE_TIMEOUT, flask_app=app),
     ])
-    forever = False if queue else 'Listening...'
+    forever = False if queue else 'Listening ({})...'.format(app.config['ENV'])
     bot.message_loop(source=queue, run_forever=forever)

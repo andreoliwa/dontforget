@@ -1,15 +1,16 @@
 """Test Telegram bot."""
 # pylint: disable=invalid-name,no-member,too-many-arguments
 import time
+from itertools import zip_longest
 from queue import Queue
 from unittest import mock
-from unittest.mock import call
 
 import arrow
 import maya
 
-from dontforget.models import Chore
+from dontforget.models import Alarm, Chore
 from dontforget.ui.telegram_bot import main_loop
+from tests.factories import ChoreFactory
 
 
 class TelegramAppMock:
@@ -94,12 +95,14 @@ class TelegramAppMock:
 
     def assert_messages(self):
         """Assert that the bot answers with the expected replies."""
-        expected_calls = [call(self.CHAT_ID, message) for message in self.expected_replies]
-
         # Wait for the messages to be processed in other threads.
-        time.sleep(len(expected_calls) + 1.5)
+        time.sleep(len(self.expected_replies) + 1.5)
 
-        assert self.mocked_send_message.target.sendMessage.mock_calls == expected_calls
+        for mock_call, expected_reply in zip_longest(
+                self.mocked_send_message.target.sendMessage.mock_calls, self.expected_replies):
+            call_args = mock_call[1]
+            assert call_args[0] == self.CHAT_ID
+            assert expected_reply in call_args[1]
 
 
 def test_start_command(db):
@@ -116,7 +119,18 @@ def test_overdue_command(db):
         telegram.type_command('overdue', 'You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
 
 
-def test_add_chores(db):
+def test_spawn_alarm_on_overdue_command(db):
+    """Spawn alarms on the overdue command."""
+    ChoreFactory(title='Something real')
+    db.session.commit()
+
+    with TelegramAppMock(db) as telegram:
+        assert Alarm.query.count() == 0
+        telegram.type_command('overdue', 'Those are your overdue chores:\n\n✅ 1: Something real')
+    assert Alarm.query.count() == 1
+
+
+def test_add_command(db):
     """Add some chores."""
     assert Chore.query.count() == 0
 
@@ -144,6 +158,7 @@ def test_add_chores(db):
         telegram.type_command('cancel', 'Okay, no new chore then.')
 
     assert Chore.query.count() == 5
+    assert Alarm.query.count() == 0
     first, do_it, wash, shopping, christmas = Chore.query.all()
 
     assert first.title == 'My first chore'
