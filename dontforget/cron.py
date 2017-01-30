@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 """Functions meant to be called several times, manually or with cron jobs."""
-from datetime import datetime
-
 from sqlalchemy.sql import func
 
 from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
-from dontforget.repetition import next_dates
+from dontforget.repetition import next_dates, right_now
 
 
-def spawn_alarms(right_now=None):
+def spawn_alarms():
     """Spawn alarms for active chores which don't have unseen alarms.
 
-    :param datetime right_now: Desired date/time. If none, assumes the current date/time.
     :return: Number of alarms created.
     :rtype: int
     """
@@ -20,7 +17,7 @@ def spawn_alarms(right_now=None):
     query = db.session.query(
         Chore.id, Chore.alarm_start, Chore.repetition, Chore.repeat_from_completed,
         Alarm.current_state, Alarm.updated_at, func.max(Alarm.next_at)
-    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(Chore.active_expression(right_now))
+    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(Chore.active_expression())
 
     alarms_created = 0
     for chore_id, alarm_start, repetition, repeat_from_completed, current_state, updated_at, last_alarm in query.all():
@@ -43,7 +40,7 @@ def spawn_alarms(right_now=None):
     return alarms_created
 
 
-def display_unseen_alarms(right_now=None):
+def display_unseen_alarms():
     """Display unseen alarms from the past (before right now), and change their state to displayed.
 
     :return: Number of alarms displayed.
@@ -53,13 +50,10 @@ def display_unseen_alarms(right_now=None):
     # otherwise the module is loaded before its time.
     from dontforget.ui import show_dialog
 
-    if not right_now:
-        right_now = datetime.utcnow()
-
     count = 0
     # pylint: disable=no-member
     query = Alarm.query.filter(Alarm.current_state == AlarmState.UNSEEN,
-                               Alarm.next_at <= right_now).order_by(Alarm.id)
+                               Alarm.next_at <= right_now()).order_by(Alarm.id)
     for unseen_alarm in query.all():
         unseen_alarm.current_state = AlarmState.DISPLAYED
         db.session.add(unseen_alarm)

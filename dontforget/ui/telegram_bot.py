@@ -1,5 +1,4 @@
 """Telegram bot module."""
-from datetime import datetime
 from enum import Enum
 
 import maya
@@ -11,6 +10,7 @@ from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from dontforget.cron import spawn_alarms
 from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
+from dontforget.repetition import right_now
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
 
 
@@ -132,9 +132,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         """Show overdue alarms on a chat message."""
         spawn_alarms()
 
-        right_now = datetime.utcnow()
         query = Alarm.query.filter(  # pylint: disable=no-member
-            Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now).order_by(Alarm.next_at.desc())
+            Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
         chores = []
         buttons = []
         for alarm in query.all():
