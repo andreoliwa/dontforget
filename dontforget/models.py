@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """Database models."""
-from datetime import datetime
-
 import arrow
 from sqlalchemy import and_, or_
 from sqlalchemy.sql.functions import func
 
 from dontforget.database import Model, SurrogatePK, reference_col
 from dontforget.extensions import db
-from dontforget.repetition import next_dates
+from dontforget.repetition import next_dates, right_now
 
 
 class Chore(SurrogatePK, Model):
@@ -29,35 +27,31 @@ class Chore(SurrogatePK, Model):
             self.id, self.title, self.alarm_start, self.repetition,
             'completed' if self.repeat_from_completed else 'due date')
 
-    def active(self, right_now=None):
+    def active(self):
         """Return True if the chore is active right now.
 
         Conditions for an active chore:
         1. Alarm start older than right now;
         2. Alarm end empty, or greater than/equal to right now.
 
-        :param datetime right_now: A reference date. If not provided (default), assumes the current date/time.
         :return: Return True if the chore is active right now.
         :rtype: bool
         """
-        if not right_now:
-            right_now = datetime.utcnow()
-        return self.alarm_start <= right_now and (self.alarm_end is None or right_now <= self.alarm_end)
+        now = right_now().replace(tzinfo=None)
+        return self.alarm_start <= now and (self.alarm_end is None or now <= self.alarm_end)
 
     @classmethod
-    def active_expression(cls, right_now=None):
+    def active_expression(cls):
         """Return a SQL expression to check if the chore is active right now.
 
         Use almost the the same logic as ``active()`` above.
         One addition: also returns new chores which still don't have any alarm.
 
-        :param datetime right_now: A reference date. If not provided (default), assumes the current date/time.
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
-        if not right_now:
-            right_now = datetime.utcnow()
-        return and_(or_(Alarm.id.is_(None), cls.alarm_start <= right_now),
-                    or_(cls.alarm_end.is_(None), right_now <= cls.alarm_end))
+        now = right_now().replace(tzinfo=None)
+        return and_(or_(Alarm.id.is_(None), cls.alarm_start <= now),
+                    or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
 
     def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.
@@ -119,7 +113,7 @@ class Alarm(SurrogatePK, Model):
     @property
     def one_line(self):
         """Represent the alarm in one line."""
-        due_at = arrow.get(self.original_at or self.next_at).to('local')
+        due_at = arrow.get(self.original_at or self.next_at).to('Europe/Berlin')
         return '{title} \u231b {due} ({human}) \u21ba {repetition} {completed}'.format(
             title=self.chore.title,
             due=due_at.format('ddd MMM DD, YYYY HH:mm'),
@@ -160,7 +154,7 @@ class Alarm(SurrogatePK, Model):
 
         next_at = None
         if snooze_repetition:
-            next_at = next_dates(snooze_repetition, datetime.utcnow())
+            next_at = next_dates(snooze_repetition, right_now())
         elif self.chore.repetition and self.chore.active():
             if self.chore.repeat_from_completed:
                 # Repeat from the update date.

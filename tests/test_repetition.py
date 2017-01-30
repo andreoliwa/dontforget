@@ -3,7 +3,7 @@
 """Tests for the repetition module."""
 from datetime import datetime
 
-from dontforget.repetition import next_dates
+from dontforget.repetition import next_dates, right_now
 
 
 def test_simple_patterns_with_every_each():
@@ -27,8 +27,8 @@ def test_simple_patterns_with_every_each():
 
 def test_invalid_repetition():
     """Invalid repetition."""
-    assert next_dates(None, datetime.utcnow()) is None
-    assert next_dates('something really strange', datetime.utcnow()) is None
+    assert next_dates(None, right_now()) is None
+    assert next_dates('something really strange', right_now()) is None
 
 
 def test_invalid_count():

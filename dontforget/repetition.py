@@ -30,6 +30,11 @@ ABBREVIATIONS = dict(
 )
 
 
+def right_now():
+    """Return the current date/time, in the UTC timezone. This function can be mocked on tests."""
+    return arrow.utcnow().datetime
+
+
 def normalise_unit(value):
     """Normalise a unit (day, month, year...) to conform to dateutil naming (mainly making it a plural word)."""
     clean = value.lower().rstrip('s')
@@ -66,7 +71,7 @@ def next_dates(natural_language_repetition, reference_date=None, count=1):
     if not natural_language_repetition:
         return None
     if not reference_date:
-        reference_date = arrow.utcnow()
+        reference_date = right_now()
 
     mapping = FREQUENCY_MAPPING.get(natural_language_repetition.lower())
     if mapping:
