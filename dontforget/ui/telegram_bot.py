@@ -67,16 +67,35 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         super(ChoreBot, self).__init__(*args, **kwargs)
 
-        self.mapping = {
-            '/start': self.show_welcome_message,
-            '/overdue': self.show_overdue_alarms,
-            '/add': self.add_command,
-            '/new': self.add_command,
+        # Raw mapping with tuples when the same function has several shortcuts.
+        raw_mapping = {
+            ('/start', '/help'): self.show_help,
+            ('/add', '/new'): self.add_command,
+            ('/overdue', '/due'): self.show_overdue_alarms,
             '/id': self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
             self.Step.TYPE_CHORE_INFO: self.type_chore_info,
         }
+
+        # Expand into a key/value mapping used by the bot.
+        self.mapping = {}
+        for key_or_tuple, function in raw_mapping.items():
+            if isinstance(key_or_tuple, tuple):
+                for key in key_or_tuple:
+                    self.mapping[key] = function
+            else:
+                self.mapping[key_or_tuple] = function
+
+    def show_help(self):
+        """Show a help message."""
+        self.send_message(
+            'I\'m a bot to help you with your chores.'
+            '\nWhat you can do:'
+            '\n\n\u2022 /start or /help to show this help'
+            '\n\n\u2022 /add or /new to add a chore with an alarm'
+            '\n\n\u2022 /due or /overdue to show overdue alarms'
+        )
 
     def send_message(self, *args, **kwargs):
         """Send a message, and remove the keyboard if none was sent.
@@ -153,10 +172,6 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 # Reset the current step and try
                 self.next_step = None
 
-    def show_welcome_message(self):
-        """Show a welcome message."""
-        self.send_message("I'm a bot to help you with your chores.")
-
     def fallback_message(self):
         """Show a fallback message in case of an unknown command or text."""
         self.send_message("I don't understand what you mean.")
@@ -221,7 +236,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             self.action_message = message
             self.send_message(
                 'Choose a time from the suggestions below, or write the desired time',
-                reply_markup=self.arrange_keyboard(self.SUGGESTED_TIMES, 5))
+                reply_markup=self.arrange_keyboard(self.SUGGESTED_TIMES, 4))
             return self.Step.CHOOSE_TIME
 
         alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
