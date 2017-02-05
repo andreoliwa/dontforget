@@ -63,6 +63,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         self.alarm_id = None
         """:type: int"""
+        self.alarm = None
         self.action_message = None
 
         super(ChoreBot, self).__init__(*args, **kwargs)
@@ -194,18 +195,21 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_alarm_details(self):
         """Show details of an alarm."""
-        alarm = None
+        self.alarm = None
         self.alarm_id = None
         if self.command_args:
             # Get only digits from the text.
             self.alarm_id = int(re.sub(r'\D', '', self.command_args))
-            alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
-        if not alarm:
-            self.send_message('I could not find the alarm {}'.format(self.alarm_id or ''))
+
+            # Query the unseen alarm with this id.
+            self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
+                id=self.alarm_id, current_state=AlarmState.UNSEEN).first()
+        if not self.alarm:
+            self.send_message('I could not find this alarm')
             return
 
         self.send_message(
-            'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
+            'What do you want to do with this alarm?\n{}'.format(self.alarm.one_line),
             reply_markup=self.arrange_keyboard(self.ACTION_BUTTONS, 4))
         return self.Step.CHOOSE_ACTION
 
@@ -239,22 +243,20 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 reply_markup=self.arrange_keyboard(self.SUGGESTED_TIMES, 4))
             return self.Step.CHOOSE_TIME
 
-        alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
-        function(alarm)
-        self.send_message('{}\n{}'.format(message, alarm.one_line))
+        function(self.alarm)
+        self.send_message('{}\n{}'.format(message, self.alarm.one_line))
 
         return self.show_overdue_alarms()
 
     def snooze_alarm(self):
         """Snooze an alarm using the desired input time."""
-        if not self.alarm_id:
+        if not self.alarm:
             self.send_message('No alarm is selected, choose one below')
         elif not self.action_message:
             self.send_message('No action was selected')
         else:
-            alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
-            alarm.snooze(self.text)
-            self.send_message('{} {}\n{}'.format(self.action_message, self.text, alarm.one_line))
+            self.alarm.snooze(self.text)
+            self.send_message('{} {}\n{}'.format(self.action_message, self.text, self.alarm.one_line))
 
         self.show_overdue_alarms()
 
