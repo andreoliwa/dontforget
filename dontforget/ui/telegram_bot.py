@@ -27,10 +27,9 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     class Step(Enum):
         """Steps for the conversation."""
 
-        CHOOSE_ALARM = 1
-        CHOOSE_ACTION = 2
-        CHOOSE_TIME = 3
-        TYPE_CHORE_INFO = 4
+        CHOOSE_ACTION = 1
+        CHOOSE_TIME = 2
+        TYPE_CHORE_INFO = 3
 
     class Actions(Enum):
         """Actions that can be performed on an alarm."""
@@ -74,14 +73,19 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             '/add': self.add_command,
             '/new': self.add_command,
             '/id': self.show_alarm_details,
-            self.Step.CHOOSE_ALARM: self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
             self.Step.TYPE_CHORE_INFO: self.type_chore_info,
         }
 
     def send_message(self, *args, **kwargs):
-        """Send a message. Show a marker for debug purposes, when in the development environment."""
+        """Send a message, and remove the keyboard if none was sent.
+
+        Also show a marker for debug purposes, when in the development environment.
+        """
+        reply_markup = kwargs.pop('reply_markup', ReplyKeyboardRemove(remove_keyboard=True, selective=True))
+        kwargs['reply_markup'] = reply_markup
+
         if self.flask_app.config.get('ENV') != 'dev':
             return self.sender.sendMessage(*args, **kwargs)  # pylint: disable=no-member
 
@@ -171,23 +175,19 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
             return
 
-        self.send_message(
-            'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)),
-            reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
-        return self.Step.CHOOSE_ALARM
+        self.send_message('Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)))
 
     def show_alarm_details(self):
         """Show details of an alarm."""
-        try:
+        alarm = None
+        self.alarm_id = None
+        if self.command_args:
             # Get only digits from the text.
-            self.alarm_id = int(re.sub(r'\D', '', self.text))
-        except ValueError:
-            raise DispatchAgain
-
-        alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
+            self.alarm_id = int(re.sub(r'\D', '', self.command_args))
+            alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
         if not alarm:
-            self.send_message('I could not find the alarm {}'.format(self.alarm_id))
-            return self.Step.CHOOSE_ALARM
+            self.send_message('I could not find the alarm {}'.format(self.alarm_id or ''))
+            return
 
         self.send_message(
             'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
@@ -234,6 +234,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         """Snooze an alarm using the desired input time."""
         if not self.alarm_id:
             self.send_message('No alarm is selected, choose one below')
+        elif not self.action_message:
+            self.send_message('No action was selected')
         else:
             alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
             alarm.snooze(self.text)
