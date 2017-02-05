@@ -1,4 +1,5 @@
 """Telegram bot module."""
+import re
 from enum import Enum
 
 import maya
@@ -12,6 +13,12 @@ from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
+
+
+class DispatchAgain(Exception):
+    """Exception to force another message dispatch."""
+
+    pass
 
 
 class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
@@ -61,6 +68,18 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         super(ChoreBot, self).__init__(*args, **kwargs)
 
+        self.mapping = {
+            '/start': self.show_welcome_message,
+            '/overdue': self.show_overdue_alarms,
+            '/add': self.add_command,
+            '/new': self.add_command,
+            '/id': self.show_alarm_details,
+            self.Step.CHOOSE_ALARM: self.show_alarm_details,
+            self.Step.CHOOSE_ACTION: self.execute_action,
+            self.Step.CHOOSE_TIME: self.snooze_alarm,
+            self.Step.TYPE_CHORE_INFO: self.type_chore_info,
+        }
+
     def send_message(self, *args, **kwargs):
         """Send a message. Show a marker for debug purposes, when in the development environment."""
         if self.flask_app.config.get('ENV') != 'dev':
@@ -95,30 +114,40 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 [(self.text[entity['offset']:entity['length']], self.text[entity['length'] + 1:])
                  for entity in msg['entities'] if entity['type'] == 'bot_command'])
 
+            # Consider the underscore as a separator between a command and its arguments.
+            if '_' in self.command:
+                self.command, self.command_args = self.command.split('_', 1)
+
             # Set an explicit None in case the message only contains the command.
             if self.command == self.text:
                 self.command_args = None
 
-        mapping = {
-            '/start': self.show_welcome_message,
-            '/overdue': self.show_overdue_alarms,
-            '/add': self.add_command,
-            '/new': self.add_command,
-            self.Step.CHOOSE_ALARM: self.show_alarm_details,
-            self.Step.CHOOSE_ACTION: self.execute_action,
-            self.Step.CHOOSE_TIME: self.snooze_alarm,
-            self.Step.TYPE_CHORE_INFO: self.type_chore_info,
-        }
-        function = None
-        for value in (self.next_step, self.text, self.command):
-            function = mapping.get(value)
-            if function:
-                break
-        if not function:
-            function = self.fallback_message
+        # Loop until a message is processed.
+        while True:
+            try:
+                # Try finding a valid function to process the message,
+                # first matching the next step, then the text, then a command.
+                function = None
+                for value in (self.next_step, self.text, self.command):
+                    function = self.mapping.get(value)
+                    if function:
+                        break
 
-        with self.flask_app.app_context():
-            self.next_step = function()
+                # Fallback message, usually to warn the user that
+                # the message was not understood.
+                if not function:
+                    function = self.fallback_message
+
+                # Execute the function inside an app context,
+                # and save the result as the next step in the conversation.
+                with self.flask_app.app_context():
+                    self.next_step = function()
+
+                # Break when a message was successfully processed.
+                break
+            except DispatchAgain:
+                # Reset the current step and try
+                self.next_step = None
 
     def show_welcome_message(self):
         """Show a welcome message."""
@@ -135,10 +164,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         query = Alarm.query.filter(  # pylint: disable=no-member
             Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
         chores = []
-        buttons = []
         for alarm in query.all():
-            buttons.append('{}: {}'.format(alarm.id, alarm.chore.title[:30]))
-            chores.append('\u2705 {}: {}'.format(alarm.id, alarm.one_line))
+            chores.append('\u2705 /id_{}: {}'.format(alarm.id, alarm.one_line))
 
         if not chores:
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
@@ -146,18 +173,22 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         self.send_message(
             'Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)),
-            reply_markup=self.arrange_keyboard(buttons, 2))
+            reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
         return self.Step.CHOOSE_ALARM
 
     def show_alarm_details(self):
         """Show details of an alarm."""
         try:
-            self.alarm_id = int(self.text.split(':')[0])
+            # Get only digits from the text.
+            self.alarm_id = int(re.sub(r'\D', '', self.text))
         except ValueError:
-            self.send_message("This doesn't look like a chore to me.")
-            return self.Step.CHOOSE_ALARM
+            raise DispatchAgain
 
         alarm = Alarm.query.get(self.alarm_id)  # pylint: disable=no-member
+        if not alarm:
+            self.send_message('I could not find the alarm {}'.format(self.alarm_id))
+            return self.Step.CHOOSE_ALARM
+
         self.send_message(
             'What do you want to do with this alarm?\n{}'.format(alarm.one_line),
             reply_markup=self.arrange_keyboard(self.ACTION_BUTTONS, 4))
@@ -183,9 +214,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
-            self.send_message(
-                "I don't understand the action '{}'. Try one of the buttons below.".format(self.text))
-            return self.Step.CHOOSE_ACTION
+            raise DispatchAgain
 
         function, message = tuple_value
         if function == Alarm.snooze:
@@ -214,9 +243,6 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def on__idle(self, event):
         """Close the conversation when idle for some time."""
-        if self.next_step:
-            self.send_message("It looks like you're busy now. Let's talk later, {}.".format(
-                self.msg['from']['first_name']), reply_markup=ReplyKeyboardRemove(remove_keyboard=True, selective=True))
         self.close()  # pylint: disable=no-member
 
     def add_command(self):
