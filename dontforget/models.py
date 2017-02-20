@@ -7,6 +7,7 @@ from sqlalchemy.sql.functions import func
 from dontforget.database import Model, SurrogatePK, reference_col
 from dontforget.extensions import db
 from dontforget.repetition import next_dates, right_now
+from dontforget.utils import DATETIME_FORMAT, TIMEZONE
 
 
 class Chore(SurrogatePK, Model):
@@ -26,6 +27,17 @@ class Chore(SurrogatePK, Model):
         return '<Chore {0!r} {1!r}, starting at {2}, repetition {3!r} from {4}>'.format(
             self.id, self.title, self.alarm_start, self.repetition,
             'completed' if self.repeat_from_completed else 'due date')
+
+    @property
+    def one_line(self):
+        """Represent the chore in one line."""
+        return '{title} / from {start} to {end} / {repetition} {completed}'.format(
+            title=self.title,
+            start=arrow.get(self.alarm_start).to(TIMEZONE).format(DATETIME_FORMAT),
+            end=arrow.get(self.alarm_end).to(TIMEZONE).format(DATETIME_FORMAT) if self.alarm_end else 'infinity',
+            repetition=self.repetition or 'Once',
+            completed='(from completed)' if self.repeat_from_completed else ''
+        )
 
     def active(self):
         """Return True if the chore is active right now.
@@ -113,10 +125,10 @@ class Alarm(SurrogatePK, Model):
     @property
     def one_line(self):
         """Represent the alarm in one line."""
-        due_at = arrow.get(self.original_at or self.next_at).to('Europe/Berlin')
+        due_at = arrow.get(self.original_at or self.next_at).to(TIMEZONE)
         return '{title} \u231b {due} ({human}) \u21ba {repetition} {completed}'.format(
             title=self.chore.title,
-            due=due_at.format('ddd MMM DD, YYYY HH:mm'),
+            due=due_at.format(DATETIME_FORMAT),
             human=due_at.humanize(),
             repetition=self.chore.repetition or 'Once',
             completed='(from completed)' if self.chore.repeat_from_completed else ''

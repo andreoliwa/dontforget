@@ -3,6 +3,7 @@ import re
 from enum import Enum
 
 import maya
+from sqlalchemy import and_
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
@@ -13,6 +14,7 @@ from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
+from dontforget.utils import UT
 
 
 class DispatchAgain(Exception):
@@ -73,6 +75,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             ('/start', '/help'): self.show_help,
             ('/add', '/new'): self.add_command,
             ('/overdue', '/due'): self.show_overdue_alarms,
+            ('/chores', '/active'): self.show_active_chores,
+            '/all': self.show_all_chores,
             '/id': self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
@@ -93,9 +97,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         self.send_message(
             'I\'m a bot to help you with your chores.'
             '\nWhat you can do:'
-            '\n\n\u2022 /start or /help to show this help'
-            '\n\n\u2022 /add or /new to add a chore with an alarm'
-            '\n\n\u2022 /due or /overdue to show overdue alarms'
+            '\n\u2022 /start or /help to show this help'
+            '\n\u2022 /add or /new to add a chore with an alarm'
+            '\n\u2022 /due or /overdue to show overdue alarms'
+            '\n\u2022 /chores to show all chores (most recent first)'
         )
 
     def send_message(self, *args, **kwargs):
@@ -298,6 +303,31 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         db.session.commit()
 
         self.send_message('The chore was added.')
+
+    def show_active_chores(self):
+        """Show only active chores."""
+        return self._show_chores(Chore.query.join)  # pylint: disable=no-member
+
+    def show_all_chores(self):
+        """Show all chores."""
+        return self._show_chores(Chore.query.outerjoin)  # pylint: disable=no-member
+
+    def _show_chores(self, join_function):
+        """Show chores using the desired JOIN function."""
+        query = join_function(
+            Alarm, and_(Alarm.chore_id == Chore.id, Alarm.current_state == AlarmState.UNSEEN)).order_by(
+                Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.current_state)
+        chores = []
+        for row in query.all():
+            chores.append('{active} {one_line}'.format(
+                active=UT.LargeBlueCircle if row.current_state else UT.LargeRedCircle,
+                one_line=row.Chore.one_line
+            ))
+        if not chores:
+            self.send_message("You don't have any chores yet, use /add to create one")
+            return
+
+        self.send_message('\n{chores}'.format(chores='\n'.join(chores)))
 
 
 def main_loop(app, queue=None):
