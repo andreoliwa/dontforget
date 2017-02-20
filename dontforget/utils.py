@@ -6,6 +6,16 @@ import sqlalchemy as sa
 from alembic import op
 from flask import flash
 
+DATETIME_FORMAT = 'ddd MMM DD, YYYY HH:mm'
+TIMEZONE = 'Europe/Berlin'
+
+
+class UT:
+    """Unicode table helper."""
+
+    LargeRedCircle = '\U0001F534'
+    LargeBlueCircle = '\U0001F535'
+
 
 def flash_errors(form, category='warning'):
     """Flash all errors for a form."""

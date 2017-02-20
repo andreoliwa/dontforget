@@ -3,6 +3,7 @@ import re
 from enum import Enum
 
 import maya
+from sqlalchemy import and_
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
@@ -13,6 +14,7 @@ from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
+from dontforget.utils import UT
 
 
 class DispatchAgain(Exception):
@@ -68,11 +70,13 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         super(ChoreBot, self).__init__(*args, **kwargs)
 
-        # Raw mapping with tuples when the same function has several shortcuts.
+        # Raw mapping with tuples when the same function has several shortcuts, plus help text when available.
         raw_mapping = {
-            ('/start', '/help'): self.show_help,
-            ('/add', '/new'): self.add_command,
-            ('/overdue', '/due'): self.show_overdue_alarms,
+            ('/start', '/help'): (self.show_help, 'show this help'),
+            ('/add', '/new'): (self.add_command, 'add a chore with an alarm'),
+            ('/overdue', '/due'): (self.show_overdue_alarms, 'show overdue alarms'),
+            ('/chores', '/active'): (self.show_active_chores, 'show chores with active alarms'),
+            '/all': (self.show_all_chores, 'show all chores'),
             '/id': self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
@@ -81,21 +85,33 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         # Expand into a key/value mapping used by the bot.
         self.mapping = {}
-        for key_or_tuple, function in raw_mapping.items():
+        self.full_help = []
+        for key_or_tuple, function_help in raw_mapping.items():
+            if isinstance(function_help, tuple):
+                function, help_text = function_help
+            else:
+                function = function_help
+                help_text = None
+
+            commands = []
             if isinstance(key_or_tuple, tuple):
                 for key in key_or_tuple:
                     self.mapping[key] = function
+                    commands.append(key)
             else:
                 self.mapping[key_or_tuple] = function
+                commands.append(key_or_tuple)
+
+            if help_text:
+                self.full_help.append('\u2022 {commands} to {help_text}'.format(
+                    commands=' or '.join(commands), help_text=help_text))
 
     def show_help(self):
         """Show a help message."""
         self.send_message(
             'I\'m a bot to help you with your chores.'
             '\nWhat you can do:'
-            '\n\n\u2022 /start or /help to show this help'
-            '\n\n\u2022 /add or /new to add a chore with an alarm'
-            '\n\n\u2022 /due or /overdue to show overdue alarms'
+            '\n{}'.format('\n'.join(self.full_help))
         )
 
     def send_message(self, *args, **kwargs):
@@ -298,6 +314,31 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         db.session.commit()
 
         self.send_message('The chore was added.')
+
+    def show_active_chores(self):
+        """Show only active chores."""
+        return self._show_chores(Chore.query.join)  # pylint: disable=no-member
+
+    def show_all_chores(self):
+        """Show all chores."""
+        return self._show_chores(Chore.query.outerjoin)  # pylint: disable=no-member
+
+    def _show_chores(self, join_function):
+        """Show chores using the desired JOIN function."""
+        query = join_function(
+            Alarm, and_(Alarm.chore_id == Chore.id, Alarm.current_state == AlarmState.UNSEEN)).order_by(
+                Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.current_state)
+        chores = []
+        for row in query.all():
+            chores.append('{active} {one_line}'.format(
+                active=UT.LargeBlueCircle if row.current_state else UT.LargeRedCircle,
+                one_line=row.Chore.one_line
+            ))
+        if not chores:
+            self.send_message("You don't have any chores yet, use /add to create one")
+            return
+
+        self.send_message('\n{chores}'.format(chores='\n'.join(chores)))
 
 
 def main_loop(app, queue=None):
