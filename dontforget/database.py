@@ -1,7 +1,21 @@
 # -*- coding: utf-8 -*-
 """Database module, including the SQLAlchemy database object and DB-related utilities."""
+import os
+import sys
+
+from flask import current_app, has_app_context
+from flask_migrate import Migrate, upgrade
+from sqlalchemy import ForeignKeyConstraint, MetaData, Table
+from sqlalchemy.engine import reflection
+from sqlalchemy.sql.ddl import DropConstraint, DropTable
+
+from dontforget.settings import TestConfig
+
 from .compat import basestring
 from .extensions import db
+
+# A list of tables that should be ignored when dropping and listing all our tables.
+IGNORED_TABLES = ['spatial_ref_sys']
 
 
 class CRUDMixin(object):
@@ -69,3 +83,88 @@ def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
     return db.Column(
         db.ForeignKey('{0}.{1}'.format(tablename, pk_name)),
         nullable=nullable, **kwargs)
+
+
+def db_refresh(short=False):
+    """Refresh the database.
+
+    :param short: Short version
+    """
+    create_local_context = not has_app_context()
+    if create_local_context:
+        # When this command is run from the command line, there is no app context, so let's create one
+        from dontforget.app import create_app
+        app_ = create_app(TestConfig)
+        Migrate(app_, db, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'migrations'))
+        context = app_.app_context()
+        context.push()
+
+    tmp_handlers = current_app.logger.handlers
+    current_app.logger.handlers = []
+    tmp_stderr = sys.stderr
+    if short:
+        sys.stderr = None
+
+    db.reflect()
+    drop_everything()
+    upgrade()
+
+    if short:
+        sys.stderr = tmp_stderr
+
+    current_app.logger.handlers = tmp_handlers
+
+    if create_local_context:
+        # Remove the context after use
+        db.session.remove()
+        context.pop()
+
+
+def drop_everything():
+    """Drop all constraints, then all tables.
+
+    Adapted from:
+    http://www.mbeckler.org/blog/?p=218
+    https://bitbucket.org/zzzeek/sqlalchemy/wiki/UsageRecipes/DropEverything
+
+    Using the ``db.drop_all()`` function can throw an error like this:
+        sqlalchemy.exc.InternalError: (InternalError) cannot drop table voucher because other objects depend on it
+        DETAIL:  constraint voucher_user_fk on table "user" depends on table voucher
+        HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+        'DROP TABLE voucher' {}
+
+    :return:
+    """
+    conn = db.engine.connect()
+
+    # The transaction only applies if the DB supports transactional DDL, i.e. PostgreSQL, MS SQL Server
+    trans = conn.begin()
+
+    inspector = reflection.Inspector.from_engine(db.engine)
+
+    # Gather all data first before dropping anything. Some DBs lock after things have been dropped in a transaction.
+    metadata = MetaData()
+
+    all_tables = []
+    all_foreign_keys = []
+
+    for table_name in inspector.get_table_names():
+        if table_name in IGNORED_TABLES:
+            continue
+
+        foreign_keys = []
+        for foreign_key in inspector.get_foreign_keys(table_name):
+            if not foreign_key['name']:
+                continue
+            foreign_keys.append(ForeignKeyConstraint((), (), name=foreign_key['name']))
+        table = Table(table_name, metadata, *foreign_keys)
+        all_tables.append(table)
+        all_foreign_keys.extend(foreign_keys)
+
+    for foreign_key_constraint in all_foreign_keys:
+        conn.execute(DropConstraint(foreign_key_constraint))
+
+    for table in all_tables:
+        conn.execute(DropTable(table))
+
+    trans.commit()
