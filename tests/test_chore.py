@@ -207,4 +207,4 @@ def test_spawn_alarm_for_future_chores(db):
     db.session.commit()
 
     assert spawn_alarms() == 1
-    assert Alarm.query.first().next_at == next_week.replace(tzinfo=None)
+    assert Alarm.query.first().next_at == next_week

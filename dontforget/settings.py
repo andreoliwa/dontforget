@@ -33,9 +33,6 @@ class ProdConfig(Config):
 
     ENV = 'prod'
     DEBUG = False
-    DB_NAME = 'prod.sqlite'
-    # Put the db file in project root
-    DB_PATH = os.path.join(Config.PROJECT_ROOT, DB_NAME)
     SQLALCHEMY_DATABASE_URI = 'postgresql://dontforget:dontforget@postgresql:5432/dontforget'
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
 
@@ -45,9 +42,6 @@ class DevConfig(Config):
 
     ENV = 'dev'
     DEBUG = True
-    DB_NAME = 'dev.sqlite'
-    # Put the db file in project root
-    DB_PATH = os.path.join(Config.PROJECT_ROOT, DB_NAME)
     SQLALCHEMY_DATABASE_URI = 'postgresql://dontforget:dontforget@postgresql:5433/dontforget_dev'
     DEBUG_TB_ENABLED = True
     ASSETS_DEBUG = True  # Don't bundle/minify static assets

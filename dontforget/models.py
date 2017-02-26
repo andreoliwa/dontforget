@@ -49,7 +49,7 @@ class Chore(SurrogatePK, Model):
         :return: Return True if the chore is active right now.
         :rtype: bool
         """
-        now = right_now().replace(tzinfo=None)
+        now = right_now()
         return self.alarm_start <= now and (self.alarm_end is None or now <= self.alarm_end)
 
     @classmethod
@@ -61,7 +61,7 @@ class Chore(SurrogatePK, Model):
 
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
-        now = right_now().replace(tzinfo=None)
+        now = right_now()
         return and_(or_(Alarm.id.is_(None), cls.alarm_start <= now),
                     or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
 
