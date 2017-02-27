@@ -4,7 +4,7 @@ wheel==0.29.0
 prettyconf==1.2.3
 python-dateutil==2.6.0
 arrow==0.10.0
-maya==0.1.5
+maya==0.1.8
 
 # Flask
 Flask==0.12
