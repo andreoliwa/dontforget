@@ -53,7 +53,7 @@ pytest-runfailed==0.6
 WebTest==2.0.24
 factory-boy==2.8.1
 fake-factory==0.7.2
-ipdb==0.10.1
+ipdb==0.10.2
 ipython==5.1.0
 coverage==4.3
 pytest-cov==2.4.0
