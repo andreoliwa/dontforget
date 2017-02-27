@@ -5,13 +5,16 @@ from datetime import timedelta
 import arrow
 
 from dontforget.cron import spawn_alarms
+from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
 
 
-def test_search_similar(db):
+def test_search_similar(app):
     """Search for similar chores."""
+    assert app
+
     first = ChoreFactory(title='My first chore')
     something = ChoreFactory(title='Do SOMETHING soon')
     coffee = ChoreFactory(title='Buy coffee')
@@ -35,8 +38,10 @@ def test_search_similar(db):
     assert rv == [first]
 
 
-def test_create_alarms_for_active_chores(db):
+def test_create_alarms_for_active_chores(app):
     """Create alarms for active chores."""
+    assert app
+
     veggie = ChoreFactory(title='Buy vegetables', alarm_start=YESTERDAY, alarm_end=YESTERDAY)
     coffee = ChoreFactory(title='Buy coffee', alarm_start=YESTERDAY, alarm_end=NEXT_WEEK)
     chocolate = ChoreFactory(title='Buy chocolate', alarm_start=YESTERDAY)
@@ -69,8 +74,10 @@ def test_create_alarms_for_active_chores(db):
     assert spawn_alarms() == 0
 
 
-def test_one_time_only_chore(db):
+def test_one_time_only_chore(app):
     """Create chore without repetition and open end."""
+    assert app
+
     chore = ChoreFactory(title='Buy house', repetition=None, alarm_start=YESTERDAY)
     db.session.commit()
 
@@ -85,8 +92,10 @@ def test_one_time_only_chore(db):
     assert spawn_alarms() == 0
 
 
-def test_daily_chore(db):
+def test_daily_chore(app):
     """Create chore with daily repetition and open end."""
+    assert app
+
     chore = ChoreFactory(title='Drink coffee', repetition='Daily', alarm_start=YESTERDAY)
     db.session.commit()
 
@@ -121,8 +130,10 @@ def test_daily_chore(db):
     assert spawn_alarms() == 0
 
 
-def test_daily_chore_from_completed(db):
+def test_daily_chore_from_completed(app):
     """Create chore with daily repetition, repeating from the completion date."""
+    assert app
+
     chore = ChoreFactory(title='Buy coffee', repetition='Daily', alarm_start=YESTERDAY, repeat_from_completed=True)
     db.session.commit()
 
@@ -160,8 +171,10 @@ def test_daily_chore_from_completed(db):
     assert spawn_alarms() == 0
 
 
-def test_snooze_from_original_due_date(db):
+def test_snooze_from_original_due_date(app):
     """When you snooze a chore and then complete it later, the original date should get the repetition."""
+    assert app
+
     ten_oclock = TODAY.replace(hour=10, minute=0, second=0, microsecond=0)
     chore = ChoreFactory(repetition='Daily', repeat_from_completed=False)
     AlarmFactory(chore=chore, next_at=ten_oclock)
@@ -200,8 +213,10 @@ def test_snooze_from_original_due_date(db):
     assert last_alarm.next_at == ten_oclock + timedelta(days=2)
 
 
-def test_spawn_alarm_for_future_chores(db):
+def test_spawn_alarm_for_future_chores(app):
     """Spawn alarms for future chores."""
+    assert app
+
     next_week = arrow.utcnow().shift(weeks=1).datetime
     ChoreFactory(title='Start a diet', alarm_start=next_week)
     db.session.commit()

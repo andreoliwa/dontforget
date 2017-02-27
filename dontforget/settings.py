@@ -13,6 +13,9 @@ UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
 UI_TELEGRAM_BOT_TOKEN = config('UI_TELEGRAM_BOT_TOKEN', default=None)
 UI_TELEGRAM_BOT_IDLE_TIMEOUT = config('UI_TELEGRAM_BOT_IDLE_TIMEOUT', default=120, cast=int)
 
+# By default, database will be refreshed every time a test runs.
+TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=config.boolean)
+
 
 class Config(object):
     """Base configuration."""

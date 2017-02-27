@@ -6,9 +6,18 @@ language: python
 python:
   - 3.5
 
+services:
+  - postgresql
+
+addons:
+  postgresql: "9.6"
+
 install:
   - pip install codecov
   - pip install -r requirements.txt
+
+before_script:
+  - psql -U postgres -c 'CREATE DATABASE dontforget_test;'
 
 script:
   - ./manage.py lint --pylint
