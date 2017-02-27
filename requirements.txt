@@ -50,7 +50,7 @@ telepot==10.4
 # Testing
 pytest==3.0.5
 pytest-runfailed==0.6
-WebTest==2.0.24
+WebTest==2.0.25
 factory-boy==2.8.1
 fake-factory==0.7.2
 ipdb==0.10.1
