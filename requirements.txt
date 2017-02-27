@@ -72,4 +72,4 @@ isort==4.2.5
 pep8==1.7.0
 pep8-naming==0.4.1
 pylint==1.6.4
-pur==4.0.0
+pur==4.0.2
