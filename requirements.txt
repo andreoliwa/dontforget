@@ -48,7 +48,7 @@ telepot==10.4
 # Everything the developer needs
 
 # Testing
-pytest==3.0.5
+pytest==3.0.6
 pytest-runfailed==0.6
 WebTest==2.0.24
 factory-boy==2.8.1
