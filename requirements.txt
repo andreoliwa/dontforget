@@ -41,7 +41,7 @@ Flask-Bcrypt==0.7.1
 Flask-Cache>=0.13.1
 
 # Debug toolbar
-Flask-DebugToolbar==0.10.0
+Flask-DebugToolbar==0.10.1
 
 # UI
 telepot==10.4
