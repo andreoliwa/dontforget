@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Functions meant to be called several times, manually or with cron jobs."""
+from sqlalchemy import and_
 from sqlalchemy.sql import func
 
 from dontforget.extensions import db
@@ -14,10 +15,14 @@ def spawn_alarms():
     :rtype: int
     """
     # pylint: disable=no-member
+    result = db.session.query(Chore.id, func.max(Alarm.next_at).label('max_next_at')).outerjoin(Alarm).filter(
+        Chore.active_expression()).group_by(Chore.id).subquery()
+
     query = db.session.query(
         Chore.id, Chore.alarm_start, Chore.repetition, Chore.repeat_from_completed,
-        Alarm.current_state, Alarm.updated_at, func.max(Alarm.next_at)
-    ).outerjoin(Alarm, Chore.id == Alarm.chore_id).group_by(Chore.id).filter(Chore.active_expression())
+        Alarm.current_state, Alarm.updated_at, Alarm.next_at
+    ).join(result, result.c.id == Chore.id).outerjoin(
+        Alarm, and_(Chore.id == Alarm.chore_id, result.c.max_next_at == Alarm.next_at)).order_by(Chore.id)
 
     alarms_created = 0
     for chore_id, alarm_start, repetition, repeat_from_completed, current_state, updated_at, last_alarm in query.all():
