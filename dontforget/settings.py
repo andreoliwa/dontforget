@@ -16,6 +16,9 @@ UI_TELEGRAM_BOT_IDLE_TIMEOUT = config('UI_TELEGRAM_BOT_IDLE_TIMEOUT', default=12
 # By default, database will be refreshed every time a test runs.
 TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=config.boolean)
 
+# Tests running on Travis CI?
+RUNNING_ON_TRAVIS = config('RUNNING_ON_TRAVIS', default=False, cast=config.boolean)
+
 
 class Config(object):
     """Base configuration."""

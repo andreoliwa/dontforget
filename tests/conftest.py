@@ -46,6 +46,9 @@ def tear_down():
 def app():
     """An application for the tests."""
     _app = create_app(TestConfig)
+    from dontforget.settings import RUNNING_ON_TRAVIS
+    if RUNNING_ON_TRAVIS:
+        _app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://dontforget:dontforget@localhost/dontforget_test'
     context = _app.app_context()
     context.push()
 
