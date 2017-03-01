@@ -44,6 +44,7 @@ def add_required_column(  # pylint: disable=too-many-arguments
         add_column = batch_operation.add_column
         execute = batch_operation.execute
         alter_column = batch_operation.alter_column
+        table_name = batch_operation.impl.table_name
     else:
         add_column = partial(op.add_column, table_name)
         execute = op.execute

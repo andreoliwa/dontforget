@@ -5,7 +5,7 @@ import sys
 
 from flask import current_app, has_app_context
 from flask_migrate import Migrate, upgrade
-from sqlalchemy import ForeignKeyConstraint, MetaData, Table
+from sqlalchemy import ForeignKeyConstraint, MetaData, Table, func
 from sqlalchemy.engine import reflection
 from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
@@ -70,6 +70,15 @@ class SurrogatePK(object):
         ):
             return cls.query.get(int(record_id))  # pylint: disable=no-member
         return None
+
+
+class CreatedUpdatedMixin(object):
+    """A mixin that adds created and updated dates to a model."""
+
+    # func.now() is equivalent to CURRENT_TIMESTAMP in SQLite, which is always UTC (GMT).
+    # See https://www.sqlite.org/lang_datefunc.html
+    created_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    updated_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, onupdate=func.now(), default=func.now())
 
 
 def reference_col(tablename, nullable=False, pk_name='id', **kwargs):

@@ -2,23 +2,24 @@
 """Database models."""
 import arrow
 from sqlalchemy import and_, or_
-from sqlalchemy.sql.functions import func
 
-from dontforget.database import Model, SurrogatePK, reference_col
+from dontforget.database import CreatedUpdatedMixin, Model, SurrogatePK, reference_col
 from dontforget.extensions import db
 from dontforget.repetition import next_dates, right_now
 from dontforget.utils import DATETIME_FORMAT, TIMEZONE
 
 
-class Chore(SurrogatePK, Model):
+class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     """Anything you need to do, with or without due date, with or without repetition."""
 
     __tablename__ = 'chore'
     title = db.Column(db.String(), unique=True, nullable=False)
-    alarm_start = db.Column(db.TIMESTAMP(True), nullable=False)
-    alarm_end = db.Column(db.TIMESTAMP(True))
+    alarm_start = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
+    alarm_end = db.Column(db.TIMESTAMP(timezone=True))
     repetition = db.Column(db.String())
     repeat_from_completed = db.Column(db.Boolean(), nullable=False, default=False)
+    due_at = db.Column(db.TIMESTAMP(timezone=True))
+    alarm_at = db.Column(db.TIMESTAMP(timezone=True))
 
     alarms = db.relationship('Alarm')
 
@@ -99,7 +100,7 @@ ALARM_STATE_ENUM = db.Enum(
     AlarmState.STOPPED, name='alarm_state_enum')
 
 
-class Alarm(SurrogatePK, Model):
+class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
     """An alarm for a chore."""
 
     __tablename__ = 'alarm'
@@ -108,11 +109,7 @@ class Alarm(SurrogatePK, Model):
     next_at = db.Column(db.TIMESTAMP(True), nullable=False)
     last_snooze = db.Column(db.String())
 
-    # func.now() is equivalent to CURRENT_TIMESTAMP in SQLite, which is always UTC (GMT).
-    # See https://www.sqlite.org/lang_datefunc.html
-    updated_at = db.Column(db.TIMESTAMP(True), nullable=False, onupdate=func.now(), default=func.now())
-
-    original_at = db.Column(db.TIMESTAMP(True), nullable=True)
+    original_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
 
     chore = db.relationship('Chore')
     """:type: dontforget.models.Chore"""
@@ -125,11 +122,11 @@ class Alarm(SurrogatePK, Model):
     @property
     def one_line(self):
         """Represent the alarm in one line."""
-        due_at = arrow.get(self.original_at or self.next_at).to(TIMEZONE)
+        reference_date = arrow.get(self.original_at or self.next_at).to(TIMEZONE)
         return '{title} \u231b {due} ({human}) \u21ba {repetition} {completed}'.format(
             title=self.chore.title,
-            due=due_at.format(DATETIME_FORMAT),
-            human=due_at.humanize(),
+            due=reference_date.format(DATETIME_FORMAT),
+            human=reference_date.humanize(),
             repetition=self.chore.repetition or 'Once',
             completed='(from completed)' if self.chore.repeat_from_completed else ''
         )
