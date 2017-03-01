@@ -3,12 +3,12 @@
 from unittest.mock import call, patch
 
 import pytest
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory
 
 from dontforget.cron import display_unseen_alarms
 from dontforget.extensions import db
 from dontforget.models import AlarmState
 from dontforget.ui import DialogButton, DialogResult
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory
 
 
 @patch('dontforget.ui.show_dialog')

@@ -8,11 +8,11 @@ from unittest import mock
 import arrow
 import maya
 import pytest
+from tests.factories import ChoreFactory
 
 from dontforget.extensions import db
 from dontforget.models import Alarm, Chore
 from dontforget.ui.telegram_bot import main_loop
-from tests.factories import ChoreFactory
 
 
 class TelegramAppMock:
