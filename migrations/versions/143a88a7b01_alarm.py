@@ -20,6 +20,8 @@ ALARM_STATE_ENUM = postgresql.ENUM('unseen', 'displayed', 'skipped', 'snoozed', 
 
 def upgrade():
     """Upgrade the database."""
+    ALARM_STATE_ENUM.create(op.get_bind())
+
     op.create_table('alarm',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('current_state', ALARM_STATE_ENUM, nullable=False),
@@ -39,3 +41,5 @@ def downgrade():
         batch_op.drop_column('alarm_start')
         batch_op.drop_column('alarm_end')
     op.drop_table('alarm')
+
+    ALARM_STATE_ENUM.drop(op.get_bind())
