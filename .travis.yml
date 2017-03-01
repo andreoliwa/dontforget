@@ -1,18 +1,28 @@
 # Config file for automatic testing at travis-ci.org
 sudo: false  # http://docs.travis-ci.com/user/migrating-from-legacy/
-
+dist: trusty
 language: python
-
+cache: pip
 python:
   - 3.5
-
+services:
+  - postgresql
+addons:
+  postgresql: "9.6"
+  hosts:
+  - postgresql
 install:
   - pip install codecov
   - pip install -r requirements.txt
-
+before_script:
+  - pip freeze
+  - psql -U postgres -c 'CREATE USER dontforget;'
+  - psql -U postgres -c 'CREATE DATABASE dontforget_test;'
+  - psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE dontforget_test TO dontforget;'
 script:
   - ./manage.py lint --pylint
   - py.test --verbose --cov dontforget
-
 after_success:
   - codecov
+after_failure:
+  - dmesg | tail -n 100
