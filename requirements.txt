@@ -4,7 +4,7 @@ wheel==0.29.0
 prettyconf==1.2.3
 python-dateutil==2.6.0
 arrow==0.10.0
-maya==0.1.5
+maya==0.1.8
 
 # Flask
 Flask==0.12
@@ -14,7 +14,7 @@ Jinja2==2.8
 itsdangerous==0.24
 
 # Database
-Flask-SQLAlchemy==2.1
+Flask-SQLAlchemy==2.2
 SQLAlchemy==1.1.6
 psycopg2==2.7
 
