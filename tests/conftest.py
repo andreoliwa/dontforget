@@ -1,50 +1,75 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Defines fixtures available to all tests."""
+import os
 
 import pytest
+from flask_migrate import Migrate
 from webtest import TestApp
 
 from dontforget.app import create_app
-from dontforget.database import db as _db
-from dontforget.settings import TestConfig
+from dontforget.database import db, db_refresh
+from dontforget.settings import TEST_REFRESH_DATABASE, TestConfig
 
-from .factories import UserFactory
+
+@pytest.yield_fixture(scope='session', autouse=True)
+def tear_down():
+    """Create a fake app to refresh db, drop app and after execution create a new fake drop db and drop app."""
+    if not TEST_REFRESH_DATABASE:
+        yield
+        return
+
+    def tear_down_app(app_generator):
+        """Consume app generator."""
+        try:
+            next(app_generator)
+        except StopIteration:
+            # Teardown app
+            pass
+        else:
+            raise RuntimeError('App fixture has more than one yield.')
+
+    app_ = app()
+
+    Migrate(next(app_), db, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'migrations'))
+    db_refresh(short=True)
+    tear_down_app(app_)
+
+    # Halt function until pytest calls the teardown.
+    yield
+    app_ = app()
+    next(app_)
+    tear_down_app(app_)
 
 
 @pytest.yield_fixture(scope='function')
 def app():
     """An application for the tests."""
     _app = create_app(TestConfig)
-    ctx = _app.test_request_context()
-    ctx.push()
+    from dontforget.settings import RUNNING_ON_TRAVIS
+    if RUNNING_ON_TRAVIS:
+        _app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://dontforget:dontforget@localhost/dontforget_test'
+    context = _app.app_context()
+    context.push()
+
+    def fake_commit():
+        """Don't commit on tests; only flush and expire caches."""
+        db.session.flush()
+        db.session.expire_all()
+
+    old_commit = db.session.commit
+    db.session.commit = fake_commit
 
     yield _app
 
-    ctx.pop()
+    db.session.commit = old_commit
+    db.session.remove()
+    db.engine.dispose()
+
+    context.pop()
 
 
 @pytest.fixture(scope='function')
 def testapp(app):
     """A Webtest app."""
     return TestApp(app)
-
-
-@pytest.yield_fixture(scope='function')
-def db(app):
-    """A database for the tests."""
-    _db.app = app
-    with app.app_context():
-        _db.create_all()
-
-    yield _db
-
-    _db.drop_all()
-
-
-@pytest.fixture
-def user(db):
-    """A user for the tests."""
-    user = UserFactory(password='myprecious')
-    db.session.commit()
-    return user

@@ -72,11 +72,11 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
         # Raw mapping with tuples when the same function has several shortcuts, plus help text when available.
         raw_mapping = {
-            ('/start', '/help'): (self.show_help, 'show this help'),
+            ('/start', '/help'): (self.show_help, 'this help'),
             ('/add', '/new'): (self.add_command, 'add a chore with an alarm'),
-            ('/overdue', '/due'): (self.show_overdue_alarms, 'show overdue alarms'),
-            ('/chores', '/active'): (self.show_active_chores, 'show chores with active alarms'),
-            '/all': (self.show_all_chores, 'show all chores'),
+            ('/overdue', '/due'): (self.show_overdue_alarms, 'overdue alarms'),
+            ('/chores', '/active'): (self.show_active_chores, 'chores with active alarms'),
+            '/all': (self.show_all_chores, 'all chores'),
             '/id': self.show_alarm_details,
             self.Step.CHOOSE_ACTION: self.execute_action,
             self.Step.CHOOSE_TIME: self.snooze_alarm,
@@ -103,7 +103,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 commands.append(key_or_tuple)
 
             if help_text:
-                self.full_help.append('\u2022 {commands} to {help_text}'.format(
+                self.full_help.append('{commands} - {help_text}'.format(
                     commands=' or '.join(commands), help_text=help_text))
 
     def show_help(self):
