@@ -14,7 +14,7 @@ down_revision = '250e5b590f7'
 
 def upgrade():
     """Upgrade the database."""
-    op.add_column('alarm', sa.Column('original_at', sa.DateTime(), nullable=True))
+    op.add_column('alarm', sa.Column('original_at', sa.TIMESTAMP(True), nullable=True))
 
 
 def downgrade():

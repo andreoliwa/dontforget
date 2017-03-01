@@ -12,6 +12,7 @@ from flask_script.commands import Clean, ShowUrls
 
 from dontforget.app import create_app
 from dontforget.cron import display_unseen_alarms, spawn_alarms
+from dontforget.database import db_refresh as real_db_refresh
 from dontforget.database import db
 from dontforget.settings import UI_TELEGRAM_BOT_TOKEN, DevConfig, ProdConfig
 from dontforget.user.models import User
@@ -37,6 +38,12 @@ def test():
     return exit_code
 
 
+@manager.command
+def db_refresh():
+    """Refresh the database (drop and redo the upgrade)."""
+    real_db_refresh()
+
+
 class Lint(Command):
     """Lint and check code style with flake8, isort and, optionally, pylint."""
 
@@ -51,7 +58,7 @@ class Lint(Command):
 
     def run(self, fix_imports, use_pylint):  # pylint: disable=arguments-differ,method-hidden
         """Run command."""
-        skip = ['requirements']
+        skip = ['requirements', 'docker']
         root_files = glob('*.py')
         root_directories = [name for name in next(os.walk('.'))[1] if not name.startswith('.')]
         files_and_directories = [arg for arg in root_files + root_directories if arg not in skip]

@@ -17,7 +17,7 @@ down_revision = '143a88a7b01'
 def upgrade():
     """Upgrade the database."""
     with op.batch_alter_table('alarm') as batch_op:
-        add_required_column('alarm', 'updated_at', sa.DateTime(), 'current_timestamp', batch_operation=batch_op)
+        add_required_column('alarm', 'updated_at', sa.TIMESTAMP(True), 'current_timestamp', batch_operation=batch_op)
 
     with op.batch_alter_table('chore') as batch_op:
         add_required_column('chore', 'repeat_from_completed', sa.Boolean(), False, batch_operation=batch_op)
