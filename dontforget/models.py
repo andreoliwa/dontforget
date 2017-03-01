@@ -15,8 +15,8 @@ class Chore(SurrogatePK, Model):
 
     __tablename__ = 'chore'
     title = db.Column(db.String(), unique=True, nullable=False)
-    alarm_start = db.Column(db.DateTime(), nullable=False)
-    alarm_end = db.Column(db.DateTime())
+    alarm_start = db.Column(db.TIMESTAMP(True), nullable=False)
+    alarm_end = db.Column(db.TIMESTAMP(True))
     repetition = db.Column(db.String())
     repeat_from_completed = db.Column(db.Boolean(), nullable=False, default=False)
 
@@ -49,7 +49,7 @@ class Chore(SurrogatePK, Model):
         :return: Return True if the chore is active right now.
         :rtype: bool
         """
-        now = right_now().replace(tzinfo=None)
+        now = right_now()
         return self.alarm_start <= now and (self.alarm_end is None or now <= self.alarm_end)
 
     @classmethod
@@ -61,7 +61,7 @@ class Chore(SurrogatePK, Model):
 
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
-        now = right_now().replace(tzinfo=None)
+        now = right_now()
         return and_(or_(Alarm.id.is_(None), cls.alarm_start <= now),
                     or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
 
@@ -105,14 +105,14 @@ class Alarm(SurrogatePK, Model):
     __tablename__ = 'alarm'
     chore_id = reference_col('chore')
     current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
-    next_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
+    next_at = db.Column(db.TIMESTAMP(True), nullable=False)
     last_snooze = db.Column(db.String())
 
     # func.now() is equivalent to CURRENT_TIMESTAMP in SQLite, which is always UTC (GMT).
     # See https://www.sqlite.org/lang_datefunc.html
-    updated_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, onupdate=func.now(), default=func.now())
+    updated_at = db.Column(db.TIMESTAMP(True), nullable=False, onupdate=func.now(), default=func.now())
 
-    original_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
+    original_at = db.Column(db.TIMESTAMP(True), nullable=True)
 
     chore = db.relationship('Chore')
     """:type: dontforget.models.Chore"""
