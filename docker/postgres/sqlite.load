@@ -1,0 +1,7 @@
+load database
+    from sqlite://../../old-prod.sqlite
+    into postgresql://dontforget:dontforget@postgresql:5433/dontforget
+    with truncate, reset sequences, create no tables
+    including only table names like 'chore', 'alarm'
+    set work_mem to '16MB', maintenance_work_mem to '512 MB'
+;
