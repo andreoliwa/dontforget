@@ -44,7 +44,7 @@ Flask-Cache>=0.13.1
 Flask-DebugToolbar==0.10.1
 
 # UI
-telepot==10.4
+telepot==10.5
 
 # Everything the developer needs
 
