@@ -11,7 +11,7 @@ from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.cron import spawn_alarms
 from dontforget.extensions import db
-from dontforget.models import Alarm, AlarmState, Chore
+from dontforget.models import Alarm, AlarmAction, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
 from dontforget.utils import UT
@@ -198,7 +198,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         spawn_alarms()
 
         query = Alarm.query.filter(  # pylint: disable=no-member
-            Alarm.current_state == AlarmState.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
+            Alarm.action == AlarmAction.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
         chores = []
         for alarm in query.all():
             chores.append('\u2705 /id_{}: {}'.format(alarm.id, alarm.one_line))
@@ -219,7 +219,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
             # Query the unseen alarm with this id.
             self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
-                id=self.alarm_id, current_state=AlarmState.UNSEEN).first()
+                id=self.alarm_id, current_state=AlarmAction.UNSEEN).first()
         if not self.alarm:
             self.send_message('I could not find this alarm')
             return
@@ -326,8 +326,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     def _show_chores(self, join_function):
         """Show chores using the desired JOIN function."""
         query = join_function(
-            Alarm, and_(Alarm.chore_id == Chore.id, Alarm.current_state == AlarmState.UNSEEN)).order_by(
-                Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.current_state)
+            Alarm, and_(Alarm.chore_id == Chore.id, Alarm.action == AlarmAction.UNSEEN)).order_by(
+                Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.action)
         chores = []
         for row in query.all():
             chores.append('{active} {one_line}'.format(

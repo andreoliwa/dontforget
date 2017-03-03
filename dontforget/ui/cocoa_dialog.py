@@ -14,7 +14,7 @@ def show_dialog(alarm):
     """
     if not UI_COCOA_DIALOG_PATH:
         raise RuntimeError('Cocoa Dialog path is not configured')
-    suggested_snooze = alarm.last_snooze if alarm.last_snooze else UI_DEFAULT_SNOOZE
+    suggested_snooze = alarm.snooze_text if alarm.snooze_text else UI_DEFAULT_SNOOZE
     args = [UI_COCOA_DIALOG_PATH, 'inputbox', '--string-output',
             '--title', alarm.chore.title,
             '--text', suggested_snooze,

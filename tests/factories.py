@@ -48,7 +48,6 @@ class ChoreFactory(BaseFactory):
     """Chore factory."""
 
     title = LazyAttribute(lambda x: ' '.join(fake.words(10)))
-    alarm_start = LazyAttribute(lambda x: fake.date_time_between('-30d', '-20d'))
 
     class Meta:
         """Factory configuration."""

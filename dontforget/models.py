@@ -2,6 +2,7 @@
 """Database models."""
 import arrow
 from sqlalchemy import and_, or_
+from sqlalchemy.dialects import postgresql
 
 from dontforget.database import CreatedUpdatedMixin, Model, SurrogatePK, reference_col
 from dontforget.extensions import db
@@ -13,20 +14,20 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     """Anything you need to do, with or without due date, with or without repetition."""
 
     __tablename__ = 'chore'
+
     title = db.Column(db.String(), unique=True, nullable=False)
-    alarm_start = db.Column(db.TIMESTAMP(timezone=True), nullable=False)
+    due_at = db.Column(db.TIMESTAMP(timezone=True))
+    alarm_at = db.Column(db.TIMESTAMP(timezone=True))
     alarm_end = db.Column(db.TIMESTAMP(timezone=True))
     repetition = db.Column(db.String())
     repeat_from_completed = db.Column(db.Boolean(), nullable=False, default=False)
-    due_at = db.Column(db.TIMESTAMP(timezone=True))
-    alarm_at = db.Column(db.TIMESTAMP(timezone=True))
 
     alarms = db.relationship('Alarm')
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<Chore {0!r} {1!r}, starting at {2}, repetition {3!r} from {4}>'.format(
-            self.id, self.title, self.alarm_start, self.repetition,
+        return '<Chore {0!r} {1!r}, due at {2}, repetition {3!r} from {4}>'.format(
+            self.id, self.title, self.due_at, self.repetition,
             'completed' if self.repeat_from_completed else 'due date')
 
     @property
@@ -40,18 +41,15 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
             completed='(from completed)' if self.repeat_from_completed else ''
         )
 
-    def active(self):
-        """Return True if the chore is active right now.
+    def has_open_end(self):
+        """Return True if the chore has an open end.
 
-        Conditions for an active chore:
-        1. Alarm start older than right now;
-        2. Alarm end empty, or greater than/equal to right now.
+        Conditions:
+        1. Alarm end empty, or greater than/equal to right now.
 
-        :return: Return True if the chore is active right now.
         :rtype: bool
         """
-        now = right_now()
-        return self.alarm_start <= now and (self.alarm_end is None or now <= self.alarm_end)
+        return self.alarm_end is None or right_now() <= self.alarm_end
 
     @classmethod
     def active_expression(cls):
@@ -83,41 +81,64 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
         return query.all()
 
+    def repeat(self, action, snooze_text=None):
+        """Set date fields and save alarm history with the desired action, based on the repetition settings.
 
-class AlarmState(object):
-    """Possible states for an alarm."""
+        :param str action: The desired action for the saved alarm.
+        :param str snooze_text: Snooze repetition chosen by the user.
+        """
+        Alarm.create(commit=False, chore_id=self.id, action=action, due_at=self.due_at, alarm_at=self.alarm_at,
+                     snooze_text=snooze_text)
 
-    UNSEEN = 'unseen'
-    DISPLAYED = 'displayed'
-    SKIPPED = 'skipped'
-    SNOOZED = 'snoozed'
-    COMPLETED = 'completed'  # This repetition is done, but the chore is still active and will spawn alarms.
-    STOPPED = 'killed'  # The chore is finished, no more alarms will be created. TODO Rename enum on database
+        due_at = None
+        alarm_at = None
+        now = right_now()
+        if snooze_text:
+            due_at = self.due_at
+            alarm_at = next_dates(snooze_text, now)
+        elif self.repetition and self.has_open_end():
+            # Repeat from the current date or the original due date.
+            due_at = alarm_at = next_dates(
+                self.repetition, now if self.repeat_from_completed else self.due_at)
+
+        self.update(due_at=due_at, alarm_at=alarm_at)
+
+    def complete(self):
+        """Mark as completed."""
+        return self.repeat(AlarmAction.COMPLETE)
 
 
-ALARM_STATE_ENUM = db.Enum(
-    AlarmState.UNSEEN, AlarmState.DISPLAYED, AlarmState.SKIPPED, AlarmState.SNOOZED, AlarmState.COMPLETED,
-    AlarmState.STOPPED, name='alarm_state_enum')
+class AlarmAction(object):
+    """Possible actions for an alarm."""
+
+    COMPLETE = 'complete'  # This repetition is done, but the chore is still active and will spawn alarms.
+    SNOOZE = 'snooze'
+    JUMP = 'jump'
+    FINISH = 'finish'  # The chore is finished, no more alarms will be created.
+
+
+ALARM_ACTION_ENUM = postgresql.ENUM(
+    AlarmAction.COMPLETE, AlarmAction.SNOOZE, AlarmAction.JUMP, AlarmAction.FINISH, name='alarm_action_enum')
 
 
 class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
-    """An alarm for a chore."""
+    """History of alarms from a chore."""
 
     __tablename__ = 'alarm'
+
     chore_id = reference_col('chore')
-    current_state = db.Column(ALARM_STATE_ENUM, nullable=False, default=AlarmState.UNSEEN)
-    next_at = db.Column(db.TIMESTAMP(True), nullable=False)
-    last_snooze = db.Column(db.String())
-
-    original_at = db.Column(db.TIMESTAMP(timezone=True), nullable=True)
-
     chore = db.relationship('Chore')
     """:type: dontforget.models.Chore"""
+
+    action = db.Column(ALARM_ACTION_ENUM, nullable=False)
+    due_at = db.Column(db.TIMESTAMP(timezone=True))
+    alarm_at = db.Column(db.TIMESTAMP(timezone=True))
+    snooze_text = db.Column(db.String())
 
     def __repr__(self):
         """Represent the alarm as a unique string."""
         return "<Alarm {!r} {!r} at '{}' (chore {!r})>".format(
-            self.id, self.current_state, self.next_at, self.chore_id)
+            self.id, self.action, self.next_at, self.chore_id)
 
     @property
     def one_line(self):
@@ -131,74 +152,18 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
             completed='(from completed)' if self.chore.repeat_from_completed else ''
         )
 
-    @classmethod
-    def create_unseen(cls, chore_id, next_at, last_snooze=None, **kwargs):
-        """Factory method to create an unseen alarm instance.
-
-        The instance will be added to the session, but no commit will be issued.
-
-        :param chore_id: Chore ID of the new alarm.
-        :param next_at: Next date/time for the new alarm.
-        :param str last_snooze: Last snooze time to be used as a suggestion for the new one.
-        :return: An alarm.
-        :rtype: Alarm
-        """
-        return cls.create(commit=False, chore_id=chore_id, next_at=next_at, current_state=AlarmState.UNSEEN,
-                          last_snooze=last_snooze, **kwargs)
-
-    def repeat(self, desired_state, snooze_repetition=None):
-        """Set the desired state and create a new unseen alarm, based on the repetition settings in the related chore.
-
-        An unseen alarm will only be created if there is a repetition, and if the chore is active.
-
-        :param str desired_state: The desired state for the current alarm, before repetition.
-        :param str snooze_repetition: Snooze repetition chosen by the user.
-        :return: The current alarm if none created, or the newly created (and unseen) alarm instance.
-        :rtype: Alarm
-        """
-        rv = self.update(commit=False, current_state=desired_state)
-
-        # The original due date or the next alarm.
-        original_at = self.original_at or self.next_at
-
-        next_at = None
-        if snooze_repetition:
-            next_at = next_dates(snooze_repetition, right_now())
-        elif self.chore.repetition and self.chore.active():
-            if self.chore.repeat_from_completed:
-                # Repeat from the update date.
-                reference_date = self.updated_at
-            else:
-                # Repeat from the original date (before snoozing) or the next alarm date (if no snoozing)
-                reference_date = original_at
-            next_at = next_dates(self.chore.repetition, reference_date)
-
-        if next_at:
-            # No original due date is saved when skipped or completed.
-            if desired_state in (AlarmState.SKIPPED, AlarmState.COMPLETED):
-                original_at = None
-
-            rv = self.create_unseen(self.chore_id, next_at, snooze_repetition, original_at=original_at)
-
-        db.session.commit()
-        return rv
-
     def snooze(self, snooze_repetition):
         """Snooze this alarm using the desired repetition."""
-        return self.repeat(AlarmState.SNOOZED, snooze_repetition)
+        return self.repeat(AlarmAction.SNOOZE, snooze_repetition)
 
     def skip(self):
         """Skip this alarm."""
-        return self.repeat(AlarmState.SKIPPED)
-
-    def complete(self):
-        """Mark as completed."""
-        return self.repeat(AlarmState.COMPLETED)
+        return self.repeat(AlarmAction.JUMP)
 
     def reset_unseen(self):
         """Mark as unseen again."""
-        return self.update(current_state=AlarmState.UNSEEN)
+        return self.update(current_state=AlarmAction.UNSEEN)
 
     def stop(self):
         """Stop the series of alarms."""
-        return self.update(current_state=AlarmState.STOPPED)
+        return self.update(current_state=AlarmAction.FINISH)
