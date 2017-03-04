@@ -3,13 +3,16 @@
 import os
 import sys
 
+from alembic import op
 from flask import current_app, has_app_context
 from flask_migrate import Migrate, upgrade
-from sqlalchemy import ForeignKeyConstraint, MetaData, Table, func
+from sqlalchemy import Column, ForeignKeyConstraint, MetaData, Table, func
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import reflection
 from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
 from dontforget.settings import TestConfig
+from dontforget.utils import to_list
 
 from .app import db
 
@@ -176,3 +179,89 @@ def drop_everything():
         conn.execute(DropTable(table))
 
     trans.commit()
+
+
+def add_required_column(table_name, column_name, column_type,  # pylint: disable=too-many-arguments
+                        default_value=None, column_exists=False, update_only_null=False):
+    """Add a required column to a table.
+
+    NOT NULL fields must be populated with some value before setting `nullable=False`.
+
+    :param table_name: Name of the table.
+    :type table_name: str
+
+    :param column_name: Name of the column.
+    :type column_name: str
+
+    :param column_type: Type of the column. E.g.: sa.String().
+
+    :param default_value: The default value to be UPDATEd in the column. If not informed, then generates UUIDs.
+
+    :param column_exists: Flag to indicate if the column already exists (to skip creation).
+
+    :param update_only_null: Flag to only update values that are null and leave the others
+    """
+    if default_value is None:
+        default_value = 'uuid_generate_v4()'
+
+    # pylint: disable=no-member
+    if not column_exists:
+        op.add_column(table_name, Column(column_name, column_type, nullable=True))
+
+    query = 'UPDATE "{table}" SET "{column}" = {value}'
+    if update_only_null:
+        query = 'UPDATE "{table}" SET "{column}" = {value} WHERE "{column}" IS NULL'
+
+    op.execute(query.format(table=table_name, column=column_name, value=default_value))
+    op.alter_column(table_name, column_name, nullable=False)
+
+
+def rename_postgresql_type(old_name, new_name):
+    """Rename a type in PostgreSQL, but only if it does not already exist.
+
+    This is useful for ENUMs, and to make them work with the cave_test database,
+    which is not always recreated on each run (it depends on the SKIP_DB_CREATION environment variable).
+
+    :param old_name: Old type name.
+    :param new_name: New type name.
+    """
+    # pylint: disable=no-member
+    connection = op.get_bind()
+    result = connection.execute("SELECT COUNT(0) FROM pg_type WHERE typname = '{}'".format(new_name)).fetchall()
+    if result[0][0] == 0:
+        op.execute('ALTER TYPE {} RENAME TO {}'.format(old_name, new_name))
+
+
+def change_enum(enum_name, old_options, new_options, affected_tables_columns):
+    """Alter ENUM.
+
+    :param enum_name: Name of the enum
+    :param old_options: Tuple of old options to add
+    :param new_options: Tuple of new options to add
+    :param dict affected_tables_columns: Tables and columns using this enum.
+        Dictionary with table name as key and column names (list or string) as values.
+    """
+    # pylint: disable=no-member
+    old_type = postgresql.ENUM(*old_options, name=enum_name, create_type=False)
+    new_type = postgresql.ENUM(*new_options, name=enum_name, create_type=False)
+    tmp_name = '_{}'.format(enum_name)
+    tmp_type = postgresql.ENUM(*new_options, name=tmp_name, create_type=False)
+
+    # Create a new temporary enum, alter all tables using the old enum, and then drop the temporary enum.
+    tmp_type.create(op.get_bind(), checkfirst=False)
+    for affected_table, affected_columns in affected_tables_columns.items():
+        for affected_column in to_list(affected_columns):
+            op.execute('ALTER TABLE {affected_table} ALTER COLUMN {affected_column} TYPE {tmp_name} '
+                       'USING {enum_name}::text::{tmp_name}'
+                       .format(affected_table=affected_table, affected_column=affected_column,
+                               enum_name=enum_name, tmp_name=tmp_name))
+    old_type.drop(op.get_bind())
+
+    # Create the new final enum and adjust all tables.
+    new_type.create(op.get_bind(), checkfirst=False)
+    for affected_table, affected_columns in affected_tables_columns.items():
+        for affected_column in to_list(affected_columns):
+            op.execute('ALTER TABLE {affected_table} ALTER COLUMN {affected_column} TYPE {enum_name} '
+                       'USING {enum_name}::text::{enum_name}'.
+                       format(affected_table=affected_table, affected_column=affected_column, enum_name=enum_name))
+    tmp_type.drop(op.get_bind())

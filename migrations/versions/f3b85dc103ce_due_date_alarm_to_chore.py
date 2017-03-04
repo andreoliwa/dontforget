@@ -9,6 +9,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
+from dontforget.database import add_required_column
+
 revision = 'f3b85dc103ce'
 down_revision = 'a2de422d22b8'
 
@@ -21,49 +23,75 @@ ALARM_STATE_ENUM = postgresql.ENUM('unseen', 'displayed', 'skipped', 'snoozed', 
 
 def upgrade():
     """Upgrade the database."""
-    # TODO Augusto: What about those not null columns? they will fail when XXX (I forgot)
     ALARM_ACTION_ENUM.create(op.get_bind())
 
     op.add_column('chore', sa.Column('due_at', sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column('chore', sa.Column('alarm_at', sa.TIMESTAMP(timezone=True), nullable=True))
-    op.add_column('chore', sa.Column('created_at', sa.TIMESTAMP(timezone=True), nullable=False))
-    op.add_column('chore', sa.Column('updated_at', sa.TIMESTAMP(timezone=True), nullable=False))
+    add_required_column('chore', 'created_at', sa.TIMESTAMP(timezone=True), 'alarm_start')
+    add_required_column('chore', 'updated_at', sa.TIMESTAMP(timezone=True), 'alarm_start')
     op.drop_column('chore', 'alarm_start')
 
     op.add_column('alarm', sa.Column('due_at', sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column('alarm', sa.Column('alarm_at', sa.TIMESTAMP(timezone=True), nullable=True))
-    op.add_column('alarm', sa.Column('action', ALARM_ACTION_ENUM, nullable=False))
+    add_required_column('alarm', 'action', ALARM_ACTION_ENUM, "'snooze'")
     op.add_column('alarm', sa.Column('snooze_text', sa.String(), nullable=True))
-    op.add_column('alarm', sa.Column('created_at', sa.TIMESTAMP(timezone=True), nullable=False))
-    op.drop_column('alarm', 'current_state')
+    add_required_column('alarm', 'created_at', sa.TIMESTAMP(timezone=True), 'next_at')
     op.drop_column('alarm', 'next_at')
     op.drop_column('alarm', 'last_snooze')
     op.drop_column('alarm', 'original_at')
-
+    op.drop_column('alarm', 'current_state')
     ALARM_STATE_ENUM.drop(op.get_bind())
+
+    op.drop_table('roles')
+    op.drop_table('users')
 
 
 def downgrade():
     """Downgrade the database."""
     ALARM_STATE_ENUM.create(op.get_bind())
 
+    add_required_column('chore', 'alarm_start', postgresql.TIMESTAMP(timezone=True), 'created_at')
     op.drop_column('chore', 'updated_at')
     op.drop_column('chore', 'due_at')
     op.drop_column('chore', 'created_at')
     op.drop_column('chore', 'alarm_at')
-    op.add_column('chore',
-                  sa.Column('alarm_start', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=False))
+
+    op.add_column('alarm', sa.Column('original_at', postgresql.TIMESTAMP(timezone=True), nullable=True))
+    op.add_column('alarm', sa.Column('last_snooze', sa.VARCHAR(), autoincrement=False, nullable=True))
+    add_required_column('alarm', 'next_at', postgresql.TIMESTAMP(timezone=True), 'created_at')
+
+    # This UPDATE will destroy history and mark everything as unseen. The right thing would be a manual UPDATE.
+    add_required_column('alarm', 'current_state', ALARM_STATE_ENUM, 'unseen')
 
     op.drop_column('alarm', 'created_at')
-    op.add_column('alarm',
-                  sa.Column('original_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=True))
-    op.add_column('alarm', sa.Column('last_snooze', sa.VARCHAR(), autoincrement=False, nullable=True))
-    op.add_column('alarm',
-                  sa.Column('next_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=False))
-    op.add_column('alarm', sa.Column('current_state', ALARM_STATE_ENUM, autoincrement=False, nullable=False))
     op.drop_column('alarm', 'snooze_text')
     op.drop_column('alarm', 'due_at')
     op.drop_column('alarm', 'alarm_at')
     op.drop_column('alarm', 'action')
-
     ALARM_ACTION_ENUM.drop(op.get_bind())
+
+    op.create_table(
+        'users',
+        sa.Column('id', sa.INTEGER(), server_default=sa.text("nextval('users_id_seq'::regclass)"), nullable=False),
+        sa.Column('username', sa.VARCHAR(length=80), autoincrement=False, nullable=False),
+        sa.Column('email', sa.VARCHAR(length=80), autoincrement=False, nullable=False),
+        sa.Column('password', sa.VARCHAR(length=128), autoincrement=False, nullable=True),
+        sa.Column('created_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=False),
+        sa.Column('first_name', sa.VARCHAR(length=30), autoincrement=False, nullable=True),
+        sa.Column('last_name', sa.VARCHAR(length=30), autoincrement=False, nullable=True),
+        sa.Column('active', sa.BOOLEAN(), autoincrement=False, nullable=True),
+        sa.Column('is_admin', sa.BOOLEAN(), autoincrement=False, nullable=True),
+        sa.PrimaryKeyConstraint('id', name='users_pkey'),
+        sa.UniqueConstraint('email', name='users_email_key'),
+        sa.UniqueConstraint('username', name='users_username_key'),
+        postgresql_ignore_search_path=False
+    )
+    op.create_table(
+        'roles',
+        sa.Column('id', sa.INTEGER(), nullable=False),
+        sa.Column('name', sa.VARCHAR(length=80), autoincrement=False, nullable=False),
+        sa.Column('user_id', sa.INTEGER(), autoincrement=False, nullable=True),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='roles_user_id_fkey'),
+        sa.PrimaryKeyConstraint('id', name='roles_pkey'),
+        sa.UniqueConstraint('name', name='roles_name_key')
+    )

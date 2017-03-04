@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """Helper utilities and decorators."""
-from functools import partial
-
-import sqlalchemy as sa
-from alembic import op
 from flask import flash
 
 DATETIME_FORMAT = 'ddd MMM DD, YYYY HH:mm'
@@ -24,34 +20,18 @@ def flash_errors(form, category='warning'):
             flash('{0} - {1}'.format(getattr(form, field).label.text, error), category)
 
 
-def add_required_column(  # pylint: disable=too-many-arguments
-        table_name, column_name, column_type, default_value=None, column_exists=False, batch_operation=None):
-    """Add a required column to a table.
+def to_list(value, default_when_none=None):
+    """Cast a value to a list.
 
-    NOT NULL fields must be populated with some value before setting `nullable=False`.
+    `list(value)` doesn't work as expected if `value` is a string:
+    it would return a list with every character as an element.
 
-    :param str table_name: Name of the table.
-    :param str column_name: Name of the column.
-    :param column_type: Type of the column. E.g.: sa.String().
-    :param default_value: The default value to be UPDATEd in the column. If not informed, then generates UUIDs.
-    :param column_exists: Flag to indicate if the column already exists (to skip creation).
+    :param value: Value to be cast to list.
+    :param default_when_none: Return this default if value is none.
+
+    :return: Value inside a list.
+    :rtype: list
     """
-    if default_value is None:
-        default_value = 'uuid_generate_v4()'
-
-    # pylint: disable=no-member
-    if batch_operation:
-        add_column = batch_operation.add_column
-        execute = batch_operation.execute
-        alter_column = batch_operation.alter_column
-        table_name = batch_operation.impl.table_name
-    else:
-        add_column = partial(op.add_column, table_name)
-        execute = op.execute
-        alter_column = partial(op.alter_column, table_name)
-
-    if not column_exists:
-        add_column(sa.Column(column_name, column_type, nullable=True))
-    if not batch_operation:
-        execute('UPDATE "{0}" SET "{1}" = {2}'.format(table_name, column_name, default_value))
-    alter_column(column_name, nullable=False)
+    if value is None:
+        return default_when_none
+    return [value] if not isinstance(value, (list, tuple)) else value
