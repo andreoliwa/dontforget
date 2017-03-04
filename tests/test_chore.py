@@ -5,8 +5,8 @@ from datetime import timedelta
 import arrow
 from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
 
+from dontforget.app import db
 from dontforget.cron import spawn_alarms
-from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 
