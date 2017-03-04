@@ -12,7 +12,6 @@ from sqlalchemy.sql.ddl import DropConstraint, DropTable
 from dontforget.settings import TestConfig
 
 from .app import db
-from .compat import basestring
 
 # A list of tables that should be ignored when dropping and listing all our tables.
 IGNORED_TABLES = ['spatial_ref_sys']
@@ -65,7 +64,7 @@ class SurrogatePK(object):
     def get_by_id(cls, record_id):
         """Get record by ID."""
         if any(
-                (isinstance(record_id, basestring) and record_id.isdigit(),
+                (isinstance(record_id, (str, bytes)) and record_id.isdigit(),
                  isinstance(record_id, (int, float))),
         ):
             return cls.query.get(int(record_id))  # pylint: disable=no-member
