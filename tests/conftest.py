@@ -5,7 +5,6 @@ import os
 
 import pytest
 from flask_migrate import Migrate
-from webtest import TestApp
 
 from dontforget.app import create_app
 from dontforget.database import db, db_refresh
@@ -66,9 +65,3 @@ def app():
     db.engine.dispose()
 
     context.pop()
-
-
-@pytest.fixture(scope='function')
-def testapp(app):
-    """A Webtest app."""
-    return TestApp(app)
