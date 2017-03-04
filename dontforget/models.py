@@ -64,6 +64,18 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         return and_(Alarm.id.is_(None),
                     or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
 
+    @classmethod
+    def query_active(cls, reference_date=None):
+        """Return a query filtered by active chores."""
+        # pylint: disable=no-member
+        return cls.query.filter(or_(cls.alarm_end.is_(None), (reference_date or right_now()) <= cls.alarm_end))
+
+    @classmethod
+    def query_inactive(cls, reference_date=None):
+        """Return a query filtered by inactive chores."""
+        # pylint: disable=no-member
+        return cls.query.filter((reference_date or right_now()) > cls.alarm_end)
+
     def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.
 

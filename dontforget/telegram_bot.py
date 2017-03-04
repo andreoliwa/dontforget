@@ -10,7 +10,7 @@ from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.app import db
-from dontforget.models import Alarm, AlarmAction, Chore
+from dontforget.models import Alarm, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
 from dontforget.utils import UT
@@ -194,8 +194,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_overdue_alarms(self):
         """Show overdue alarms on a chat message."""
+        # query = Alarm.query.filter(  # pylint: disable=no-member
+        #     Alarm.action == AlarmAction.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
         query = Alarm.query.filter(  # pylint: disable=no-member
-            Alarm.action == AlarmAction.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
+            Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())  # TODO Augusto:
         chores = []
         for alarm in query.all():
             chores.append('\u2705 /id_{}: {}'.format(alarm.id, alarm.one_line))
@@ -215,8 +217,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             self.alarm_id = int(re.sub(r'\D', '', self.command_args))
 
             # Query the unseen alarm with this id.
+            # self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
+            #     id=self.alarm_id, current_state=AlarmAction.UNSEEN).first()
             self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
-                id=self.alarm_id, current_state=AlarmAction.UNSEEN).first()
+                id=self.alarm_id).first()  # TODO Augusto:
         if not self.alarm:
             self.send_message('I could not find this alarm')
             return
@@ -239,10 +243,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     def execute_action(self):
         """Choose an action for the alarm."""
         function_map = {
-            self.Actions.COMPLETE.value: (Alarm.complete, 'This occurrence is completed.'),
+            self.Actions.COMPLETE.value: (Chore.complete, 'This occurrence is completed.'),
             self.Actions.SNOOZE.value: (Alarm.snooze, 'Alarm snoozed for'),
             self.Actions.SKIP.value: (Alarm.skip, 'Skipping this occurrence.'),
-            self.Actions.STOP.value: (Alarm.stop, 'This chore is stopped for now (no more alarms).'),
+            self.Actions.STOP.value: (Chore.finish, 'This chore is stopped for now (no more alarms).'),
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
@@ -322,8 +326,11 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def _show_chores(self, join_function):
         """Show chores using the desired JOIN function."""
-        query = join_function(
-            Alarm, and_(Alarm.chore_id == Chore.id, Alarm.action == AlarmAction.UNSEEN)).order_by(
+        # query = join_function(
+        #     Alarm, and_(Alarm.chore_id == Chore.id, Alarm.action == AlarmAction.UNSEEN)).order_by(
+        #         Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.action)
+        query = join_function(  # TODO Augusto:
+            Alarm, and_(Alarm.chore_id == Chore.id)).order_by(
                 Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.action)
         chores = []
         for row in query.all():
