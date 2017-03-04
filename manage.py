@@ -13,7 +13,6 @@ from dontforget.app import create_app
 from dontforget.database import db_refresh as real_db_refresh
 from dontforget.database import db
 from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
-from dontforget.user.models import User
 
 CONFIG = ProdConfig if os.environ.get('DONTFORGET_ENV') == 'prod' else DevConfig
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -24,8 +23,8 @@ manager = Manager(app)  # pylint: disable=invalid-name
 
 
 def _make_context():
-    """Return context dict for a shell session so you can access app, db, and the User model by default."""
-    return {'app': app, 'db': db, 'User': User}
+    """Return context dict for a shell session so you can access app and db."""
+    return dict(app=app, db=db)
 
 
 @manager.command

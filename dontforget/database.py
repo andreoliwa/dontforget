@@ -11,8 +11,8 @@ from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
 from dontforget.settings import TestConfig
 
+from .app import db
 from .compat import basestring
-from .extensions import db
 
 # A list of tables that should be ignored when dropping and listing all our tables.
 IGNORED_TABLES = ['spatial_ref_sys']

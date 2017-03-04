@@ -9,8 +9,8 @@ from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
+from dontforget.app import db
 from dontforget.cron import spawn_alarms
-from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import right_now
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN

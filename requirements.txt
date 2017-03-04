@@ -5,6 +5,7 @@ prettyconf==1.2.3
 python-dateutil==2.6.0
 arrow==0.10.0
 maya==0.1.8
+telepot==10.5
 
 # Flask
 Flask==0.12
@@ -21,30 +22,8 @@ psycopg2==2.7
 # Migrations
 Flask-Migrate==2.0.3
 
-# Forms
-Flask-WTF==0.14.2
-WTForms==2.1
-
 # Deployment
 gunicorn>=19.6.0
-
-# Assets
-Flask-Assets==0.12
-cssmin>=0.2.0
-jsmin>=2.2.1
-
-# Auth
-Flask-Login==0.4.0
-Flask-Bcrypt==0.7.1
-
-# Caching
-Flask-Cache>=0.13.1
-
-# Debug toolbar
-Flask-DebugToolbar==0.10.1
-
-# UI
-telepot==10.5
 
 # Everything the developer needs
 

@@ -3,7 +3,7 @@
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 
-from dontforget.extensions import db
+from dontforget.app import db
 from dontforget.models import Alarm, AlarmState, Chore
 from dontforget.repetition import next_dates
 
