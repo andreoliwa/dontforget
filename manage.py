@@ -4,17 +4,15 @@
 import os
 from glob import glob
 from subprocess import call
-from time import sleep
 
 from flask_migrate import MigrateCommand
 from flask_script import Command, Manager, Option, Shell
 from flask_script.commands import Clean, ShowUrls
 
 from dontforget.app import create_app
-from dontforget.cron import display_unseen_alarms, spawn_alarms
 from dontforget.database import db_refresh as real_db_refresh
 from dontforget.database import db
-from dontforget.settings import UI_TELEGRAM_BOT_TOKEN, DevConfig, ProdConfig
+from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
 from dontforget.user.models import User
 
 CONFIG = ProdConfig if os.environ.get('DONTFORGET_ENV') == 'prod' else DevConfig
@@ -79,38 +77,13 @@ class Lint(Command):
 
 
 @manager.command
-def display(daemon=False, seconds=10):
-    """Display unseen alarms."""
-    seconds = int(seconds)
-    if seconds <= 0:
-        seconds = 10
-
-    if daemon:
-        print('Running in daemon mode, checking alarms every {0} seconds...'.format(seconds))
-
-    while True:
-        display_unseen_alarms()
-        if not daemon:
-            return
-        sleep(seconds)
-
-
-@manager.command
-def spawn():
-    """Spawn alarms for chores."""
-    print('Spawning alarms for chores...')
-    spawned = spawn_alarms()
-    print('{0} alarms spawned.'.format(spawned))
-
-
-@manager.command
 def telegram():
     """Run Telegram bot loop together with Flask main loop."""
-    if not UI_TELEGRAM_BOT_TOKEN:
-        print('Telegram bot token is not defined (UI_TELEGRAM_BOT_TOKEN)')
+    if not TELEGRAM_TOKEN:
+        print('Telegram bot token is not defined (TELEGRAM_TOKEN)')
         return
 
-    from dontforget.ui.telegram_bot import main_loop
+    from dontforget.telegram_bot import main_loop
     main_loop(app)
 
 

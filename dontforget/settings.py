@@ -4,14 +4,8 @@ import os
 
 from prettyconf import config
 
-UI_MODULE_NAME = config('UI_MODULE_NAME', default='cocoa_dialog')
-UI_COCOA_DIALOG_PATH = config(
-    'UI_COCOA_DIALOG_PATH',
-    default='/Applications/cocoaDialog.app/Contents/MacOS/cocoaDialog')
-UI_DIALOG_TIMEOUT = config('UI_DIALOG_TIMEOUT', default=30, cast=int)
-UI_DEFAULT_SNOOZE = config('UI_DEFAULT_SNOOZE', default='1 hour')
-UI_TELEGRAM_BOT_TOKEN = config('UI_TELEGRAM_BOT_TOKEN', default=None)
-UI_TELEGRAM_BOT_IDLE_TIMEOUT = config('UI_TELEGRAM_BOT_IDLE_TIMEOUT', default=120, cast=int)
+TELEGRAM_TOKEN = config('TELEGRAM_TOKEN', default=None)
+TELEGRAM_IDLE_TIMEOUT = config('TELEGRAM_IDLE_TIMEOUT', default=120, cast=int)
 
 # By default, database will be refreshed every time a test runs.
 TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=config.boolean)

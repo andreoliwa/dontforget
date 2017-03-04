@@ -12,7 +12,7 @@ from tests.factories import ChoreFactory
 
 from dontforget.extensions import db
 from dontforget.models import Alarm, Chore
-from dontforget.ui.telegram_bot import main_loop
+from dontforget.telegram_bot import main_loop
 
 
 class TelegramAppMock:
