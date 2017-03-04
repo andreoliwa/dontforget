@@ -9,7 +9,6 @@ from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-from dontforget.cron import spawn_alarms
 from dontforget.extensions import db
 from dontforget.models import Alarm, AlarmAction, Chore
 from dontforget.repetition import right_now
@@ -195,8 +194,6 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_overdue_alarms(self):
         """Show overdue alarms on a chat message."""
-        spawn_alarms()
-
         query = Alarm.query.filter(  # pylint: disable=no-member
             Alarm.action == AlarmAction.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
         chores = []

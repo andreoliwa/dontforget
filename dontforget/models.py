@@ -61,7 +61,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         :return: Return a binary expression to be used in SQLAlchemy queries.
         """
         now = right_now()
-        return and_(or_(Alarm.id.is_(None), cls.alarm_start <= now),
+        return and_(Alarm.id.is_(None),
                     or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
 
     def search_similar(self, min_chars=3):
@@ -101,11 +101,15 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
             due_at = alarm_at = next_dates(
                 self.repetition, now if self.repeat_from_completed else self.due_at)
 
-        self.update(due_at=due_at, alarm_at=alarm_at)
+        self.update(commit=True, due_at=due_at, alarm_at=alarm_at)
 
     def complete(self):
         """Mark as completed."""
         return self.repeat(AlarmAction.COMPLETE)
+
+    def finish(self):
+        """Stop the series of alarms (save one last alarm in the history)."""
+        return self.repeat(AlarmAction.FINISH)
 
 
 class AlarmAction(object):
@@ -138,7 +142,7 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
     def __repr__(self):
         """Represent the alarm as a unique string."""
         return "<Alarm {!r} {!r} at '{}' (chore {!r})>".format(
-            self.id, self.action, self.next_at, self.chore_id)
+            self.id, self.action, self.due_at, self.chore_id)
 
     @property
     def one_line(self):
@@ -159,11 +163,3 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
     def skip(self):
         """Skip this alarm."""
         return self.repeat(AlarmAction.JUMP)
-
-    def reset_unseen(self):
-        """Mark as unseen again."""
-        return self.update(current_state=AlarmAction.UNSEEN)
-
-    def stop(self):
-        """Stop the series of alarms."""
-        return self.update(current_state=AlarmAction.FINISH)

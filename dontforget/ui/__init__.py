@@ -30,7 +30,6 @@ def show_dialog(alarm, **kwargs):
         DialogButton.SNOOZE: alarm.snooze,
         DialogButton.SKIP: alarm.skip,
         DialogButton.COMPLETE: alarm.complete,
-        DialogButton.TIMEOUT: alarm.reset_unseen
     }
     method = method_mapping.get(dialog_result.button)
     if method:

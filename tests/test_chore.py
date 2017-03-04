@@ -112,17 +112,28 @@ class FakeChore:
         # assert last_alarm.due_at == self.original_due_at
         # assert last_alarm.alarm_at == self.original_alarm_at
 
-    def assert_completed(self, **kwargs):
-        """Assert a chore was completed."""
-        self.chore.complete()
-
-        due_at = alarm_at = None
+    def assert_timedelta(self, **kwargs):
+        """Assert if the due and alarm times match the timedelta."""
+        expected_due_at = expected_alarm_at = None
         if kwargs:
             diff = timedelta(**kwargs)
-            due_at = self.original_due_at + diff
-            alarm_at = self.original_alarm_at + diff
-        assert self.chore.due_at == due_at
-        assert self.chore.alarm_at == alarm_at
+            expected_due_at = self.original_due_at + diff
+            expected_alarm_at = self.original_alarm_at + diff
+        assert self.chore.due_at == expected_due_at
+        assert self.chore.alarm_at == expected_alarm_at
+
+        self.reset_original()
+
+    def assert_close_to_now(self, seconds: int=2, **kwargs):
+        """Assert both chore dates are close to the current time (since we cannot assert the exact time)."""
+        expected_at = right_now()
+        if kwargs:
+            expected_at += timedelta(**kwargs)
+
+        begin = expected_at - timedelta(seconds=seconds)
+        end = expected_at + timedelta(seconds=seconds)
+        assert begin <= self.chore.due_at <= end
+        assert begin <= self.chore.alarm_at <= end
 
         self.reset_original()
 
@@ -131,7 +142,8 @@ def test_one_time_only(app):
     """One time only chore."""
     fake = FakeChore(app)
 
-    fake.assert_completed()
+    fake.chore.complete()
+    fake.assert_timedelta()
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
 
 
@@ -139,56 +151,34 @@ def test_repetition_from_due_date(app):
     """Chore with repetition from due date."""
     fake = FakeChore(app, repetition='Daily')
 
-    fake.assert_completed(days=1)
+    fake.chore.complete()
+    fake.assert_timedelta(days=1)
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
 
-    fake.assert_completed(days=1)
+    fake.chore.complete()
+    fake.assert_timedelta(days=1)
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
 
-    # # Kill the chore.
-    # assert chore.alarms[2].stop() is chore.alarms[2]
-    # assert chore.alarms[2].current_state == AlarmAction.FINISH
+    fake.chore.finish()
+    fake.assert_timedelta(days=1)
+    fake.assert_saved_alarm(3, AlarmAction.FINISH)
 
 
 def test_repetition_from_completed(app):
     """Chore with repetition from completion date."""
-    assert app
+    fake = FakeChore(app, repetition='Every 2 days', due_at=YESTERDAY, repeat_from_completed=True)
 
-    chore = ChoreFactory(title='Buy coffee', repetition='Daily', alarm_start=YESTERDAY, repeat_from_completed=True)
-    db.session.commit()
+    fake.chore.complete()
+    fake.assert_close_to_now(days=2)
+    fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
 
-    # Spawn one alarm.
-    assert spawn_alarms() == 1
-    assert chore.alarms[0].current_state == AlarmAction.UNSEEN
-    assert chore.alarms[0].next_at == chore.alarm_start
+    fake.chore.complete()
+    fake.assert_close_to_now(days=2)
+    fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
 
-    # Simulate as the chore were completed some time from now.
-    # Automated tests are too fast, the timestamps are almost the same, and that interferes with the results.
-    chore.alarms[0].current_state = AlarmAction.COMPLETE
-    chore.alarms[0].updated_at = right_now() + timedelta(seconds=5)
-    chore.alarms[0].save()
-
-    # Spawn one alarm for the next day.
-    assert spawn_alarms() == 1
-    assert chore.alarms[1].current_state == AlarmAction.UNSEEN
-    assert chore.alarms[1].next_at == chore.alarms[0].updated_at + timedelta(days=1)
-
-    # Simulate as the chore were completed again, some time from now.
-    chore.alarms[1].current_state = AlarmAction.COMPLETE
-    chore.alarms[1].updated_at = right_now() + timedelta(seconds=10)
-    chore.alarms[1].save()
-
-    # Spawn one alarm for the next day.
-    assert spawn_alarms() == 1
-    assert chore.alarms[2].current_state == AlarmAction.UNSEEN
-    assert chore.alarms[2].next_at == chore.alarms[1].updated_at + timedelta(days=1)
-
-    # Kill the chore.
-    chore.alarms[2].current_state = AlarmAction.FINISH
-    chore.alarms[2].save()
-
-    # No alarm should be spawned.
-    assert spawn_alarms() == 0
+    fake.chore.finish()
+    fake.assert_close_to_now(days=2)
+    fake.assert_saved_alarm(3, AlarmAction.FINISH)
 
 
 def test_snooze_from_original_due_date(app):
