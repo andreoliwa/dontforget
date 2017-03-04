@@ -15,7 +15,6 @@ telegram:
     - .:/dontforget
   environment:
     - DONTFORGET_ENV=prod
-    - UI_MODULE_NAME=telegram_bot  # Docker doesn't work with Cocoa Dialog as UI
 
 postgresql:
   # Official PostgreSQL image

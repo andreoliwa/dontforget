@@ -3,9 +3,9 @@
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 
-from dontforget.extensions import db
+from dontforget.app import db
 from dontforget.models import Alarm, AlarmAction, Chore
-from dontforget.repetition import next_dates, right_now
+from dontforget.repetition import next_dates
 
 
 def spawn_alarms():
@@ -43,28 +43,3 @@ def spawn_alarms():
     if alarms_created:
         db.session.commit()
     return alarms_created
-
-
-def display_unseen_alarms():
-    """Display unseen alarms from the past (before right now), and change their state to displayed.
-
-    :return: Number of alarms displayed.
-    :rtype: int
-    """
-    # The module must be imported here, for the mock.patch to work on the tests;
-    # otherwise the module is loaded before its time.
-    from dontforget.ui import show_dialog
-
-    count = 0
-    # pylint: disable=no-member
-    query = Alarm.query.filter(Alarm.action == AlarmAction.UNSEEN,
-                               Alarm.next_at <= right_now()).order_by(Alarm.id)
-    for unseen_alarm in query.all():
-        unseen_alarm.current_state = AlarmAction.DISPLAYED
-        db.session.add(unseen_alarm)
-
-        show_dialog(unseen_alarm)
-        count += 1
-    if count:
-        db.session.commit()
-    return count

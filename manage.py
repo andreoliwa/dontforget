@@ -12,8 +12,7 @@ from flask_script.commands import Clean, ShowUrls
 from dontforget.app import create_app
 from dontforget.database import db_refresh as real_db_refresh
 from dontforget.database import db
-from dontforget.settings import UI_TELEGRAM_BOT_TOKEN, DevConfig, ProdConfig
-from dontforget.user.models import User
+from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
 
 CONFIG = ProdConfig if os.environ.get('DONTFORGET_ENV') == 'prod' else DevConfig
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -24,8 +23,8 @@ manager = Manager(app)  # pylint: disable=invalid-name
 
 
 def _make_context():
-    """Return context dict for a shell session so you can access app, db, and the User model by default."""
-    return {'app': app, 'db': db, 'User': User}
+    """Return context dict for a shell session so you can access app and db."""
+    return dict(app=app, db=db)
 
 
 @manager.command
@@ -79,11 +78,11 @@ class Lint(Command):
 @manager.command
 def telegram():
     """Run Telegram bot loop together with Flask main loop."""
-    if not UI_TELEGRAM_BOT_TOKEN:
-        print('Telegram bot token is not defined (UI_TELEGRAM_BOT_TOKEN)')
+    if not TELEGRAM_TOKEN:
+        print('Telegram bot token is not defined (TELEGRAM_TOKEN)')
         return
 
-    from dontforget.ui.telegram_bot import main_loop
+    from dontforget.telegram_bot import main_loop
     main_loop(app)
 
 

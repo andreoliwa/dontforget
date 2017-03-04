@@ -9,10 +9,10 @@ from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-from dontforget.extensions import db
+from dontforget.app import db
 from dontforget.models import Alarm, AlarmAction, Chore
 from dontforget.repetition import right_now
-from dontforget.settings import UI_TELEGRAM_BOT_IDLE_TIMEOUT, UI_TELEGRAM_BOT_TOKEN
+from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
 from dontforget.utils import UT
 
 
@@ -344,9 +344,9 @@ def main_loop(app, queue=None):
     :param flask.app.Flask app: Flask app.
     :param queue: Update queue to be used as the source of updates instead of the Telegram API server. Used in tests.
     """
-    bot = DelegatorBot(UI_TELEGRAM_BOT_TOKEN, [
+    bot = DelegatorBot(TELEGRAM_TOKEN, [
         pave_event_space()(
-            per_chat_id(), create_open, ChoreBot, timeout=UI_TELEGRAM_BOT_IDLE_TIMEOUT, flask_app=app),
+            per_chat_id(), create_open, ChoreBot, timeout=TELEGRAM_IDLE_TIMEOUT, flask_app=app),
     ])
     forever = False if queue else 'Listening ({})...'.format(app.config['ENV'])
     bot.message_loop(source=queue, run_forever=forever)

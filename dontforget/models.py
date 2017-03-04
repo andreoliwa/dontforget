@@ -4,8 +4,8 @@ import arrow
 from sqlalchemy import and_, or_
 from sqlalchemy.dialects import postgresql
 
-from dontforget.database import CreatedUpdatedMixin, Model, SurrogatePK, reference_col
-from dontforget.extensions import db
+from dontforget.app import db
+from dontforget.database import Model, SurrogatePK, reference_col, CreatedUpdatedMixin
 from dontforget.repetition import next_dates, right_now
 from dontforget.utils import DATETIME_FORMAT, TIMEZONE
 
