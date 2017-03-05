@@ -14,10 +14,13 @@ stop:
 restart: stop
 	docker-compose up -d
 
+isort:
+	isort -y
+
 lint:
 	./manage.py lint --pylint
 
 test:
 	py.test --verbose --cov dontforget
 
-lt: lint test
+ilt: isort lint test

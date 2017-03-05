@@ -4,12 +4,13 @@ from datetime import timedelta
 
 import arrow
 import pytest
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, AlarmFactory, ChoreFactory
+from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 from dontforget.app import db
 from dontforget.cron import spawn_alarms
 from dontforget.models import Alarm, AlarmAction, Chore
 from dontforget.repetition import right_now
+from dontforget.utils import DATETIME_FORMAT
 
 
 def test_search_similar(app):
@@ -59,7 +60,10 @@ def test_active_inactive_chores(app):
 class FakeChore:
     """Helper to create and assert chores and alarms."""
 
-    def __init__(self, app, **kwargs):
+    # Seconds to compare to the current date.
+    NOW_PRECISION_SECONDS = 1
+
+    def __init__(self, app, assert_alarm_dates=True, **kwargs):
         """Init the helper."""
         assert app
 
@@ -69,17 +73,12 @@ class FakeChore:
         """:type: Chore"""
         db.session.commit()
 
-        self.previous_due_at = self.previous_alarm_at = None
-        self.reset_previous_dates()
+        self.previous = dict(due_at=self.chore.due_at, alarm_at=self.chore.alarm_at)
+        self.last_alarm = None
+        """:type: Alarm"""
+        self.assert_alarm_dates = assert_alarm_dates
 
-    def reset_previous_dates(self, reset_due=True, reset_alarm=True):
-        """Reset previous dates."""
-        if reset_due:
-            self.previous_due_at = self.chore.due_at
-        if reset_alarm:
-            self.previous_alarm_at = self.chore.alarm_at
-
-    def alarm(self, index):
+    def get_alarm(self, index):
         """Get an alarm from the underlying chore.
 
         :rtype: Alarm
@@ -90,52 +89,49 @@ class FakeChore:
         """Assert an alarm was saved to the history."""
         assert len(self.chore.alarms) == expected_alarm_count
 
-        last_alarm = self.chore.alarms[expected_alarm_count - 1]
+        self.last_alarm = self.get_alarm(expected_alarm_count - 1)
         """:type: Alarm"""
-        assert last_alarm.action == expected_action
-        # TODO Augusto:
-        # assert last_alarm.due_at == self.previous_due_at
-        # assert last_alarm.alarm_at == self.previous_alarm_at
+        assert self.last_alarm.action == expected_action
 
-    def assert_both_dates(self, **kwargs):
+        if self.assert_alarm_dates:
+            assert self.last_alarm.due_at == self.previous['due_at']
+            assert self.last_alarm.alarm_at == self.previous['alarm_at']
+
+    def assert_empty_dates(self):
+        """Assert both dates are empty."""
+        assert self.chore.due_at is None, 'Expected None, got {}'.format(
+            arrow.get(self.chore.due_at).format(DATETIME_FORMAT))
+        assert self.chore.alarm_at is None, 'Expected None, got {}'.format(
+            arrow.get(self.chore.alarm_at).format(DATETIME_FORMAT))
+
+    def assert_date(self, field_name, close_to_now=False, **kwargs):
+        """Assert if the date field matches the timedelta.
+
+        :param field_name: Name of the field: due_at or alarm_at.
+        :param close_to_now: Assert both chore dates are close to the current time
+            (since we cannot assert the exact time).
+        :param kwargs: Arguments to the timedelta() function.
+        """
+        if close_to_now:
+            expected = right_now() + timedelta(**kwargs)
+            begin = expected - timedelta(seconds=self.NOW_PRECISION_SECONDS)
+            end = expected + timedelta(seconds=self.NOW_PRECISION_SECONDS)
+
+            assert begin <= getattr(self.chore, field_name) <= end
+        else:
+            expected = self.previous[field_name]
+            if kwargs:
+                expected += timedelta(**kwargs)
+            actual = getattr(self.chore, field_name)
+            assert actual == expected, 'Expected {} {}, got {}'.format(
+                field_name, arrow.get(expected).format(DATETIME_FORMAT), arrow.get(actual).format(DATETIME_FORMAT))
+
+        self.previous[field_name] = expected
+
+    def assert_both_dates(self, close_to_now=False, **kwargs):
         """Assert if the due and alarm times match the timedelta."""
-        expected_due_at = expected_alarm_at = None
-        if kwargs:
-            diff = timedelta(**kwargs)
-            expected_due_at = self.previous_due_at + diff
-            expected_alarm_at = self.previous_alarm_at + diff
-        assert self.chore.due_at == expected_due_at
-        assert self.chore.alarm_at == expected_alarm_at
-
-        self.reset_previous_dates()
-
-    def assert_alarm_at(self, **kwargs):
-        """Assert if the alarm time match the timedelta."""
-        expected_alarm_at = None
-        if kwargs:
-            diff = timedelta(**kwargs)
-            expected_alarm_at = self.previous_alarm_at + diff
-
-        assert self.chore.due_at == self.previous_due_at
-        assert self.chore.alarm_at == expected_alarm_at, 'Expected {}, got {}'.format(
-            arrow.get(expected_alarm_at).humanize(),
-            arrow.get(self.chore.alarm_at).humanize(),
-        )
-
-        self.reset_previous_dates(reset_due=False)
-
-    def assert_close_to_now(self, seconds: int=2, **kwargs):
-        """Assert both chore dates are close to the current time (since we cannot assert the exact time)."""
-        expected_at = right_now()
-        if kwargs:
-            expected_at += timedelta(**kwargs)
-
-        begin = expected_at - timedelta(seconds=seconds)
-        end = expected_at + timedelta(seconds=seconds)
-        assert begin <= self.chore.due_at <= end
-        assert begin <= self.chore.alarm_at <= end
-
-        self.reset_previous_dates()
+        self.assert_date('due_at', close_to_now, **kwargs)
+        self.assert_date('alarm_at', close_to_now, **kwargs)
 
 
 def test_one_time_only(app):
@@ -143,8 +139,8 @@ def test_one_time_only(app):
     fake = FakeChore(app)
 
     fake.chore.complete()
-    fake.assert_both_dates()
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
+    fake.assert_empty_dates()
 
 
 def test_repetition_from_due_date(app):
@@ -152,60 +148,66 @@ def test_repetition_from_due_date(app):
     fake = FakeChore(app, repetition='Daily')
 
     fake.chore.complete()
-    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
+    fake.assert_both_dates(days=1)
 
     fake.chore.complete()
-    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
+    fake.assert_both_dates(days=1)
 
     fake.chore.finish()
-    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(3, AlarmAction.FINISH)
+    fake.assert_both_dates(days=1)
 
 
 def test_repetition_from_completed(app):
     """Chore with repetition from completion date."""
-    fake = FakeChore(app, repetition='Every 2 days', due_at=YESTERDAY, repeat_from_completed=True)
+    fake = FakeChore(app, repetition='Every 2 days', due_at=YESTERDAY, repeat_from_completed=True,
+                     assert_alarm_dates=False)
 
     fake.chore.complete()
-    fake.assert_close_to_now(days=2)
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
+    fake.assert_both_dates(close_to_now=True, days=2)
 
     fake.chore.complete()
-    fake.assert_close_to_now(days=2)
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
+    fake.assert_both_dates(close_to_now=True, days=2)
 
     fake.chore.finish()
-    fake.assert_close_to_now(days=2)
     fake.assert_saved_alarm(3, AlarmAction.FINISH)
+    fake.assert_both_dates(close_to_now=True, days=2)
 
 
-@pytest.mark.xfail(reason='Fix this')
 def test_snooze_from_original_due_date(app):
     """When you snooze a chore and then complete it later, the original date should get the repetition."""
     ten_oclock = TODAY.replace(hour=10, minute=0, second=0, microsecond=0)
-    fake = FakeChore(app, repetition='Daily', due_at=ten_oclock)
+    fake = FakeChore(app, repetition='Every 3 days', due_at=ten_oclock, assert_alarm_dates=False)
 
     # Snooze several times.
     for index, hours in enumerate([2, 1, 4]):
         fake.chore.snooze('{} hours'.format(hours))
-        fake.assert_alarm_at(minutes=hours)
-    #
-    # # Skip one day.
-    # fake.chore.skip()
-    # last_alarm = get_last_alarm(5)
-    # assert last_alarm.next_at == ten_oclock + timedelta(days=1)
-    #
-    # # Snooze again several times.
-    # for index, minutes in enumerate([10, 15, 30, 10]):
-    #     last_alarm.snooze('{} minutes'.format(minutes))
-    #     last_alarm = get_last_alarm(6 + index)
-    #
-    # # Finally complete the chore the next day.
-    # last_alarm.complete()
-    # last_alarm = get_last_alarm(10)
-    # assert last_alarm.next_at == ten_oclock + timedelta(days=2)
+        fake.assert_saved_alarm(index + 1, AlarmAction.SNOOZE)
+        fake.assert_date('due_at')
+        fake.assert_date('alarm_at', close_to_now=True, hours=hours)
+
+    # Skip one occurrence.
+    fake.chore.jump()
+    fake.assert_saved_alarm(4, AlarmAction.JUMP)
+    fake.assert_date('due_at', days=3)
+    assert fake.chore.due_at == fake.chore.alarm_at
+
+    # Snooze again several times.
+    for index, minutes in enumerate([10, 15, 30, 10]):
+        fake.chore.snooze('{} minutes'.format(minutes))
+        fake.assert_saved_alarm(index + 5, AlarmAction.SNOOZE)
+        fake.assert_date('due_at')
+        fake.assert_date('alarm_at', close_to_now=True, minutes=minutes)
+
+    # Finally complete the chore.
+    fake.chore.complete()
+    fake.assert_saved_alarm(9, AlarmAction.COMPLETE)
+    fake.assert_date('due_at', days=3)
+    assert fake.chore.due_at == fake.chore.alarm_at
 
 
 @pytest.mark.xfail(reason='Fix this')

@@ -119,13 +119,18 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         """Mark as completed."""
         return self.repeat(AlarmAction.COMPLETE)
 
-    def finish(self):
-        """Stop the series of alarms (save one last alarm in the history)."""
-        return self.repeat(AlarmAction.FINISH)
-
     def snooze(self, snooze_repetition):
         """Snooze this alarm using the desired repetition."""
         return self.repeat(AlarmAction.SNOOZE, snooze_repetition)
+
+    def jump(self):
+        """Jump this alarm."""
+        return self.repeat(AlarmAction.JUMP)
+
+    def finish(self):
+        """Stop the series of alarms (save one last alarm in the history)."""
+        # TODO Augusto:
+        return self.repeat(AlarmAction.FINISH)
 
 
 class AlarmAction(object):
@@ -171,7 +176,3 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
             repetition=self.chore.repetition or 'Once',
             completed='(from completed)' if self.chore.repeat_from_completed else ''
         )
-
-    def skip(self):
-        """Skip this alarm."""
-        return self.repeat(AlarmAction.JUMP)

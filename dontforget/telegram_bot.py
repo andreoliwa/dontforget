@@ -244,8 +244,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         """Choose an action for the alarm."""
         function_map = {
             self.Actions.COMPLETE.value: (Chore.complete, 'This occurrence is completed.'),
-            self.Actions.SNOOZE.value: (Alarm.snooze, 'Alarm snoozed for'),
-            self.Actions.SKIP.value: (Alarm.skip, 'Skipping this occurrence.'),
+            self.Actions.SNOOZE.value: (Chore.snooze, 'Alarm snoozed for'),
+            self.Actions.SKIP.value: (Chore.jump, 'JUmping this occurrence.'),
             self.Actions.STOP.value: (Chore.finish, 'This chore is stopped for now (no more alarms).'),
         }
         tuple_value = function_map.get(self.text)
@@ -253,7 +253,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             raise DispatchAgain
 
         function, message = tuple_value
-        if function == Alarm.snooze:
+        if function == Chore.snooze:
             self.action_message = message
             self.send_message(
                 'Choose a time from the suggestions below, or write the desired time',
