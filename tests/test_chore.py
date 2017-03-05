@@ -69,13 +69,15 @@ class FakeChore:
         """:type: Chore"""
         db.session.commit()
 
-        self.original_due_at = self.original_alarm_at = None
-        self.reset_original()
+        self.previous_due_at = self.previous_alarm_at = None
+        self.reset_previous_dates()
 
-    def reset_original(self):
-        """Reset original dates."""
-        self.original_due_at = self.chore.due_at
-        self.original_alarm_at = self.chore.alarm_at
+    def reset_previous_dates(self, reset_due=True, reset_alarm=True):
+        """Reset previous dates."""
+        if reset_due:
+            self.previous_due_at = self.chore.due_at
+        if reset_alarm:
+            self.previous_alarm_at = self.chore.alarm_at
 
     def alarm(self, index):
         """Get an alarm from the underlying chore.
@@ -91,20 +93,36 @@ class FakeChore:
         last_alarm = self.chore.alarms[expected_alarm_count - 1]
         """:type: Alarm"""
         assert last_alarm.action == expected_action
-        # assert last_alarm.due_at == self.original_due_at
-        # assert last_alarm.alarm_at == self.original_alarm_at
+        # TODO Augusto:
+        # assert last_alarm.due_at == self.previous_due_at
+        # assert last_alarm.alarm_at == self.previous_alarm_at
 
-    def assert_timedelta(self, **kwargs):
+    def assert_both_dates(self, **kwargs):
         """Assert if the due and alarm times match the timedelta."""
         expected_due_at = expected_alarm_at = None
         if kwargs:
             diff = timedelta(**kwargs)
-            expected_due_at = self.original_due_at + diff
-            expected_alarm_at = self.original_alarm_at + diff
+            expected_due_at = self.previous_due_at + diff
+            expected_alarm_at = self.previous_alarm_at + diff
         assert self.chore.due_at == expected_due_at
         assert self.chore.alarm_at == expected_alarm_at
 
-        self.reset_original()
+        self.reset_previous_dates()
+
+    def assert_alarm_at(self, **kwargs):
+        """Assert if the alarm time match the timedelta."""
+        expected_alarm_at = None
+        if kwargs:
+            diff = timedelta(**kwargs)
+            expected_alarm_at = self.previous_alarm_at + diff
+
+        assert self.chore.due_at == self.previous_due_at
+        assert self.chore.alarm_at == expected_alarm_at, 'Expected {}, got {}'.format(
+            arrow.get(expected_alarm_at).humanize(),
+            arrow.get(self.chore.alarm_at).humanize(),
+        )
+
+        self.reset_previous_dates(reset_due=False)
 
     def assert_close_to_now(self, seconds: int=2, **kwargs):
         """Assert both chore dates are close to the current time (since we cannot assert the exact time)."""
@@ -117,7 +135,7 @@ class FakeChore:
         assert begin <= self.chore.due_at <= end
         assert begin <= self.chore.alarm_at <= end
 
-        self.reset_original()
+        self.reset_previous_dates()
 
 
 def test_one_time_only(app):
@@ -125,7 +143,7 @@ def test_one_time_only(app):
     fake = FakeChore(app)
 
     fake.chore.complete()
-    fake.assert_timedelta()
+    fake.assert_both_dates()
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
 
 
@@ -134,15 +152,15 @@ def test_repetition_from_due_date(app):
     fake = FakeChore(app, repetition='Daily')
 
     fake.chore.complete()
-    fake.assert_timedelta(days=1)
+    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(1, AlarmAction.COMPLETE)
 
     fake.chore.complete()
-    fake.assert_timedelta(days=1)
+    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
 
     fake.chore.finish()
-    fake.assert_timedelta(days=1)
+    fake.assert_both_dates(days=1)
     fake.assert_saved_alarm(3, AlarmAction.FINISH)
 
 
@@ -166,44 +184,28 @@ def test_repetition_from_completed(app):
 @pytest.mark.xfail(reason='Fix this')
 def test_snooze_from_original_due_date(app):
     """When you snooze a chore and then complete it later, the original date should get the repetition."""
-    assert app
-
     ten_oclock = TODAY.replace(hour=10, minute=0, second=0, microsecond=0)
-    chore = ChoreFactory(repetition='Daily', repeat_from_completed=False)
-    AlarmFactory(chore=chore, next_at=ten_oclock)
-    """:type: dontforget.models.Alarm"""
-    db.session.commit()
-
-    def get_last_alarm(expected_len):
-        """Get the last alarm from the chore.
-
-        :rtype: dontforget.models.Alarm
-        """
-        assert len(chore.alarms) == expected_len
-        return chore.alarms[expected_len - 1]
-
-    last_alarm = get_last_alarm(1)
-    assert last_alarm.next_at == ten_oclock
+    fake = FakeChore(app, repetition='Daily', due_at=ten_oclock)
 
     # Snooze several times.
-    for index, minutes in enumerate([2, 1, 4]):
-        last_alarm.snooze('{} hours'.format(minutes))
-        last_alarm = get_last_alarm(2 + index)
-
-    # Skip one day.
-    last_alarm.skip()
-    last_alarm = get_last_alarm(5)
-    assert last_alarm.next_at == ten_oclock + timedelta(days=1)
-
-    # Snooze again several times.
-    for index, minutes in enumerate([10, 15, 30, 10]):
-        last_alarm.snooze('{} minutes'.format(minutes))
-        last_alarm = get_last_alarm(6 + index)
-
-    # Finally complete the chore the next day.
-    last_alarm.complete()
-    last_alarm = get_last_alarm(10)
-    assert last_alarm.next_at == ten_oclock + timedelta(days=2)
+    for index, hours in enumerate([2, 1, 4]):
+        fake.chore.snooze('{} hours'.format(hours))
+        fake.assert_alarm_at(minutes=hours)
+    #
+    # # Skip one day.
+    # fake.chore.skip()
+    # last_alarm = get_last_alarm(5)
+    # assert last_alarm.next_at == ten_oclock + timedelta(days=1)
+    #
+    # # Snooze again several times.
+    # for index, minutes in enumerate([10, 15, 30, 10]):
+    #     last_alarm.snooze('{} minutes'.format(minutes))
+    #     last_alarm = get_last_alarm(6 + index)
+    #
+    # # Finally complete the chore the next day.
+    # last_alarm.complete()
+    # last_alarm = get_last_alarm(10)
+    # assert last_alarm.next_at == ten_oclock + timedelta(days=2)
 
 
 @pytest.mark.xfail(reason='Fix this')

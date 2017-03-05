@@ -34,7 +34,7 @@ def upgrade():
     op.add_column('alarm', sa.Column('due_at', sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column('alarm', sa.Column('alarm_at', sa.TIMESTAMP(timezone=True), nullable=True))
     add_required_column('alarm', 'action', ALARM_ACTION_ENUM, "'snooze'")
-    op.add_column('alarm', sa.Column('snooze_text', sa.String(), nullable=True))
+    op.add_column('alarm', sa.Column('snooze_repetition', sa.String(), nullable=True))
     add_required_column('alarm', 'created_at', sa.TIMESTAMP(timezone=True), 'next_at')
     op.drop_column('alarm', 'next_at')
     op.drop_column('alarm', 'last_snooze')
@@ -64,7 +64,7 @@ def downgrade():
     add_required_column('alarm', 'current_state', ALARM_STATE_ENUM, 'unseen')
 
     op.drop_column('alarm', 'created_at')
-    op.drop_column('alarm', 'snooze_text')
+    op.drop_column('alarm', 'snooze_repetition')
     op.drop_column('alarm', 'due_at')
     op.drop_column('alarm', 'alarm_at')
     op.drop_column('alarm', 'action')

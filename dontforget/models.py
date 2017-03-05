@@ -93,21 +93,21 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
         return query.all()
 
-    def repeat(self, action, snooze_text=None):
+    def repeat(self, action, snooze_repetition=None):
         """Set date fields and save alarm history with the desired action, based on the repetition settings.
 
         :param str action: The desired action for the saved alarm.
-        :param str snooze_text: Snooze repetition chosen by the user.
+        :param str snooze_repetition: Snooze repetition chosen by the user.
         """
         Alarm.create(commit=False, chore_id=self.id, action=action, due_at=self.due_at, alarm_at=self.alarm_at,
-                     snooze_text=snooze_text)
+                     snooze_repetition=snooze_repetition)
 
         due_at = None
         alarm_at = None
         now = right_now()
-        if snooze_text:
+        if snooze_repetition:
             due_at = self.due_at
-            alarm_at = next_dates(snooze_text, now)
+            alarm_at = next_dates(snooze_repetition, now)
         elif self.repetition and self.has_open_end():
             # Repeat from the current date or the original due date.
             due_at = alarm_at = next_dates(
@@ -122,6 +122,10 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     def finish(self):
         """Stop the series of alarms (save one last alarm in the history)."""
         return self.repeat(AlarmAction.FINISH)
+
+    def snooze(self, snooze_repetition):
+        """Snooze this alarm using the desired repetition."""
+        return self.repeat(AlarmAction.SNOOZE, snooze_repetition)
 
 
 class AlarmAction(object):
@@ -149,7 +153,7 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
     action = db.Column(ALARM_ACTION_ENUM, nullable=False)
     due_at = db.Column(db.TIMESTAMP(timezone=True))
     alarm_at = db.Column(db.TIMESTAMP(timezone=True))
-    snooze_text = db.Column(db.String())
+    snooze_repetition = db.Column(db.String())
 
     def __repr__(self):
         """Represent the alarm as a unique string."""
@@ -167,10 +171,6 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
             repetition=self.chore.repetition or 'Once',
             completed='(from completed)' if self.chore.repeat_from_completed else ''
         )
-
-    def snooze(self, snooze_repetition):
-        """Snooze this alarm using the desired repetition."""
-        return self.repeat(AlarmAction.SNOOZE, snooze_repetition)
 
     def skip(self):
         """Skip this alarm."""
