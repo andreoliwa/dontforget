@@ -68,13 +68,19 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     def query_active(cls, reference_date=None):
         """Return a query filtered by active chores."""
         # pylint: disable=no-member
-        return cls.query.filter(or_(cls.alarm_end.is_(None), (reference_date or right_now()) <= cls.alarm_end))
+        return cls.query.filter(or_(cls.alarm_end.is_(None), cls.alarm_end >= (reference_date or right_now())))
 
     @classmethod
     def query_inactive(cls, reference_date=None):
         """Return a query filtered by inactive chores."""
         # pylint: disable=no-member
-        return cls.query.filter((reference_date or right_now()) > cls.alarm_end)
+        return cls.query.filter(cls.alarm_end < (reference_date or right_now()))
+
+    @classmethod
+    def query_future(cls, reference_date=None):
+        """Return a query filtered by future chores."""
+        # pylint: disable=no-member
+        return cls.query.filter(cls.due_at > (reference_date or right_now()))
 
     def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.

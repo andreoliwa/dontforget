@@ -3,58 +3,12 @@
 from datetime import timedelta
 
 import arrow
-import pytest
 from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 from dontforget.app import db
-from dontforget.cron import spawn_alarms
-from dontforget.models import Alarm, AlarmAction, Chore
+from dontforget.models import AlarmAction, Chore
 from dontforget.repetition import right_now
 from dontforget.utils import DATETIME_FORMAT
-
-
-def test_search_similar(app):
-    """Search for similar chores."""
-    assert app
-
-    first = ChoreFactory(title='My first chore')
-    something = ChoreFactory(title='Do SOMETHING soon')
-    coffee = ChoreFactory(title='Buy coffee')
-    cheese = ChoreFactory(title='Buy cheese')
-    db.session.commit()
-    assert len(Chore(title='Write anything').search_similar()) == 0
-
-    rv = Chore(title='Read something now').search_similar()
-    assert len(rv) == 1
-    assert rv == [something]
-
-    rv = Chore(title='Buy bread').search_similar()
-    assert len(rv) == 2
-    assert {coffee, cheese}.issubset(set(rv))
-
-    assert len(Chore(title='Buy bread').search_similar(min_chars=4)) == 0
-    assert len(Chore(title='My duty').search_similar()) == 0
-
-    rv = Chore(title='My first duty').search_similar()
-    assert len(rv) == 1
-    assert rv == [first]
-
-
-def test_active_inactive_chores(app):
-    """Query active and inactive chores."""
-    assert app
-
-    ChoreFactory(due_at=YESTERDAY, alarm_end=YESTERDAY)
-    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)
-    ChoreFactory(due_at=YESTERDAY)
-    db.session.commit()
-
-    assert Chore.query_active().count() == 2
-    assert Chore.query_inactive().count() == 1
-
-    after_next_week = NEXT_WEEK + timedelta(seconds=1)
-    assert Chore.query_active(after_next_week).count() == 1
-    assert Chore.query_inactive(after_next_week).count() == 2
 
 
 class FakeChore:
@@ -134,6 +88,53 @@ class FakeChore:
         self.assert_date('alarm_at', close_to_now, **kwargs)
 
 
+def test_search_similar(app):
+    """Search for similar chores."""
+    assert app
+
+    first = ChoreFactory(title='My first chore')
+    something = ChoreFactory(title='Do SOMETHING soon')
+    coffee = ChoreFactory(title='Buy coffee')
+    cheese = ChoreFactory(title='Buy cheese')
+    db.session.commit()
+    assert len(Chore(title='Write anything').search_similar()) == 0
+
+    rv = Chore(title='Read something now').search_similar()
+    assert len(rv) == 1
+    assert rv == [something]
+
+    rv = Chore(title='Buy bread').search_similar()
+    assert len(rv) == 2
+    assert {coffee, cheese}.issubset(set(rv))
+
+    assert len(Chore(title='Buy bread').search_similar(min_chars=4)) == 0
+    assert len(Chore(title='My duty').search_similar()) == 0
+
+    rv = Chore(title='My first duty').search_similar()
+    assert len(rv) == 1
+    assert rv == [first]
+
+
+def test_active_inactive_future_chores(app):
+    """Query active, inactive and future chores."""
+    assert app
+
+    ChoreFactory(due_at=YESTERDAY, alarm_end=YESTERDAY)
+    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)
+    ChoreFactory(due_at=YESTERDAY)
+    ChoreFactory(due_at=NEXT_WEEK)
+    db.session.commit()
+
+    assert Chore.query_active().count() == 3
+    assert Chore.query_inactive().count() == 1
+    assert Chore.query_future().count() == 1
+
+    after_next_week = NEXT_WEEK + timedelta(seconds=1)
+    assert Chore.query_active(after_next_week).count() == 2
+    assert Chore.query_inactive(after_next_week).count() == 2
+    assert Chore.query_future(after_next_week).count() == 0
+
+
 def test_one_time_only(app):
     """One time only chore."""
     fake = FakeChore(app)
@@ -208,16 +209,3 @@ def test_snooze_from_original_due_date(app):
     fake.assert_saved_alarm(9, AlarmAction.COMPLETE)
     fake.assert_date('due_at', days=3)
     assert fake.chore.due_at == fake.chore.alarm_at
-
-
-@pytest.mark.xfail(reason='Fix this')
-def test_spawn_alarm_for_future_chores(app):
-    """Spawn alarms for future chores."""
-    assert app
-
-    next_week = arrow.utcnow().shift(weeks=1).datetime
-    ChoreFactory(title='Start a diet', alarm_start=next_week)
-    db.session.commit()
-
-    assert spawn_alarms() == 1
-    assert Alarm.query.first().next_at == next_week
