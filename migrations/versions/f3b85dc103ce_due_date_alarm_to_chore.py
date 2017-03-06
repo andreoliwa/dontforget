@@ -14,7 +14,7 @@ from dontforget.database import add_required_column
 revision = 'f3b85dc103ce'
 down_revision = 'a2de422d22b8'
 
-ALARM_ACTION_ENUM = postgresql.ENUM('complete', 'snooze', 'jump', 'finish',
+ALARM_ACTION_ENUM = postgresql.ENUM('complete', 'snooze', 'jump', 'pause',
                                     name='alarm_action_enum', create_type=False)
 
 ALARM_STATE_ENUM = postgresql.ENUM('unseen', 'displayed', 'skipped', 'snoozed', 'completed', 'killed',
@@ -60,8 +60,9 @@ def downgrade():
     op.add_column('alarm', sa.Column('last_snooze', sa.VARCHAR(), autoincrement=False, nullable=True))
     add_required_column('alarm', 'next_at', postgresql.TIMESTAMP(timezone=True), 'created_at')
 
-    # This UPDATE will destroy history and mark everything as unseen. The right thing would be a manual UPDATE.
-    add_required_column('alarm', 'current_state', ALARM_STATE_ENUM, 'unseen')
+    # This UPDATE will destroy history and mark everything as unseen.
+    # The right thing would be a manual UPDATE, mapping old enum items to new ones.
+    add_required_column('alarm', 'current_state', ALARM_STATE_ENUM, "'unseen'")
 
     op.drop_column('alarm', 'created_at')
     op.drop_column('alarm', 'snooze_repetition')
@@ -72,7 +73,7 @@ def downgrade():
 
     op.create_table(
         'users',
-        sa.Column('id', sa.INTEGER(), server_default=sa.text("nextval('users_id_seq'::regclass)"), nullable=False),
+        sa.Column('id', sa.INTEGER(), nullable=False),
         sa.Column('username', sa.VARCHAR(length=80), autoincrement=False, nullable=False),
         sa.Column('email', sa.VARCHAR(length=80), autoincrement=False, nullable=False),
         sa.Column('password', sa.VARCHAR(length=128), autoincrement=False, nullable=True),

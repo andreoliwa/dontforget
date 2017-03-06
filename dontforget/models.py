@@ -133,10 +133,9 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         """Jump this alarm."""
         return self.repeat(AlarmAction.JUMP)
 
-    def finish(self):
-        """Stop the series of alarms (save one last alarm in the history)."""
-        # TODO Augusto:
-        return self.repeat(AlarmAction.FINISH)
+    def pause(self):
+        """Pause the series of alarms by clearing the alarm dates."""
+        return self.update(due_at=None, alarm_at=None)
 
 
 class AlarmAction(object):
@@ -145,11 +144,11 @@ class AlarmAction(object):
     COMPLETE = 'complete'  # This repetition is done, but the chore is still active and will spawn alarms.
     SNOOZE = 'snooze'
     JUMP = 'jump'
-    FINISH = 'finish'  # The chore is finished, no more alarms will be created.
+    PAUSE = 'pause'  # The chore is finished, no more alarms will be created.
 
 
 ALARM_ACTION_ENUM = postgresql.ENUM(
-    AlarmAction.COMPLETE, AlarmAction.SNOOZE, AlarmAction.JUMP, AlarmAction.FINISH, name='alarm_action_enum')
+    AlarmAction.COMPLETE, AlarmAction.SNOOZE, AlarmAction.JUMP, AlarmAction.PAUSE, name='alarm_action_enum')
 
 
 class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):

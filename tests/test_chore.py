@@ -41,7 +41,7 @@ class FakeChore:
 
     def assert_saved_alarm(self, expected_alarm_count, expected_action):
         """Assert an alarm was saved to the history."""
-        assert len(self.chore.alarms) == expected_alarm_count
+        self.assert_alarm_count(expected_alarm_count)
 
         self.last_alarm = self.get_alarm(expected_alarm_count - 1)
         """:type: Alarm"""
@@ -50,6 +50,10 @@ class FakeChore:
         if self.assert_alarm_dates:
             assert self.last_alarm.due_at == self.previous['due_at']
             assert self.last_alarm.alarm_at == self.previous['alarm_at']
+
+    def assert_alarm_count(self, expected_alarm_count):
+        """Assert the expected alarm count."""
+        assert len(self.chore.alarms) == expected_alarm_count
 
     def assert_empty_dates(self):
         """Assert both dates are empty."""
@@ -156,9 +160,9 @@ def test_repetition_from_due_date(app):
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
     fake.assert_both_dates(days=1)
 
-    fake.chore.finish()
-    fake.assert_saved_alarm(3, AlarmAction.FINISH)
-    fake.assert_both_dates(days=1)
+    fake.chore.pause()
+    fake.assert_alarm_count(2)
+    fake.assert_empty_dates()
 
 
 def test_repetition_from_completed(app):
@@ -174,9 +178,9 @@ def test_repetition_from_completed(app):
     fake.assert_saved_alarm(2, AlarmAction.COMPLETE)
     fake.assert_both_dates(close_to_now=True, days=2)
 
-    fake.chore.finish()
-    fake.assert_saved_alarm(3, AlarmAction.FINISH)
-    fake.assert_both_dates(close_to_now=True, days=2)
+    fake.chore.pause()
+    fake.assert_alarm_count(2)
+    fake.assert_empty_dates()
 
 
 def test_snooze_from_original_due_date(app):

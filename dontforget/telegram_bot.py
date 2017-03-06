@@ -246,7 +246,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             self.Actions.COMPLETE.value: (Chore.complete, 'This occurrence is completed.'),
             self.Actions.SNOOZE.value: (Chore.snooze, 'Alarm snoozed for'),
             self.Actions.SKIP.value: (Chore.jump, 'JUmping this occurrence.'),
-            self.Actions.STOP.value: (Chore.finish, 'This chore is stopped for now (no more alarms).'),
+            self.Actions.STOP.value: (Chore.pause, 'This chore is stopped for now (no more alarms).'),
         }
         tuple_value = function_map.get(self.text)
         if not tuple_value:
