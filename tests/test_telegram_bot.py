@@ -114,7 +114,6 @@ def test_start_command(app):
         telegram.type_command('start', "I'm a bot to help you with your chores.")
 
 
-@pytest.mark.xfail(reason='Fix this')
 def test_overdue_command(app):
     """Overdue command."""
     with TelegramAppMock(app) as telegram:
