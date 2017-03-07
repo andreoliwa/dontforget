@@ -33,54 +33,66 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     @property
     def one_line(self):
         """Represent the chore in one line."""
-        return '{title} / from {start} to {end} / {repetition} {completed}'.format(
+        return '{title} \u231b {due}{human} \u21ba {repetition} {completed}'.format(
             title=self.title,
-            start=arrow.get(self.alarm_start).to(TIMEZONE).format(DATETIME_FORMAT),
-            end=arrow.get(self.alarm_end).to(TIMEZONE).format(DATETIME_FORMAT) if self.alarm_end else 'infinity',
+            due=arrow.get(self.due_at).format(DATETIME_FORMAT) if self.due_at else 'No due date',
+            human=' ({})'.format(arrow.get(self.due_at).humanize()) if self.due_at else '',
             repetition=self.repetition or 'Once',
             completed='(from completed)' if self.repeat_from_completed else ''
         )
 
-    def has_open_end(self):
+    @property
+    def active(self):
         """Return True if the chore has an open end.
 
         Conditions:
-        1. Alarm end empty, or greater than/equal to right now.
+        1. No alarm end, or alarm end in the future.
 
         :rtype: bool
         """
         return self.alarm_end is None or right_now() <= self.alarm_end
 
     @classmethod
-    def active_expression(cls):
-        """Return a SQL expression to check if the chore is active right now.
-
-        Use almost the the same logic as ``active()`` above.
-        One addition: also returns new chores which still don't have any alarm.
-
-        :return: Return a binary expression to be used in SQLAlchemy queries.
-        """
-        now = right_now()
-        return and_(Alarm.id.is_(None),
-                    or_(cls.alarm_end.is_(None), now <= cls.alarm_end))
-
-    @classmethod
     def query_active(cls, reference_date=None):
-        """Return a query filtered by active chores."""
+        """Return a query filtered by active chores on a reference date (default now).
+
+        1. Has a due date in the past.
+        2. No alarm end, or alarm end in the future.
+        """
         # pylint: disable=no-member
-        return cls.query.filter(or_(cls.alarm_end.is_(None), cls.alarm_end >= (reference_date or right_now())))
+        valid_date = (reference_date or right_now())
+        return cls.query.filter(
+            cls.due_at <= valid_date,
+            or_(cls.alarm_end.is_(None),
+                cls.alarm_end >= valid_date))
 
     @classmethod
     def query_inactive(cls, reference_date=None):
-        """Return a query filtered by inactive chores."""
+        """Return a query filtered by inactive chores on a reference date (default now).
+
+        One of those:
+        1. Empty due date.
+        2. Due date in the future (after the reference date).
+        3. Alarm end in the past.
+        """
         # pylint: disable=no-member
-        return cls.query.filter(cls.alarm_end < (reference_date or right_now()))
+        valid_date = (reference_date or right_now())
+        return cls.query.filter(or_(cls.due_at.is_(None),
+                                    cls.due_at > valid_date,
+                                    cls.alarm_end < valid_date))
 
     @classmethod
     def query_future(cls, reference_date=None):
         """Return a query filtered by future chores."""
         # pylint: disable=no-member
         return cls.query.filter(cls.due_at > (reference_date or right_now()))
+
+    @classmethod
+    def query_overdue(cls, reference_date=None):
+        """Return a query filtered with overdue chores."""
+        # pylint: disable=no-member
+        return cls.query.filter(cls.alarm_at <= (reference_date or right_now()))\
+            .order_by(Chore.alarm_at.desc(), Chore.due_at.desc())
 
     def search_similar(self, min_chars=3):
         """Search for similar chores, using the title for comparison.
@@ -114,7 +126,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         if snooze_repetition:
             due_at = self.due_at
             alarm_at = next_dates(snooze_repetition, now)
-        elif self.repetition and self.has_open_end():
+        elif self.repetition and self.active:
             # Repeat from the current date or the original due date.
             due_at = alarm_at = next_dates(
                 self.repetition, now if self.repeat_from_completed else self.due_at)
@@ -169,15 +181,3 @@ class Alarm(SurrogatePK, CreatedUpdatedMixin, Model):
         """Represent the alarm as a unique string."""
         return "<Alarm {!r} {!r} at '{}' (chore {!r})>".format(
             self.id, self.action, self.due_at, self.chore_id)
-
-    @property
-    def one_line(self):
-        """Represent the alarm in one line."""
-        reference_date = arrow.get(self.original_at or self.next_at).to(TIMEZONE)
-        return '{title} \u231b {due} ({human}) \u21ba {repetition} {completed}'.format(
-            title=self.chore.title,
-            due=reference_date.format(DATETIME_FORMAT),
-            human=reference_date.humanize(),
-            repetition=self.chore.repetition or 'Once',
-            completed='(from completed)' if self.chore.repeat_from_completed else ''
-        )

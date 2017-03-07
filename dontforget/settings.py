@@ -14,7 +14,7 @@ TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=confi
 class Config(object):
     """Base configuration."""
 
-    SECRET_KEY = os.environ.get('DONTFORGET_SECRET', 'secret-key')  # TODO: Change me
+    SECRET_KEY = os.environ.get('DONTFORGET_SECRET', 'r9UVPJectYXDHm2X87W92C')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_INTERCEPT_REDIRECTS = False

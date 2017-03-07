@@ -3,15 +3,13 @@ import re
 from enum import Enum
 
 import maya
-from sqlalchemy import and_
 from telepot import DelegatorBot, glance
 from telepot.delegate import create_open, pave_event_space, per_chat_id
 from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.app import db
-from dontforget.models import Alarm, Chore
-from dontforget.repetition import right_now
+from dontforget.models import Chore, AlarmAction
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
 from dontforget.utils import UT
 
@@ -32,15 +30,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         CHOOSE_TIME = 2
         TYPE_CHORE_INFO = 3
 
-    class Actions(Enum):
-        """Actions that can be performed on an alarm."""
-
-        COMPLETE = 'Complete'
-        SNOOZE = 'Snooze'
-        SKIP = 'Jump'
-        STOP = 'End series'
-
-    ACTION_BUTTONS = [Actions.COMPLETE.value, Actions.SNOOZE.value, Actions.SKIP.value, Actions.STOP.value]
+    ACTION_BUTTONS = [action.capitalize() for action in (
+        AlarmAction.COMPLETE, AlarmAction.SNOOZE, AlarmAction.JUMP, AlarmAction.PAUSE)]
     SUGGESTED_TIMES = ['5 min', '10 min', '15 min', '30 min', '1 hour', '2 hours', '4 hours', '8 hours', '12 hours',
                        '1 day', '2 days', '4 days', '1 week', '2 weeks', '1 month']
 
@@ -62,9 +53,9 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         self.command_args = None
         """:type: str"""
 
-        self.alarm_id = None
+        self.chore_id = None
         """:type: int"""
-        self.alarm = None
+        self.chore = None
         self.action_message = None
 
         super(ChoreBot, self).__init__(*args, **kwargs)
@@ -72,8 +63,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         # Raw mapping with tuples when the same function has several shortcuts, plus help text when available.
         raw_mapping = {
             ('/start', '/help'): (self.show_help, 'this help'),
-            ('/add', '/new'): (self.add_command, 'add a chore with an alarm'),
-            ('/overdue', '/due'): (self.show_overdue_alarms, 'overdue alarms'),
+            ('/add', '/new'): (self.add_command, 'add a chore'),
+            ('/overdue', '/due'): (self.show_overdue, 'overdue chores'),
             ('/chores', '/active'): (self.show_active_chores, 'chores with active alarms'),
             '/all': (self.show_all_chores, 'all chores'),
             '/id': self.show_alarm_details,
@@ -192,16 +183,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         """Show a fallback message in case of an unknown command or text."""
         self.send_message("I don't understand what you mean.")
 
-    def show_overdue_alarms(self):
+    def show_overdue(self):
         """Show overdue alarms on a chat message."""
-        # query = Alarm.query.filter(  # pylint: disable=no-member
-        #     Alarm.action == AlarmAction.UNSEEN, Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())
-        query = Alarm.query.filter(  # pylint: disable=no-member
-            Alarm.next_at <= right_now()).order_by(Alarm.next_at.desc())  # TODO Augusto:
-        chores = []
-        for alarm in query.all():
-            chores.append('\u2705 /id_{}: {}'.format(alarm.id, alarm.one_line))
-
+        chores = ['\u2705 /id_{}: {}'.format(chore.id, chore.one_line)
+                  for chore in Chore.query_overdue().all()]
         if not chores:
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
             return
@@ -210,23 +195,18 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_alarm_details(self):
         """Show details of an alarm."""
-        self.alarm = None
-        self.alarm_id = None
+        self.chore = None
+        self.chore_id = None
         if self.command_args:
             # Get only digits from the text.
-            self.alarm_id = int(re.sub(r'\D', '', self.command_args))
-
-            # Query the unseen alarm with this id.
-            # self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
-            #     id=self.alarm_id, current_state=AlarmAction.UNSEEN).first()
-            self.alarm = Alarm.query.filter_by(  # pylint: disable=no-member
-                id=self.alarm_id).first()  # TODO Augusto:
-        if not self.alarm:
-            self.send_message('I could not find this alarm')
+            self.chore_id = int(re.sub(r'\D', '', self.command_args))
+            self.chore = Chore.query.get(self.chore_id)
+        if not self.chore:
+            self.send_message('I could not find this chore')
             return
 
         self.send_message(
-            'What do you want to do with this alarm?\n{}'.format(self.alarm.one_line),
+            'What do you want to do with this chore?\n{}'.format(self.chore.one_line),
             reply_markup=self.arrange_keyboard(self.ACTION_BUTTONS, 4))
         return self.Step.CHOOSE_ACTION
 
@@ -243,12 +223,12 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     def execute_action(self):
         """Choose an action for the alarm."""
         function_map = {
-            self.Actions.COMPLETE.value: (Chore.complete, 'This occurrence is completed.'),
-            self.Actions.SNOOZE.value: (Chore.snooze, 'Alarm snoozed for'),
-            self.Actions.SKIP.value: (Chore.jump, 'JUmping this occurrence.'),
-            self.Actions.STOP.value: (Chore.pause, 'This chore is stopped for now (no more alarms).'),
+            AlarmAction.COMPLETE: (Chore.complete, 'This occurrence is completed.'),
+            AlarmAction.SNOOZE: (Chore.snooze, 'Alarm snoozed for'),
+            AlarmAction.JUMP: (Chore.jump, 'Jumping this occurrence.'),
+            AlarmAction.PAUSE: (Chore.pause, 'This chore is paused for now (no more alarms).'),
         }
-        tuple_value = function_map.get(self.text)
+        tuple_value = function_map.get(self.text.lower())
         if not tuple_value:
             raise DispatchAgain
 
@@ -260,22 +240,22 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
                 reply_markup=self.arrange_keyboard(self.SUGGESTED_TIMES, 4))
             return self.Step.CHOOSE_TIME
 
-        function(self.alarm)
-        self.send_message('{}\n{}'.format(message, self.alarm.one_line))
+        function(self.chore)
+        self.send_message('{}\n{}'.format(message, self.chore.one_line))
 
-        return self.show_overdue_alarms()
+        return self.show_overdue()
 
     def snooze_alarm(self):
         """Snooze an alarm using the desired input time."""
-        if not self.alarm:
-            self.send_message('No alarm is selected, choose one below')
+        if not self.chore:
+            self.send_message('No chore is selected, choose one below')
         elif not self.action_message:
             self.send_message('No action was selected')
         else:
-            self.alarm.snooze(self.text)
-            self.send_message('{} {}\n{}'.format(self.action_message, self.text, self.alarm.one_line))
+            self.chore.snooze(self.text)
+            self.send_message('{} {}\n{}'.format(self.action_message, self.text, self.chore.one_line))
 
-        self.show_overdue_alarms()
+        self.show_overdue()
 
     def on__idle(self, event):
         """Close the conversation when idle for some time."""
@@ -304,11 +284,13 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             return
 
         args = list(map(str.strip, info.translate(self.TRANSLATION_TABLE).split('|')))
-        arg_title, arg_alarm_start, arg_repetition = args + [None] * (3 - len(args))
+        arg_title, arg_due_at, arg_repetition = args + [None] * (3 - len(args))
 
+        alarm_at = (maya.when(arg_due_at) if arg_due_at else maya.now()).datetime()
         fields = dict(
             title=arg_title,
-            alarm_start=(maya.when(arg_alarm_start) if arg_alarm_start else maya.now()).datetime(),
+            due_at=alarm_at,
+            alarm_at=alarm_at,
             repetition=arg_repetition,
         )
         db.session.add(Chore(**fields))
@@ -318,26 +300,17 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_active_chores(self):
         """Show only active chores."""
-        return self._show_chores(Chore.query.join)  # pylint: disable=no-member
+        return self._show_chores(Chore.query_active())  # pylint: disable=no-member
 
     def show_all_chores(self):
         """Show all chores."""
-        return self._show_chores(Chore.query.outerjoin)  # pylint: disable=no-member
+        return self._show_chores(Chore.query)  # pylint: disable=no-member
 
-    def _show_chores(self, join_function):
+    def _show_chores(self, base_query):
         """Show chores using the desired JOIN function."""
-        # query = join_function(
-        #     Alarm, and_(Alarm.chore_id == Chore.id, Alarm.action == AlarmAction.UNSEEN)).order_by(
-        #         Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.action)
-        query = join_function(  # TODO Augusto:
-            Alarm, and_(Alarm.chore_id == Chore.id)).order_by(
-                Alarm.updated_at.desc(), Chore.id.desc()).with_entities(Chore, Alarm.action)
-        chores = []
-        for row in query.all():
-            chores.append('{active} {one_line}'.format(
-                active=UT.LargeBlueCircle if row.current_state else UT.LargeRedCircle,
-                one_line=row.Chore.one_line
-            ))
+        query = base_query.order_by(Chore.updated_at.desc(), Chore.id.desc())
+        chores = ['{} {}'.format(UT.LargeBlueCircle if chore.active else UT.LargeRedCircle, chore.one_line)
+                  for chore in query.all()]
         if not chores:
             self.send_message("You don't have any chores yet, use /add to create one")
             return

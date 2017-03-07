@@ -123,14 +123,14 @@ def test_active_inactive_future_chores(app):
     """Query active, inactive and future chores."""
     assert app
 
-    ChoreFactory(due_at=YESTERDAY, alarm_end=YESTERDAY)
-    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)
-    ChoreFactory(due_at=YESTERDAY)
-    ChoreFactory(due_at=NEXT_WEEK)
+    ChoreFactory(due_at=YESTERDAY, alarm_end=YESTERDAY)  # Not active
+    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)  # Active, with end
+    ChoreFactory(due_at=YESTERDAY)  # Active, no end
+    ChoreFactory(due_at=NEXT_WEEK)  # Not active, future
     db.session.commit()
 
-    assert Chore.query_active().count() == 3
-    assert Chore.query_inactive().count() == 1
+    assert Chore.query_active().count() == 2
+    assert Chore.query_inactive().count() == 2
     assert Chore.query_future().count() == 1
 
     after_next_week = NEXT_WEEK + timedelta(seconds=1)
