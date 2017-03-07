@@ -4,6 +4,7 @@ import os
 
 from prettyconf import config
 
+LOCAL_TIMEZONE = config('LOCAL_TIMEZONE', default='Europe/Berlin')
 TELEGRAM_TOKEN = config('TELEGRAM_TOKEN', default=None)
 TELEGRAM_IDLE_TIMEOUT = config('TELEGRAM_IDLE_TIMEOUT', default=120, cast=int)
 

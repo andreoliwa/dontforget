@@ -3,12 +3,12 @@
 from flask import flash
 
 DATETIME_FORMAT = 'ddd MMM DD, YYYY HH:mm'
-TIMEZONE = 'Europe/Berlin'
 
 
 class UT:
     """Unicode table helper."""
 
+    Hourglass = '\u231b'
     LargeRedCircle = '\U0001F534'
     LargeBlueCircle = '\U0001F535'
 

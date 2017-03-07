@@ -9,7 +9,7 @@ from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.app import db
-from dontforget.models import Chore, AlarmAction
+from dontforget.models import AlarmAction, Chore
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
 from dontforget.utils import UT
 
@@ -200,7 +200,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         if self.command_args:
             # Get only digits from the text.
             self.chore_id = int(re.sub(r'\D', '', self.command_args))
-            self.chore = Chore.query.get(self.chore_id)
+            self.chore = Chore.query.get(self.chore_id)  # pylint: disable=no-member
         if not self.chore:
             self.send_message('I could not find this chore')
             return

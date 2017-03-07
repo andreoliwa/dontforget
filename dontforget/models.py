@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """Database models."""
 import arrow
-from sqlalchemy import and_, or_
+from sqlalchemy import or_
 from sqlalchemy.dialects import postgresql
 
 from dontforget.app import db
 from dontforget.database import CreatedUpdatedMixin, Model, SurrogatePK, reference_col
 from dontforget.repetition import next_dates, right_now
-from dontforget.utils import DATETIME_FORMAT, TIMEZONE
+from dontforget.settings import LOCAL_TIMEZONE
+from dontforget.utils import DATETIME_FORMAT, UT
 
 
 class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
@@ -33,11 +34,20 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     @property
     def one_line(self):
         """Represent the chore in one line."""
-        return '{title} \u231b {due}{human} \u21ba {repetition} {completed}'.format(
+        due_string = ''
+        if self.due_at:
+            date = arrow.get(self.due_at).to(LOCAL_TIMEZONE)
+            due_string = ' {icon} {due} ({human})'.format(
+                icon=UT.Hourglass, due=date.format(DATETIME_FORMAT), human=date.humanize())
+
+        repetition = ''
+        if self.repetition:
+            repetition = ' {icon} {repetition}'.format(icon='\u21ba', repetition=self.repetition)
+
+        return '{title}{due}{repetition} {completed}'.format(
             title=self.title,
-            due=arrow.get(self.due_at).format(DATETIME_FORMAT) if self.due_at else 'No due date',
-            human=' ({})'.format(arrow.get(self.due_at).humanize()) if self.due_at else '',
-            repetition=self.repetition or 'Once',
+            due=due_string,
+            repetition=repetition,
             completed='(from completed)' if self.repeat_from_completed else ''
         )
 
@@ -46,11 +56,13 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         """Return True if the chore has an open end.
 
         Conditions:
-        1. No alarm end, or alarm end in the future.
+        1. Has a due date in the past.
+        2. No alarm end, or alarm end in the future.
 
         :rtype: bool
         """
-        return self.alarm_end is None or right_now() <= self.alarm_end
+        return self.due_at and self.due_at <= right_now() and (
+            self.alarm_end is None or right_now() <= self.alarm_end)
 
     @classmethod
     def query_active(cls, reference_date=None):
