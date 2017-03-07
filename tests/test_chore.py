@@ -74,8 +74,11 @@ class FakeChore:
             expected = right_now() + timedelta(**kwargs)
             begin = expected - timedelta(seconds=self.NOW_PRECISION_SECONDS)
             end = expected + timedelta(seconds=self.NOW_PRECISION_SECONDS)
+            value = getattr(self.chore, field_name)
 
-            assert begin <= getattr(self.chore, field_name) <= end
+            assert begin <= value <= end, 'Field {} with value {} should be between {} and {}'.format(
+                field_name, value, arrow.get(begin).format(DATETIME_FORMAT), arrow.get(end).format(DATETIME_FORMAT)
+            )
         else:
             expected = self.previous[field_name]
             if kwargs:

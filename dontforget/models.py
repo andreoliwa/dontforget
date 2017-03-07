@@ -52,17 +52,21 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         )
 
     @property
+    def expired(self):
+        """Return True when a chore is over its alarm end date."""
+        return self.alarm_end and right_now() > self.alarm_end
+
+    @property
     def active(self):
         """Return True if the chore has an open end.
 
         Conditions:
         1. Has a due date in the past.
-        2. No alarm end, or alarm end in the future.
+        2. Not expired: no alarm end, or alarm end in the future.
 
         :rtype: bool
         """
-        return self.due_at and self.due_at <= right_now() and (
-            self.alarm_end is None or right_now() <= self.alarm_end)
+        return self.due_at and self.due_at <= right_now() and not self.expired
 
     @classmethod
     def query_active(cls, reference_date=None):
@@ -138,7 +142,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         if snooze_repetition:
             due_at = self.due_at
             alarm_at = next_dates(snooze_repetition, now)
-        elif self.repetition and self.active:
+        elif self.repetition and not self.expired:
             # Repeat from the current date or the original due date.
             due_at = alarm_at = next_dates(
                 self.repetition, now if self.repeat_from_completed else self.due_at)
