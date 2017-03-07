@@ -9,7 +9,7 @@ from alembic import op
 # revision identifiers, used by Alembic.
 from sqlalchemy.dialects import postgresql
 
-from dontforget.utils import add_required_column
+from dontforget.database import add_required_column
 
 revision = '143a88a7b01'
 down_revision = '1b2288a0f6'
@@ -32,7 +32,7 @@ def upgrade():
                     )
     with op.batch_alter_table('chore') as batch_op:
         batch_op.add_column(sa.Column('alarm_end', sa.TIMESTAMP(True), nullable=True))
-        add_required_column('chore', 'alarm_start', sa.TIMESTAMP(True), 'current_timestamp', batch_operation=batch_op)
+    add_required_column('chore', 'alarm_start', sa.TIMESTAMP(True), 'current_timestamp')
 
 
 def downgrade():

@@ -4,17 +4,18 @@ import os
 
 from prettyconf import config
 
+LOCAL_TIMEZONE = config('LOCAL_TIMEZONE', default='Europe/Berlin')
 TELEGRAM_TOKEN = config('TELEGRAM_TOKEN', default=None)
 TELEGRAM_IDLE_TIMEOUT = config('TELEGRAM_IDLE_TIMEOUT', default=120, cast=int)
 
 # By default, database will be refreshed every time a test runs.
-TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=config.boolean)
+REFRESH_TEST_DATABASE = config('REFRESH_TEST_DATABASE', default=True, cast=config.boolean)
 
 
 class Config(object):
     """Base configuration."""
 
-    SECRET_KEY = os.environ.get('DONTFORGET_SECRET', 'secret-key')  # TODO: Change me
+    SECRET_KEY = os.environ.get('DONTFORGET_SECRET', 'r9UVPJectYXDHm2X87W92C')
     APP_DIR = os.path.abspath(os.path.dirname(__file__))  # This directory
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_INTERCEPT_REDIRECTS = False
