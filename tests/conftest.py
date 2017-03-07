@@ -8,13 +8,13 @@ from flask_migrate import Migrate
 
 from dontforget.app import create_app
 from dontforget.database import db, db_refresh
-from dontforget.settings import TEST_REFRESH_DATABASE, TestConfig
+from dontforget.settings import REFRESH_TEST_DATABASE, TestConfig
 
 
 @pytest.yield_fixture(scope='session', autouse=True)
 def tear_down():
     """Create a fake app to refresh db, drop app and after execution create a new fake drop db and drop app."""
-    if not TEST_REFRESH_DATABASE:
+    if not REFRESH_TEST_DATABASE:
         yield
         return
 

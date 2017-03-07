@@ -9,7 +9,7 @@ TELEGRAM_TOKEN = config('TELEGRAM_TOKEN', default=None)
 TELEGRAM_IDLE_TIMEOUT = config('TELEGRAM_IDLE_TIMEOUT', default=120, cast=int)
 
 # By default, database will be refreshed every time a test runs.
-TEST_REFRESH_DATABASE = config('TEST_REFRESH_DATABASE', default=True, cast=config.boolean)
+REFRESH_TEST_DATABASE = config('REFRESH_TEST_DATABASE', default=True, cast=config.boolean)
 
 
 class Config(object):

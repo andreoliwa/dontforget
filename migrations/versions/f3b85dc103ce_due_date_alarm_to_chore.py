@@ -31,14 +31,45 @@ def upgrade():
     add_required_column('chore', 'updated_at', sa.TIMESTAMP(timezone=True), 'alarm_start')
     op.drop_column('chore', 'alarm_start')
 
+    op.execute("""UPDATE chore
+SET due_at = alarm.next_at,
+  alarm_at = coalesce(alarm.original_at, alarm.next_at)
+FROM alarm
+WHERE alarm.chore_id = chore.id AND alarm.current_state = 'unseen';
+""")
+
+    # Alarm date should not be inferior to the due date.
+    op.execute("""UPDATE chore
+SET alarm_at = due_at
+WHERE alarm_at < chore.due_at
+""")
+
     op.add_column('alarm', sa.Column('due_at', sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column('alarm', sa.Column('alarm_at', sa.TIMESTAMP(timezone=True), nullable=True))
     add_required_column('alarm', 'action', ALARM_ACTION_ENUM, "'snooze'")
     op.add_column('alarm', sa.Column('snooze_repetition', sa.String(), nullable=True))
     add_required_column('alarm', 'created_at', sa.TIMESTAMP(timezone=True), 'next_at')
+
+    op.execute("""UPDATE alarm
+SET due_at          = next_at,
+  alarm_at          = original_at,
+  snooze_repetition = last_snooze,
+  "action"          = CASE current_state
+                      WHEN 'skipped'
+                        THEN 'jump'
+                      WHEN 'snoozed'
+                        THEN 'snooze'
+                      WHEN 'completed'
+                        THEN 'complete'
+                      WHEN 'killed'
+                        THEN 'pause'
+                      ELSE 'snooze'
+                      END :: alarm_action_enum
+""")
+
     op.drop_column('alarm', 'next_at')
-    op.drop_column('alarm', 'last_snooze')
     op.drop_column('alarm', 'original_at')
+    op.drop_column('alarm', 'last_snooze')
     op.drop_column('alarm', 'current_state')
     ALARM_STATE_ENUM.drop(op.get_bind())
 

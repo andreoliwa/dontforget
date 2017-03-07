@@ -9,10 +9,14 @@ logs:
 	docker-compose logs -f --tail 100
 
 stop:
+	docker-compose stop flask
 	docker-compose stop telegram
 
 restart: stop
 	docker-compose up -d
+
+database-only: stop
+	docker-compose up -d postgresql
 
 isort:
 	isort -y
