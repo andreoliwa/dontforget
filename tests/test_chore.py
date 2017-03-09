@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 import arrow
-from tests.factories import NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
+from tests.factories import LAST_WEEK, NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 from dontforget.app import db
 from dontforget.models import AlarmAction, Chore
@@ -126,14 +126,19 @@ def test_active_inactive_future_chores(app):
     """Query active, inactive and future chores."""
     assert app
 
-    ChoreFactory(due_at=YESTERDAY, alarm_end=YESTERDAY)  # Not active
-    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)  # Active, with end
+    ChoreFactory(due_at=LAST_WEEK, alarm_end=LAST_WEEK)  # Inactive, end in the past
+    ChoreFactory(due_at=YESTERDAY, alarm_end=NEXT_WEEK)  # Active, end in the future
     ChoreFactory(due_at=YESTERDAY)  # Active, no end
-    ChoreFactory(due_at=NEXT_WEEK)  # Not active, future
+    ChoreFactory(due_at=NEXT_WEEK)  # Active, future, no end
     db.session.commit()
 
-    assert Chore.query_active().count() == 2
-    assert Chore.query_inactive().count() == 2
+    assert Chore.query.filter(Chore.expression_overdue()).count() == 2
+    assert Chore.query.filter(Chore.expression_expired()).count() == 1
+    assert Chore.query.filter(Chore.expression_not_expired()).count() == 3
+    assert Chore.query.filter(Chore.expression_future()).count() == 1
+
+    assert Chore.query_active().count() == 3
+    assert Chore.query_inactive().count() == 1
     assert Chore.query_future().count() == 1
 
     after_next_week = NEXT_WEEK + timedelta(seconds=1)

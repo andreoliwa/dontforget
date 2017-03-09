@@ -30,9 +30,13 @@ ABBREVIATIONS = dict(
 )
 
 
-def right_now():
-    """Return the current date/time, in the UTC timezone. This function can be mocked on tests."""
-    return arrow.utcnow().datetime
+def right_now(date=None):
+    """Return the reference date passed as an argument, or the current date/time in the UTC timezone.
+
+    The reference date is returned as is, no checking.
+    This function can be mocked on tests.
+    """
+    return date or arrow.utcnow().datetime
 
 
 def normalise_unit(value):

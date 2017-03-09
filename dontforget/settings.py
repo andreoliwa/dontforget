@@ -11,6 +11,9 @@ TELEGRAM_IDLE_TIMEOUT = config('TELEGRAM_IDLE_TIMEOUT', default=120, cast=int)
 # By default, database will be refreshed every time a test runs.
 REFRESH_TEST_DATABASE = config('REFRESH_TEST_DATABASE', default=True, cast=config.boolean)
 
+LONG_OVERDUE = config('LONG_OVERDUE', default=14, cast=int)
+MEDIUM_OVERDUE = config('MEDIUM_OVERDUE', default=7, cast=int)
+
 
 class Config(object):
     """Base configuration."""

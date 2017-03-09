@@ -11,7 +11,6 @@ from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from dontforget.app import db
 from dontforget.models import AlarmAction, Chore
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
-from dontforget.utils import UT
 
 
 class DispatchAgain(Exception):
@@ -121,8 +120,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         else:
             text = args[0]
             remaining_args = args[1:]
-        text += ' (DEV)'
-        return self.sender.sendMessage(*remaining_args, text=text, **kwargs)  # pylint: disable=no-member
+        return self.sender.sendMessage(*remaining_args, text='(DEV) ' + text, **kwargs)  # pylint: disable=no-member
 
     def on_chat_message(self, msg):
         """Handle chat messages."""
@@ -185,8 +183,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_overdue(self):
         """Show overdue alarms on a chat message."""
-        chores = ['\u2705 /id_{}: {}'.format(chore.id, chore.one_line)
-                  for chore in Chore.query_overdue().all()]
+        chores = [chore.one_line for chore in Chore.query_overdue().all()]
         if not chores:
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
             return
@@ -309,8 +306,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
     def _show_chores(self, base_query):
         """Show chores using the desired JOIN function."""
         query = base_query.order_by(Chore.updated_at.desc(), Chore.id.desc())
-        chores = ['{} {}'.format(UT.LargeBlueCircle if chore.active else UT.LargeRedCircle, chore.one_line)
-                  for chore in query.all()]
+        chores = [chore.one_line for chore in query.all()]
         if not chores:
             self.send_message("You don't have any chores yet, use /add to create one")
             return
