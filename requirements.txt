@@ -8,7 +8,7 @@ telepot==10.5
 # Flask
 Flask==0.12
 MarkupSafe==1.0
-Werkzeug==0.11.15
+Werkzeug==0.12
 Jinja2==2.9.5
 itsdangerous==0.24
 Flask-Migrate==2.0.3
