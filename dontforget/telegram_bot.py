@@ -10,8 +10,9 @@ from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.app import db
 from dontforget.models import AlarmAction, Chore
+from dontforget.repetition import local_right_now
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
-from dontforget.utils import UT
+from dontforget.utils import DATETIME_FORMAT
 
 
 class DispatchAgain(Exception):
@@ -121,8 +122,7 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         else:
             text = args[0]
             remaining_args = args[1:]
-        text += ' (DEV)'
-        return self.sender.sendMessage(*remaining_args, text=text, **kwargs)  # pylint: disable=no-member
+        return self.sender.sendMessage(*remaining_args, text='(DEV) ' + text, **kwargs)  # pylint: disable=no-member
 
     def on_chat_message(self, msg):
         """Handle chat messages."""
@@ -185,13 +185,13 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_overdue(self):
         """Show overdue alarms on a chat message."""
-        chores = ['\u2705 /id_{}: {}'.format(chore.id, chore.one_line)
-                  for chore in Chore.query_overdue().all()]
+        chores = [chore.one_line for chore in Chore.query_overdue().all()]
         if not chores:
             self.send_message('You have no overdue chores, congratulations! \U0001F44F\U0001F3FB')
             return
 
-        self.send_message('Those are your overdue chores:\n\n{chores}'.format(chores='\n'.join(chores)))
+        self.send_message('Your overdue chores at {date}:\n\n{chores}'.format(
+            date=local_right_now().format(DATETIME_FORMAT), chores='\n'.join(chores)))
 
     def show_alarm_details(self):
         """Show details of an alarm."""
@@ -300,22 +300,27 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
 
     def show_active_chores(self):
         """Show only active chores."""
-        return self._show_chores(Chore.query_active())  # pylint: disable=no-member
+        # pylint: disable=no-member
+        return self._show_chores(
+            'Your active chores at {}:'.format(local_right_now().format(DATETIME_FORMAT)),
+            Chore.query_active())
 
     def show_all_chores(self):
         """Show all chores."""
-        return self._show_chores(Chore.query)  # pylint: disable=no-member
+        # pylint: disable=no-member
+        return self._show_chores(
+            'Your chores at {}:'.format(local_right_now().format(DATETIME_FORMAT)),
+            Chore.query)
 
-    def _show_chores(self, base_query):
+    def _show_chores(self, message, base_query):
         """Show chores using the desired JOIN function."""
         query = base_query.order_by(Chore.updated_at.desc(), Chore.id.desc())
-        chores = ['{} {}'.format(UT.LargeBlueCircle if chore.active else UT.LargeRedCircle, chore.one_line)
-                  for chore in query.all()]
+        chores = [chore.one_line for chore in query.all()]
         if not chores:
             self.send_message("You don't have any chores yet, use /add to create one")
             return
 
-        self.send_message('\n{chores}'.format(chores='\n'.join(chores)))
+        self.send_message('{msg}\n{chores}'.format(msg=message, chores='\n'.join(chores)))
 
 
 def main_loop(app, queue=None):
