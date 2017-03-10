@@ -83,8 +83,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     @classmethod
     def expression_overdue(cls, date=None):
         """SQL expression for overdue."""
-        return and_(cls.due_at.isnot(None),
-                    cls.due_at <= right_now(date),
+        return and_(cls.due_at <= right_now(date).datetime,
                     cls.expression_not_expired(date))
 
     def expired(self, date=None):
@@ -94,12 +93,12 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     @classmethod
     def expression_expired(cls, date=None):
         """SQL expression for expired."""
-        return cls.alarm_end < right_now(date)
+        return cls.alarm_end < right_now(date).datetime
 
     @classmethod
     def expression_not_expired(cls, date=None):
         """SQL expression for not expired."""
-        return or_(cls.alarm_end.is_(None), cls.alarm_end >= right_now(date))
+        return or_(cls.alarm_end.is_(None), cls.alarm_end >= right_now(date).datetime)
 
     def future(self, date=None):
         """Future chore: due date in the future."""
@@ -108,19 +107,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     @classmethod
     def expression_future(cls, date=None):
         """SQL expression for future."""
-        return cls.due_at > right_now(date)
-
-    @property
-    def active(self):
-        """Return True if the chore has an open end.
-
-        Conditions:
-        1. Has a due date in the past.
-        2. Not expired: no alarm end, or alarm end in the future.
-
-        :rtype: bool
-        """
-        return self.due_at and self.due_at <= right_now() and not self.expired()
+        return cls.due_at > right_now(date).datetime
 
     @classmethod
     def query_active(cls, date=None):
@@ -138,13 +125,13 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
     def query_future(cls, date=None):
         """Return a query filtered by future chores."""
         # pylint: disable=no-member
-        return cls.query.filter(cls.due_at > right_now(date))
+        return cls.query.filter(cls.due_at > right_now(date).datetime)
 
     @classmethod
     def query_overdue(cls, date=None):
         """Return a query filtered with overdue chores."""
         # pylint: disable=no-member
-        return cls.query.filter(cls.alarm_at <= right_now(date))\
+        return cls.query.filter(cls.alarm_at <= right_now(date).datetime)\
             .order_by(Chore.alarm_at.desc(), Chore.due_at.desc())
 
     def search_similar(self, min_chars=3):
@@ -175,7 +162,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
 
         due_at = None
         alarm_at = None
-        now = right_now()
+        now = right_now().datetime
         if snooze_repetition:
             due_at = self.due_at
             alarm_at = next_dates(snooze_repetition, now)

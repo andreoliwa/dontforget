@@ -12,7 +12,7 @@ from dontforget.repetition import right_now
 
 fake = Faker()  # pylint: disable=invalid-name
 
-TODAY = right_now()
+TODAY = right_now().datetime
 NEXT_WEEK = TODAY + timedelta(days=7)
 LAST_WEEK = TODAY - timedelta(days=7)
 YESTERDAY = TODAY - timedelta(days=1)

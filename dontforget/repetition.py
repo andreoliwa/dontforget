@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """Repetition patterns for chores."""
+import datetime
 import re
 
 import arrow
 from dateutil.relativedelta import relativedelta
+
+from dontforget.settings import LOCAL_TIMEZONE
 
 
 class Unit(object):
@@ -30,13 +33,20 @@ ABBREVIATIONS = dict(
 )
 
 
-def right_now(date=None):
-    """Return the reference date passed as an argument, or the current date/time in the UTC timezone.
+def right_now(date=None) -> arrow.Arrow:
+    """Current date/time in the UTC timezone, or the date passed as an argument.
 
     The reference date is returned as is, no checking.
     This function can be mocked on tests.
     """
-    return date or arrow.utcnow().datetime
+    if date:
+        return date if isinstance(date, arrow.Arrow) else arrow.get(date)
+    return arrow.utcnow()
+
+
+def local_right_now(date=None) -> arrow.Arrow:
+    """Current datetime in the local timezone."""
+    return right_now(date).to(LOCAL_TIMEZONE)
 
 
 def normalise_unit(value):
@@ -63,7 +73,7 @@ def every(reference_date, count, number, unit):
     return results if len(results) > 1 else results[0]
 
 
-def next_dates(natural_language_repetition, reference_date=None, count=1):
+def next_dates(natural_language_repetition, reference_date=None, count=1) -> datetime.datetime:
     """Return the next date(s) by parsing a natural language repetition string.
 
     :param str natural_language_repetition: A string like 'daily', 'every 3 days', 'once a month', etc.
@@ -75,7 +85,7 @@ def next_dates(natural_language_repetition, reference_date=None, count=1):
     if not natural_language_repetition:
         return None
     if not reference_date:
-        reference_date = right_now()
+        reference_date = right_now().datetime
 
     mapping = FREQUENCY_MAPPING.get(natural_language_repetition.lower())
     if mapping:

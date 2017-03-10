@@ -129,7 +129,7 @@ def test_spawn_alarm_on_overdue_command(app):
 
     with TelegramAppMock(app) as telegram:
         assert Alarm.query.count() == 0
-        telegram.type_command('overdue', 'Those are your overdue chores:\n\n✅ /id_1: Something real')
+        telegram.type_command('overdue', 'Your overdue chores at:\n\n✅ /id_1: Something real')
     assert Alarm.query.count() == 1
 
 
