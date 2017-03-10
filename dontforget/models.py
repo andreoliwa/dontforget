@@ -111,9 +111,9 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
 
     @classmethod
     def query_active(cls, date=None):
-        """Return a query with active chores: overdue or future."""
+        """Return a query with active chores: has a due date and it's not expired."""
         # pylint: disable=no-member
-        return cls.query.filter(or_(cls.expression_overdue(date), cls.expression_future(date)))
+        return cls.query.filter(cls.due_at.isnot(None), cls.expression_not_expired(date))
 
     @classmethod
     def query_inactive(cls, date=None):
