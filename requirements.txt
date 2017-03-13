@@ -17,7 +17,7 @@ Flask-Script==2.0.5
 # Database
 Flask-SQLAlchemy==2.2
 SQLAlchemy==1.1.6
-psycopg2==2.7
+psycopg2==2.7.1
 
 # Testing
 pytest==3.0.6
