@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=unnecessary-lambda
 """Factories to help in tests."""
 from datetime import timedelta
 
-from factory import LazyAttribute, PostGenerationMethodCall, Sequence, SubFactory
+from factory import LazyAttribute, Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker import Faker
 
 from dontforget.database import db
 from dontforget.models import Alarm, Chore
 from dontforget.repetition import right_now
-from dontforget.user.models import User
 
 fake = Faker()  # pylint: disable=invalid-name
 
-TODAY = right_now()
+TODAY = right_now().datetime
 NEXT_WEEK = TODAY + timedelta(days=7)
 LAST_WEEK = TODAY - timedelta(days=7)
 YESTERDAY = TODAY - timedelta(days=1)
@@ -30,25 +28,10 @@ class BaseFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db.session
 
 
-class UserFactory(BaseFactory):
-    """User factory."""
-
-    username = Sequence(lambda n: 'user{0}'.format(n))
-    email = Sequence(lambda n: 'user{0}@example.com'.format(n))
-    password = PostGenerationMethodCall('set_password', 'example')
-    active = True
-
-    class Meta:
-        """Factory configuration."""
-
-        model = User
-
-
 class ChoreFactory(BaseFactory):
     """Chore factory."""
 
-    title = LazyAttribute(lambda x: ' '.join(fake.words(10)))
-    alarm_start = LazyAttribute(lambda x: fake.date_time_between('-30d', '-20d'))
+    title = Sequence(lambda n: '{0} {1}'.format(fake.word, n))
 
     class Meta:
         """Factory configuration."""
