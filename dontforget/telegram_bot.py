@@ -141,8 +141,8 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
         self.command_args = None
         if 'entities' in msg:
             self.command, self.command_args = min(
-                [(self.text[entity['offset']:entity['length']], self.text[entity['length'] + 1:])
-                 for entity in msg['entities'] if entity['type'] == 'bot_command'])
+                (self.text[entity['offset']:entity['length']], self.text[entity['length'] + 1:])
+                for entity in msg['entities'] if entity['type'] == 'bot_command')
 
             # Consider the underscore as a separator between a command and its arguments.
             if '_' in self.command:
@@ -284,15 +284,10 @@ class ChoreBot(ChatHandler):  # pylint: disable=too-many-instance-attributes
             return
 
         args = list(map(str.strip, info.translate(self.TRANSLATION_TABLE).split('|')))
-        arg_title, arg_due_at, arg_repetition = args + [None] * (3 - len(args))
+        arg_title, arg_due_at, arg_repetition = args + [None] * (3 - len(args))  # type: ignore
 
         alarm_at = (maya.when(arg_due_at) if arg_due_at else maya.now()).datetime()
-        fields = dict(
-            title=arg_title,
-            due_at=alarm_at,
-            alarm_at=alarm_at,
-            repetition=arg_repetition,
-        )
+        fields = {'title': arg_title, 'due_at': alarm_at, 'alarm_at': alarm_at, 'repetition': arg_repetition}
         db.session.add(Chore(**fields))
         db.session.commit()
 

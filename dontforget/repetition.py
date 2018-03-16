@@ -2,6 +2,7 @@
 """Repetition patterns for chores."""
 import datetime
 import re
+from typing import Union
 
 import arrow
 from dateutil.relativedelta import relativedelta
@@ -21,16 +22,13 @@ class Unit(object):
 
 
 REGEX_EVERY = re.compile(r"""(?P<every>Every|Each)?\s*(?P<number>\d*)\s*(?P<unit>.+)s?""", re.IGNORECASE)
-FREQUENCY_MAPPING = dict(
-    daily=(1, Unit.DAY), weekly=(1, Unit.WEEK), biweekly=(2, Unit.WEEK),
-    monthly=(1, Unit.MONTH), bimonthly=(2, Unit.MONTH), quarterly=(4, Unit.MONTH), semiannually=(6, Unit.MONTH),
-    yearly=(1, Unit.YEAR), hourly=(1, Unit.HOUR)
-)
+FREQUENCY_MAPPING = {'daily': (1, Unit.DAY), 'weekly': (1, Unit.WEEK), 'biweekly': (2, Unit.WEEK),
+                     'monthly': (1, Unit.MONTH), 'bimonthly': (2, Unit.MONTH), 'quarterly': (4, Unit.MONTH),
+                     'semiannually': (6, Unit.MONTH), 'yearly': (1, Unit.YEAR), 'hourly': (1, Unit.HOUR)}
 
 # Using 'm' for minute, because it's more likely to be used than 'month'
-ABBREVIATIONS = dict(
-    d=Unit.DAY, mo=Unit.MONTH, y=Unit.YEAR, w=Unit.WEEK, h=Unit.HOUR, m=Unit.MINUTE, mi=Unit.MINUTE, min=Unit.MINUTE
-)
+ABBREVIATIONS = {'d': Unit.DAY, 'mo': Unit.MONTH, 'y': Unit.YEAR, 'w': Unit.WEEK, 'h': Unit.HOUR, 'm': Unit.MINUTE,
+                 'mi': Unit.MINUTE, 'min': Unit.MINUTE}
 
 
 def right_now(date=None) -> arrow.Arrow:
@@ -64,7 +62,7 @@ def every(reference_date, count, number, unit):
 
     temp_date = reference_date
     results = []
-    for dummy in range(count):
+    for _index in range(count):
         try:
             temp_date = temp_date + relativedelta(**{normalise_unit(unit): int(number)})
         except TypeError:
@@ -73,7 +71,7 @@ def every(reference_date, count, number, unit):
     return results if len(results) > 1 else results[0]
 
 
-def next_dates(natural_language_repetition, reference_date=None, count=1) -> datetime.datetime:
+def next_dates(natural_language_repetition, reference_date=None, count=1) -> Union[datetime.datetime, None]:
     """Return the next date(s) by parsing a natural language repetition string.
 
     :param str natural_language_repetition: A string like 'daily', 'every 3 days', 'once a month', etc.
