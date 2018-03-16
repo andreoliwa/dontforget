@@ -1,12 +1,14 @@
-FROM python:3.5
+FROM python:3.6
+
 ENV TERM xterm-256color
-RUN apt-get update && apt-get install -y vim lsof less --no-install-recommends --no-install-suggests && apt-get clean
-RUN pip install -U pip
 
 RUN mkdir /dontforget
 WORKDIR /dontforget
 
-ADD requirements.txt .
-RUN pip install -r requirements.txt
+RUN apt-get update && apt-get install -y vim lsof less --no-install-recommends --no-install-suggests && apt-get clean
+RUN pip install -U pip pipenv
 
-ADD . /dontforget
+COPY Pipfile.lock .
+RUN pipenv install --dev
+
+COPY . /dontforget
