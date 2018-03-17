@@ -8,11 +8,11 @@ from unittest import mock
 import arrow
 import maya
 import pytest
-from tests.factories import ChoreFactory
 
 from dontforget.app import db
 from dontforget.models import Alarm, Chore
 from dontforget.telegram_bot import main_loop
+from tests.factories import ChoreFactory
 
 
 class TelegramAppMock:
@@ -45,12 +45,8 @@ class TelegramAppMock:
 
     def dict_message(self, text='', **kwargs):
         """Dict with message data."""
-        default = dict(
-            message_id=self.next_message_id(),
-            chat=self.dict_user(type='private'),
-            date=1482861515,
-            text=text,
-        )
+        default = {'message_id': self.next_message_id(), 'chat': self.dict_user(type='private'), 'date': 1482861515,
+                   'text': text}
         default.update({'from': self.dict_user()})
         default.update(**kwargs)
         return default
@@ -85,7 +81,7 @@ class TelegramAppMock:
         command = clean.split()[0]
         self.put_update(message=self.dict_message(
             text=clean,
-            entities=[dict(type='bot_command', offset=0, length=len(command))]
+            entities=[{'type': 'bot_command', 'offset': 0, 'length': len(command)}]
         ))
         self.expected_replies.append(expected_reply)
 

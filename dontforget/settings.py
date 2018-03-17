@@ -14,6 +14,9 @@ REFRESH_TEST_DATABASE = config('REFRESH_TEST_DATABASE', default=True, cast=confi
 LONG_OVERDUE = config('LONG_OVERDUE', default=14, cast=int)
 MEDIUM_OVERDUE = config('MEDIUM_OVERDUE', default=7, cast=int)
 
+TODOIST_USER = config('TODOIST_USER')
+TODOIST_PASSWORD = config('TODOIST_PASSWORD')
+
 
 class Config(object):
     """Base configuration."""

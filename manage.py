@@ -2,16 +2,19 @@
 # -*- coding: utf-8 -*-
 """Management script."""
 import os
+import sys
 from glob import glob
 from subprocess import call
 
 from flask_migrate import MigrateCommand
 from flask_script import Command, Manager, Option, Shell
 from flask_script.commands import Clean, ShowUrls
+from PyObjCTools import AppHelper
 
 from dontforget.app import create_app
-from dontforget.database import db_refresh as real_db_refresh
 from dontforget.database import db
+from dontforget.database import db_refresh as real_db_refresh
+from dontforget.menu import Sentinel, suppress_dock_icon
 from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
 
 CONFIG = ProdConfig if os.environ.get('DONTFORGET_ENV') == 'prod' else DevConfig
@@ -24,7 +27,7 @@ manager = Manager(app)  # pylint: disable=invalid-name
 
 def _make_context():
     """Return context dict for a shell session so you can access app and db."""
-    return dict(app=app, db=db)
+    return {'app': app, 'db': db}
 
 
 @manager.command
@@ -84,6 +87,16 @@ def telegram():
 
     from dontforget.telegram_bot import main_loop
     main_loop(app)
+
+
+@manager.command
+def menu():
+    """Display the menu of the application."""
+    if (len(sys.argv) > 1) and (sys.argv[1] == '--suppress-dock-icon'):
+        suppress_dock_icon()
+    else:
+        app = Sentinel.sharedApplication()
+        AppHelper.runEventLoop(app)
 
 
 manager.add_command('shell', Shell(make_context=_make_context))

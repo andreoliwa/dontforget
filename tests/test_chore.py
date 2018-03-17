@@ -3,12 +3,12 @@
 from datetime import timedelta
 
 import arrow
-from tests.factories import LAST_WEEK, NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 from dontforget.app import db
 from dontforget.models import AlarmAction, Chore
 from dontforget.repetition import right_now
 from dontforget.utils import DATETIME_FORMAT
+from tests.factories import LAST_WEEK, NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 
 class FakeChore:
@@ -27,7 +27,7 @@ class FakeChore:
         """:type: Chore"""
         db.session.commit()
 
-        self.previous = dict(due_at=self.chore.due_at, alarm_at=self.chore.alarm_at)
+        self.previous = {'due_at': self.chore.due_at, 'alarm_at': self.chore.alarm_at}
         self.last_alarm = None
         """:type: Alarm"""
         self.assert_alarm_dates = assert_alarm_dates
