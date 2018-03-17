@@ -1,10 +1,11 @@
 """Application menu at the status bar."""
 import plistlib
-from random import choice
+from typing import Tuple
 
 import objc
 from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar
 from Foundation import NSRunLoop, NSTimer
+from simple_settings import settings
 
 from dontforget.utils import UT
 
@@ -17,6 +18,15 @@ def suppress_dock_icon():
     plist['LSUIElement'] = '1'
     plistlib.writePlist(plist, path_to_plist)
     print('Done! Run Sentinel again.')
+
+
+def get_highest_count() -> Tuple[str, int]:
+    """Get the highest count of an icon."""
+    for icon in settings.icons:
+        count = settings.counts.get(icon, 0)
+        if count > 0:
+            return icon, count
+    return settings.icons[-1], 0
 
 
 class Sentinel(NSApplication):
@@ -45,11 +55,8 @@ class Sentinel(NSApplication):
 
     def update_(self, timer):
         """Run the update on every cycle of the timer."""
-        # FIXME: Replace this random update with something not distracting.
-        self.main_menu.setTitle_('{icon} {count}'.format(
-            icon=choice([UT.FourLeafClover, UT.Fire, UT.LargeRedCircle, UT.LargeBlueCircle]),
-            count=choice(range(1, 50))
-        ))
+        icon, count = get_highest_count()
+        self.main_menu.setTitle_('{} {}'.format(getattr(UT, icon), count or ''))
 
     def _setup_menu_bar(self):
         """Setup the menu bar of the app."""
@@ -58,7 +65,7 @@ class Sentinel(NSApplication):
 
         # [f for f in dir(NSButton) if 'Title' in f]
         self.button = self.main_menu.button
-        self.main_menu.setTitle_('\U0001F534 3')
+        self.update_(None)
 
         # Menu items
         quit_menu = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e2ced4ad806fb8b8d550226223a6b0f7ea3c853657b40be4095854e01145f44d"
+            "sha256": "e9e22eb17b27e6706471cfba54792d53a4546223afe330e5fc8e1dee521adb9b"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -340,6 +340,13 @@
             ],
             "version": "==0.15.35"
         },
+        "simple-settings": {
+            "hashes": [
+                "sha256:1d8bf51a4f1a25add691c0651dcdcbadb271048a520d145294ffcb25816e99fc",
+                "sha256:c384685c8f070f16a49f75806da4a45ffccf3d9316d2fd3e201ce108629bbf17"
+            ],
+            "version": "==0.12.1"
+        },
         "six": {
             "hashes": [
                 "sha256:70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9",
@@ -358,6 +365,12 @@
                 "sha256:9b77efc37564487932675bd8dee583ac287e8742f1e0693448e6ac3890180815"
             ],
             "version": "==12.6"
+        },
+        "toml": {
+            "hashes": [
+                "sha256:e1e8c220046889234df5ec688d6f97b734fc4a08a6d8edfc176f4e6abf90cfb5"
+            ],
+            "version": "==0.9.3.1"
         },
         "tzlocal": {
             "hashes": [
@@ -413,6 +426,14 @@
                 "sha256:a17a9573a6f475c99b551c0e0a812707ddda1ec9653bed04c13841404ed6f450"
             ],
             "version": "==17.4.0"
+        },
+        "colorama": {
+            "hashes": [
+                "sha256:463f8483208e921368c9f306094eb6f725c6ca42b0f97e313cb5d5512459feda",
+                "sha256:48eb22f4f8461b1df5734a074b57042430fb06e1d61bd1e11b078c0fe6d7a1f1"
+            ],
+            "markers": "sys_platform == 'win32'",
+            "version": "==0.3.9"
         },
         "coverage": {
             "hashes": [
@@ -557,6 +578,14 @@
                 "sha256:83efcb4d4dc3ebcc74e2f20330d1f3460393cf8fb1ec045888ce169e0f998e70"
             ],
             "version": "==0.14.0"
+        },
+        "funcsigs": {
+            "hashes": [
+                "sha256:330cc27ccbf7f1e992e69fef78261dc7c6569012cf397db8d3de0234e6c937ca",
+                "sha256:a7bb0f2cf3a3fd1ab2732cb49eba4252c2af4240442415b4abce3b87022a8f50"
+            ],
+            "markers": "python_version < '3.0'",
+            "version": "==1.0.2"
         },
         "ipdb": {
             "hashes": [
@@ -776,6 +805,15 @@
                 "sha256:f19f2a4f547505fe9072e15f6f4ae714af51b5a681a97f187971f50c283193b6"
             ],
             "version": "==1.1.0"
+        },
+        "typing": {
+            "hashes": [
+                "sha256:3a887b021a77b292e151afb75323dea88a7bc1b3dfa92176cff8e44c8b68bddf",
+                "sha256:b2c689d54e1144bbcfd191b0832980a21c2dbcf7b5ff7a66248a60c90e951eb8",
+                "sha256:d400a9344254803a2368533e4533a4200d21eb7b6b729c173bc38201a74db3f2"
+            ],
+            "markers": "python_version < '3.5'",
+            "version": "==3.6.4"
         },
         "wcwidth": {
             "hashes": [

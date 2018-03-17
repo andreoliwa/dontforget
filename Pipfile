@@ -25,6 +25,7 @@ telepot = "*"
 marshmallow = "*"
 pyobjc-core = "*"
 pyobjc-framework-cocoa = "*"
+simple-settings = {extras = ["toml"]}
 
 [dev-packages]
 "flake8" = "*"
