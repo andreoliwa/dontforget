@@ -21,13 +21,22 @@ def go_home(desired_date: Union[date, str, None]):
 
     # Find entries from projects which belong to the configured clients.
     client_ids = [client.id().data for client in my_data.clients
-                  if client.name().data in settings.go_home['clients']]
-    project_ids = [project.id().data for project in my_data.projects if project.cid().data in client_ids]
-    selected_entries = [entry.start().data for entry in entries if entry.pid().data in project_ids]
-    if not selected_entries:
+                  if client.name().data in settings.go_home['toggl_clients']]
+    client_projects = [project.id().data for project in my_data.projects if project.cid().data in client_ids]
+    start_dates = [entry.start().data for entry in entries if entry.pid().data in client_projects]
+    if not start_dates:
         return
 
     # Add 8 hours to the first entry.
-    first_entry_start = arrow.get(min(selected_entries))
-    time_to_go_home = first_entry_start + timedelta(hours=settings.go_home['hours'])
-    assert time_to_go_home  # FIXME:
+    first_start_date = arrow.get(min(start_dates))
+    time_to_go_home = first_start_date + timedelta(hours=settings.go_home['hours'])
+
+    # Find entries from projects that should be added to the time to go home.
+    add_projects = [project.id().data for project in my_data.projects
+                    if project.name().data in settings.go_home['toggl_add_projects']]
+    add_entries = [entry.duration().data for entry in entries if entry.pid().data in add_projects]
+    if not add_entries:
+        return
+
+    time_to_go_home += timedelta(seconds=sum(add_entries))
+    print(time_to_go_home)  # FIXME:

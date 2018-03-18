@@ -17,7 +17,7 @@ FourLeafClover = 0
 
 [go_home]
 hours = 8
-clients = ['Toggl Client Name 1', 'Toggl Client Name 2']
-exclude_tags = ['ignore']
-project = 'Todoist Project Name'
-task_description = 'Go home!'
+toggl_clients = ['Toggl Client Name 1', 'Toggl Client Name 2']
+toggl_add_projects = ['Work Pause']
+todoist_project = 'Todoist Project Name'
+todoist_task = 'Go home!'
