@@ -1,12 +1,17 @@
 [[source]]
+
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
+
 [pipenv]
+
 allow_prereleases = true
 
+
 [packages]
+
 "jinja2" = "*"
 "psycopg2" = "*"
 flask = "*"
@@ -26,8 +31,12 @@ marshmallow = "*"
 pyobjc-core = "*"
 pyobjc-framework-cocoa = "*"
 simple-settings = {extras = ["toml"]}
+todoist-python = "*"
+tapioca-toggl = "*"
+
 
 [dev-packages]
+
 "flake8" = "*"
 "flake8-blind-except" = "*"
 "flake8-bugbear" = "*"

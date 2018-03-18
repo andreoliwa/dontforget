@@ -99,6 +99,13 @@ def menu():
         AppHelper.runEventLoop(app)
 
 
+@manager.command
+def go_home():
+    """Determine the time to go home."""
+    from dontforget.home import go_home
+    go_home('2018-03-16')  # FIXME:
+
+
 manager.add_command('shell', Shell(make_context=_make_context))
 manager.add_command('db', MigrateCommand)
 manager.add_command('urls', ShowUrls())

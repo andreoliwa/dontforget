@@ -1,0 +1,23 @@
+# The following values can either be set with settings.toml or environment variables
+TOGGL_API_TOKEN = ''
+TODOIST_USER = ''
+TODOIST_PASSWORD = ''
+
+icons = [
+  'Fire',
+  'LargeRedCircle',
+  'FourLeafClover',
+  'MediumWhiteCircle',
+]
+
+[counts]
+Fire = 0
+LargeRedCircle = 0
+FourLeafClover = 0
+
+[go_home]
+hours = 8
+clients = ['Toggl Client Name 1', 'Toggl Client Name 2']
+exclude_tags = ['ignore']
+project = 'Todoist Project Name'
+task_description = 'Go home!'
