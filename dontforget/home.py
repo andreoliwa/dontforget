@@ -7,6 +7,8 @@ import arrow
 from simple_settings import settings
 from tapioca_toggl import Toggl
 
+from dontforget.todoist import Todoist
+
 
 def go_home(desired_date: Union[date, str, None]):
     """Determine the time to go home on the desired day."""
@@ -39,4 +41,12 @@ def go_home(desired_date: Union[date, str, None]):
         return
 
     time_to_go_home += timedelta(seconds=sum(add_entries))
-    print(time_to_go_home)  # FIXME:
+
+    todoist = Todoist()
+    project_id = todoist.fetch_first('projects', 'id', {'name': settings.go_home['todoist_project']})
+    if not project_id:
+        return
+
+    task = todoist.fetch_first('items', 'content',
+                               {'project_id': project_id, 'content': settings.go_home['todoist_task']})
+    print(task)  # FIXME:
