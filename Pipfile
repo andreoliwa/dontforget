@@ -36,4 +36,4 @@ factory-boy = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-runfailed = "*"
-nitpick = {git = "https://github.com/andreoliwa/python-nitpick", editable = true}
+nitpick = "*"

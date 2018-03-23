@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d8e3ee309ed0e5ca6362b247c807f6f20ff8a3d30230ae28648ed353320b20b5"
+            "sha256": "e42e7d6b2d61efea7e79b446a7f6c01af52e67bc5ac98997deb3531f17246d05"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -680,14 +680,18 @@
         },
         "mypy": {
             "hashes": [
-                "sha256:83d798f66323f2de6191d66d9ae5ab234e4ee5b400010e19c58d75d308049f25",
-                "sha256:884f18f3a40cfcf24cdd5860b84958cfb35e6563e439c5adc1503878df221dc3"
+                "sha256:3bd95a1369810f7693366911d85be9f0a0bd994f6cb7162b7a994e5ded90e3d9",
+                "sha256:7247f9948d7cdaae9408a4ee1662a01853c24e668117b4419acf025b05fbe3ce"
             ],
-            "version": "==0.570"
+            "version": "==0.580"
         },
         "nitpick": {
-            "editable": true,
-            "git": "https://github.com/andreoliwa/python-nitpick"
+            "hashes": [
+                "sha256:7baabedf6a9b43b1ff29894404f99bb8502c2b34eb668dfbfb700463a684f123",
+                "sha256:db018f5d6138f06388ced47ac542cda9a1b1bc4575fed835d47e9087072436e1"
+            ],
+            "index": "pypi",
+            "version": "==0.1.0"
         },
         "parso": {
             "hashes": [
@@ -862,15 +866,6 @@
                 "sha256:f19f2a4f547505fe9072e15f6f4ae714af51b5a681a97f187971f50c283193b6"
             ],
             "version": "==1.1.0"
-        },
-        "typing": {
-            "hashes": [
-                "sha256:3a887b021a77b292e151afb75323dea88a7bc1b3dfa92176cff8e44c8b68bddf",
-                "sha256:b2c689d54e1144bbcfd191b0832980a21c2dbcf7b5ff7a66248a60c90e951eb8",
-                "sha256:d400a9344254803a2368533e4533a4200d21eb7b6b729c173bc38201a74db3f2"
-            ],
-            "markers": "python_version < '3.5'",
-            "version": "==3.6.4"
         },
         "wcwidth": {
             "hashes": [
