@@ -21,7 +21,7 @@ maya = "*"
 prettyconf = "*"
 python-dateutil = "*"
 telepot = "*"
-marshmallow = "*"
+marshmallow = {version = "*", allows-prereleases = true}
 pyobjc-core = "*"
 pyobjc-framework-cocoa = "*"
 todoist-python = "*"
