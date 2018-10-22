@@ -1,14 +1,13 @@
-[[source]]
-url = "https://pypi.python.org/simple"
-verify_ssl = true
-name = "pypi"
+[tool.poetry]
+name = "dontforget"
+version = "0.1.0"
+description = "Don't forget to complete your tasks, using Todoist, Toggle and Node-RED integrations"
+authors = ["Augusto Wagner Andreoli <andreoliwa@gmail.com>"]
 
-[pipenv]
-allow_prereleases = true
-
-[packages]
-"jinja2" = "*"
-"psycopg2" = "*"
+[tool.poetry.dependencies]
+python = "3.6"
+jinja2 = "*"
+psycopg2 = "*"
 flask = "*"
 flask-migrate = "*"
 flask-sqlalchemy = "*"
@@ -25,11 +24,13 @@ telepot = "*"
 marshmallow = "*"
 pyobjc-core = "*"
 pyobjc-framework-cocoa = "*"
-simple-settings = {extras = ["toml"]}
 todoist-python = "*"
 tapioca-toggl = "*"
+toml = "*"
+simple-settings = {version = "*", extras = ["toml"]}
 
-[dev-packages]
+[tool.poetry.dev-dependencies]
+black = "*"
 faker = "*"
 coverage = "*"
 factory-boy = "*"
