@@ -37,7 +37,9 @@ def go_home(desired_date: Union[date, str, None] = None):
     # Add 8 hours to the first entry.
     arrived_at = arrow.get(min(start_dates)).to(timezone)
     print(f"Arrived at work at {arrived_at}")
-    go_home_at = arrived_at + timedelta(hours=settings.go_home["hours"])
+    go_home_at = (
+        arrived_at + timedelta(hours=settings.go_home["hours"]) - timedelta(minutes=settings.go_home["minutes_before"])
+    )
 
     # Find entries with tags and descriptions that should be added to the time to go home (e.g.: pause, not work)
     non_working_durations = [
