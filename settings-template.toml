@@ -18,6 +18,7 @@ FourLeafClover = 0
 [go_home]
 hours = 8
 toggl_clients = ['Toggl Client Name 1', 'Toggl Client Name 2']
-toggl_add_projects = ['Work Pause']
+toggl_not_work_tags = ['not work']
+toggl_not_work_descriptions = ['Lunch']
 todoist_project = 'Todoist Project Name'
 todoist_task = 'Go home!'
