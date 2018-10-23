@@ -1,4 +1,8 @@
-"""Todoist API interface."""
+"""Todoist API interface.
+
+Docs: https://developer.todoist.com/sync/v7/
+Python module: https://github.com/Doist/todoist-python
+"""
 from typing import Any, Dict, List, Union
 
 from simple_settings import settings
