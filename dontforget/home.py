@@ -1,5 +1,6 @@
 """Create a task when it's time to go home."""
 from datetime import date, timedelta
+from pprint import pprint
 from typing import Union
 
 import arrow
@@ -9,7 +10,7 @@ from tapioca_toggl import Toggl
 from dontforget.todoist import Todoist
 
 
-def go_home(desired_date: Union[date, str, None]):
+def go_home(desired_date: Union[date, str, None] = None):
     """Determine the time to go home on the desired day."""
     api = Toggl(access_token=settings.TOGGL_API_TOKEN)
     my_data = api.me_with_related_data().get().data
@@ -30,7 +31,7 @@ def go_home(desired_date: Union[date, str, None]):
 
     start_dates = [entry["start"] for entry in entries().data if entry["pid"] in client_projects]
     if not start_dates:
-        print("No start dates")
+        print(f"No Toggl entries for {', '.join(toggl_clients)} in {desired_date.date().isoformat()}")
         return
 
     # Add 8 hours to the first entry.
@@ -57,11 +58,21 @@ def go_home(desired_date: Union[date, str, None]):
         print("No project ID")
         return
 
-    task = todoist.fetch_first(
-        "items", "content", {"project_id": project_id, "content": settings.go_home["todoist_task"]}
-    )
-    if task:
-        pass  # FIXME: update existing task
+    task_description = settings.go_home["todoist_task"]
+    date_string = f"{go_home_at.format('MMM DD, YYYY')} at {go_home_at.format('HH:mm')}"
+
+    existing_task = todoist.fetch_first("items", None, {"project_id": project_id, "content": task_description})
+    if not existing_task:
+        # Create a new task
+        item = todoist.api.items.add(
+            task_description, project_id, date_string=date_string, priority=4, auto_reminder=True
+        )
+        todoist.api.commit()
+        print("Task created")
     else:
-        pass  # FIXME: create a new task
-    print(task)  # FIXME:
+        # Update existing task
+        item = todoist.api.items.get_by_id(existing_task["id"])
+        item.update(content=task_description, date_string=date_string, priority=4)
+        todoist.api.commit()
+        print("Task updated")
+    pprint(item)

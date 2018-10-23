@@ -1,4 +1,4 @@
-"""Todoist interface."""
+"""Todoist API interface."""
 from typing import Any, Dict, List, Union
 
 from simple_settings import settings
@@ -19,8 +19,14 @@ class Todoist:
         self.api.user.login(settings.TODOIST_USER, settings.TODOIST_PASSWORD)
         self.response = self.api.sync()
 
-    def fetch(self, element_name: str, return_field: Union[str, None], params: Dict[str, Union[str, List[str]]],
-              index: Union[int, None]=None, matching_function=all) -> List[Any]:
+    def fetch(
+        self,
+        element_name: str,
+        return_field: Union[str, None],
+        params: Dict[str, Union[str, List[str]]],
+        index: Union[int, None] = None,
+        matching_function=all,
+    ) -> List[Any]:
         """Fetch elements matching items that satisfy the desired parameters.
 
         :param element_name: Name of the element to search. E.g. 'projects', 'items'.
@@ -30,16 +36,18 @@ class Todoist:
         :param matching_function: ``all`` items by default, but ``any`` can be used as well.
         """
         self.sync()
-        values_to_list = {key: [value] if not isinstance(value, list) else value
-                          for key, value in params.items()}
-        found_elements = [element[return_field] if return_field else element
-                          for element in self.response[element_name]
-                          if matching_function(element[key] in value for key, value in values_to_list.items())]
+        values_to_list = {key: [value] if not isinstance(value, list) else value for key, value in params.items()}
+        found_elements = [
+            element[return_field] if return_field else element
+            for element in self.response[element_name]
+            if matching_function(element[key] in value for key, value in values_to_list.items())
+        ]
         if index is not None:
             return found_elements[index] if found_elements else None
         return found_elements
 
-    def fetch_first(self, element_name: str, return_field: str,
-                    params: Dict[str, Union[str, List[str]]]) -> Union[Any, None]:
+    def fetch_first(
+        self, element_name: str, return_field: str, params: Dict[str, Union[str, List[str]]]
+    ) -> Union[Any, None]:
         """Fetch only the first result from the fetched list, or None if the list is empty."""
         return self.fetch(element_name, return_field, params, 0)

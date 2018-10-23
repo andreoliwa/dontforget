@@ -118,7 +118,7 @@ def go_home():
     """Determine the time to go home."""
     from dontforget.home import go_home
 
-    go_home("2018-10-19")  # FIXME:
+    go_home()
 
 
 manager.add_command("shell", Shell(make_context=_make_context))
