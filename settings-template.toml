@@ -1,0 +1,32 @@
+# The following values can either be set with settings.toml or environment variables
+TOGGL_API_TOKEN = ''
+TODOIST_USER = ''
+TODOIST_PASSWORD = ''
+
+icons = [
+  'Fire',
+  'LargeRedCircle',
+  'FourLeafClover',
+  'MediumWhiteCircle',
+]
+
+[counts]
+Fire = 0
+LargeRedCircle = 0
+FourLeafClover = 0
+
+[go_home]
+# Working hours
+hours = 8
+# How many minutes before the reminder should be set
+minutes_before = 10
+# Toggl clients to count as working hours
+toggl_clients = ['Toggl Client Name 1', 'Toggl Client Name 2']
+# Tags that should not be considered working hours
+toggl_not_work_tags = ['not work']
+# Descriptions that should not be considered working hours
+toggl_not_work_descriptions = ['Lunch']
+# Project name where the task will be created
+todoist_project = 'Todoist Project Name'
+# Description of the task that will be created
+todoist_task = 'Go home!'
