@@ -15,7 +15,7 @@ from dontforget.settings import TestConfig
 from .app import db
 
 # A list of tables that should be ignored when dropping and listing all our tables.
-IGNORED_TABLES = ['spatial_ref_sys']
+IGNORED_TABLES = ["spatial_ref_sys"]
 
 
 class CRUDMixin(object):
@@ -57,17 +57,14 @@ class Model(CRUDMixin, db.Model):
 class SurrogatePK(object):
     """A mixin that adds a surrogate integer 'primary key' column named ``id`` to any declarative-mapped class."""
 
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
 
     @classmethod
     def get_by_id(cls, record_id):
         """Get record by ID."""
-        if any(
-                (isinstance(record_id, (str, bytes)) and record_id.isdigit(),
-                 isinstance(record_id, (int, float))),
-        ):
+        if any((isinstance(record_id, (str, bytes)) and record_id.isdigit(), isinstance(record_id, (int, float)))):
             return cls.query.get(int(record_id))  # pylint: disable=no-member
         return None
 
@@ -81,7 +78,7 @@ class CreatedUpdatedMixin(object):
     updated_at = db.Column(db.TIMESTAMP(timezone=True), nullable=False, onupdate=func.now(), default=func.now())
 
 
-def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
+def reference_col(tablename, nullable=False, pk_name="id", **kwargs):
     """Column that adds primary key foreign key reference.
 
     Usage: ::
@@ -89,9 +86,7 @@ def reference_col(tablename, nullable=False, pk_name='id', **kwargs):
         category_id = reference_col('category')
         category = relationship('Category', backref='categories')
     """
-    return db.Column(
-        db.ForeignKey('{0}.{1}'.format(tablename, pk_name)),
-        nullable=nullable, **kwargs)
+    return db.Column(db.ForeignKey("{0}.{1}".format(tablename, pk_name)), nullable=nullable, **kwargs)
 
 
 def db_refresh(short=False):
@@ -103,8 +98,9 @@ def db_refresh(short=False):
     if create_local_context:
         # When this command is run from the command line, there is no app context, so let's create one
         from dontforget.app import create_app
+
         app_ = create_app(TestConfig)
-        Migrate(app_, db, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'migrations'))
+        Migrate(app_, db, os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "..", "..", "migrations"))
         context = app_.app_context()
         context.push()
 
@@ -163,9 +159,9 @@ def drop_everything():
 
         foreign_keys = []
         for foreign_key in inspector.get_foreign_keys(table_name):
-            if not foreign_key['name']:
+            if not foreign_key["name"]:
                 continue
-            foreign_keys.append(ForeignKeyConstraint((), (), name=foreign_key['name']))
+            foreign_keys.append(ForeignKeyConstraint((), (), name=foreign_key["name"]))
         table = Table(table_name, metadata, *foreign_keys)
         all_tables.append(table)
         all_foreign_keys.extend(foreign_keys)
@@ -179,8 +175,14 @@ def drop_everything():
     trans.commit()
 
 
-def add_required_column(table_name, column_name, column_type,  # pylint: disable=too-many-arguments
-                        default_value=None, column_exists=False, update_only_null=False):
+def add_required_column(
+    table_name,
+    column_name,
+    column_type,  # pylint: disable=too-many-arguments
+    default_value=None,
+    column_exists=False,
+    update_only_null=False,
+):
     """Add a required column to a table.
 
     NOT NULL fields must be populated with some value before setting `nullable=False`.
@@ -200,7 +202,7 @@ def add_required_column(table_name, column_name, column_type,  # pylint: disable
     :param update_only_null: Flag to only update values that are null and leave the others
     """
     if default_value is None:
-        default_value = 'uuid_generate_v4()'
+        default_value = "uuid_generate_v4()"
 
     # pylint: disable=no-member
     if not column_exists:

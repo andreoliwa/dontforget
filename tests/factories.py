@@ -31,7 +31,7 @@ class BaseFactory(SQLAlchemyModelFactory):
 class ChoreFactory(BaseFactory):
     """Chore factory."""
 
-    title = Sequence(lambda n: '{0} {1}'.format(fake.word, n))
+    title = Sequence(lambda n: "{0} {1}".format(fake.word, n))
 
     class Meta:
         """Factory configuration."""
@@ -42,7 +42,7 @@ class ChoreFactory(BaseFactory):
 class AlarmFactory(BaseFactory):
     """Alarm factory."""
 
-    next_at = LazyAttribute(lambda x: fake.date_time_between('-5d', '-1d'))
+    next_at = LazyAttribute(lambda x: fake.date_time_between("-5d", "-1d"))
     chore = SubFactory(ChoreFactory)
 
     class Meta:

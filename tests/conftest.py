@@ -11,7 +11,7 @@ from dontforget.database import db, db_refresh
 from dontforget.settings import REFRESH_TEST_DATABASE, TestConfig
 
 
-@pytest.yield_fixture(scope='session', autouse=True)
+@pytest.yield_fixture(scope="session", autouse=True)
 def tear_down():
     """Create a fake app to refresh db, drop app and after execution create a new fake drop db and drop app."""
     if not REFRESH_TEST_DATABASE:
@@ -26,11 +26,11 @@ def tear_down():
             # Teardown app
             pass
         else:
-            raise RuntimeError('App fixture has more than one yield.')
+            raise RuntimeError("App fixture has more than one yield.")
 
     app_ = app()
 
-    Migrate(next(app_), db, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'migrations'))
+    Migrate(next(app_), db, os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "migrations"))
     db_refresh(short=True)
     tear_down_app(app_)
 
@@ -41,12 +41,12 @@ def tear_down():
     tear_down_app(app_)
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def app():
     """An application for the tests."""
     _app = create_app(TestConfig)
-    if os.environ.get('TRAVIS', False):
-        _app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://dontforget:dontforget@localhost/dontforget_test'
+    if os.environ.get("TRAVIS", False):
+        _app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://dontforget:dontforget@localhost/dontforget_test"
     context = _app.app_context()
     context.push()
 

@@ -1,3 +1,6 @@
+[tool.black]
+line-length = 120
+
 [tool.poetry]
 name = "dontforget"
 version = "0.1.0"
@@ -5,7 +8,7 @@ description = "Don't forget to complete your tasks, using Todoist, Toggle and No
 authors = ["Augusto Wagner Andreoli <andreoliwa@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "3.6"
+python = "^3.6"
 jinja2 = "*"
 psycopg2 = "*"
 flask = "*"
@@ -16,10 +19,8 @@ markupsafe = "*"
 sqlalchemy = "*"
 werkzeug = "*"
 arrow = "*"
-itsdangerous = "*"
 maya = "*"
 prettyconf = "*"
-python-dateutil = "*"
 telepot = "*"
 marshmallow = {version = "*", allows-prereleases = true}
 pyobjc-core = "*"
@@ -30,7 +31,7 @@ toml = "*"
 simple-settings = {version = "*", extras = ["toml"]}
 
 [tool.poetry.dev-dependencies]
-black = "*"
+black = {version = "*", allows-prereleases = true}
 faker = "*"
 coverage = "*"
 factory-boy = "*"
@@ -47,5 +48,10 @@ pytest-runfailed = "*"
 "flake8-polyfill" = "*"
 "flake8-pytest" = "*"
 "flake8" = "*"
+flake8-quotes = "*"
+flake8-nitpick = "*"
+pylint = "*"
+mypy = "*"
 ipython = "*"
 ipdb = "*"
+pre-commit = {version = "*", allows-prereleases = true}

@@ -10,24 +10,24 @@ from alembic import op
 # revision identifiers, used by Alembic.
 from dontforget.database import add_required_column
 
-revision = '3362b720863'
-down_revision = '143a88a7b01'
+revision = "3362b720863"
+down_revision = "143a88a7b01"
 
 
 def upgrade():
     """Upgrade the database."""
-    add_required_column('alarm', 'updated_at', sa.TIMESTAMP(True), 'current_timestamp')
+    add_required_column("alarm", "updated_at", sa.TIMESTAMP(True), "current_timestamp")
 
-    with op.batch_alter_table('chore') as batch_op:
-        add_required_column('chore', 'repeat_from_completed', sa.Boolean(), False)
-        batch_op.add_column(sa.Column('repetition', sa.String(), nullable=True))
+    with op.batch_alter_table("chore") as batch_op:
+        add_required_column("chore", "repeat_from_completed", sa.Boolean(), False)
+        batch_op.add_column(sa.Column("repetition", sa.String(), nullable=True))
 
 
 def downgrade():
     """Downgrade the database."""
-    with op.batch_alter_table('chore') as batch_op:
-        batch_op.drop_column('repetition')
-        batch_op.drop_column('repeat_from_completed')
+    with op.batch_alter_table("chore") as batch_op:
+        batch_op.drop_column("repetition")
+        batch_op.drop_column("repeat_from_completed")
 
-    with op.batch_alter_table('alarm') as batch_op:
-        batch_op.drop_column('updated_at')
+    with op.batch_alter_table("alarm") as batch_op:
+        batch_op.drop_column("updated_at")

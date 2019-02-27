@@ -13,11 +13,11 @@ from dontforget.utils import UT
 def suppress_dock_icon():
     """Don't show the dock icon for the app."""
     path_to_current_bundle = objc.currentBundle().bundlePath()
-    path_to_plist = '{}/Contents/Info.plist'.format(path_to_current_bundle)
+    path_to_plist = "{}/Contents/Info.plist".format(path_to_current_bundle)
     plist = plistlib.readPlist(path_to_plist)
-    plist['LSUIElement'] = '1'
+    plist["LSUIElement"] = "1"
     plistlib.writePlist(plist, path_to_plist)
-    print('Done! Run Sentinel again.')
+    print("Done! Run Sentinel again.")
 
 
 def get_highest_count() -> Tuple[str, int]:
@@ -43,20 +43,18 @@ class Sentinel(NSApplication):
         # Create a timer which fires the update_ method every 1second,
         # and add it to the runloop
         NSRunLoop.currentRunLoop().addTimer_forMode_(
-            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(
-                1, self, 'update:', '', True
-            ),
-            NSEventTrackingRunLoopMode
+            NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(1, self, "update:", "", True),
+            NSEventTrackingRunLoopMode,
         )
 
-        print('Sentinel is now running.')
-        print('CTRL+C does not work here.')
-        print('You can quit through the menu bar (Sentinel -> Quit).')
+        print("Sentinel is now running.")
+        print("CTRL+C does not work here.")
+        print("You can quit through the menu bar (Sentinel -> Quit).")
 
     def update_(self, timer):
         """Run the update on every cycle of the timer."""
         icon, count = get_highest_count()
-        self.main_menu.setTitle_('{} {}'.format(getattr(UT, icon), count or ''))
+        self.main_menu.setTitle_("{} {}".format(getattr(UT, icon), count or ""))
 
     def _setup_menu_bar(self):
         """Setup the menu bar of the app."""
@@ -68,7 +66,7 @@ class Sentinel(NSApplication):
         self.update_(None)
 
         # Menu items
-        quit_menu = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
+        quit_menu = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("Quit", "terminate:", "")
 
         # Add items to the menuBar
         self.menuBar.addItem_(quit_menu)
@@ -78,7 +76,7 @@ class Sentinel(NSApplication):
 
     def _create_empty_menu_item(self):
         """Create an empty menu item."""
-        return NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('', '', '')
+        return NSMenuItem.alloc().initWithTitle_action_keyEquivalent_("", "", "")
 
     def doNothing_(self, sender):
         """Hack to enable menuItems by passing them this method as action.

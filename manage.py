@@ -12,8 +12,7 @@ from flask_script.commands import Clean, ShowUrls
 from PyObjCTools import AppHelper
 
 from dontforget.app import create_app
-from dontforget.database import db
-from dontforget.database import db_refresh as real_db_refresh
+from dontforget.database import db, db_refresh as real_db_refresh
 from dontforget.menu import Sentinel, suppress_dock_icon
 from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
 
@@ -81,7 +80,7 @@ class Lint(Command):
             command_line = list(args) + files_and_directories
             print("{0}: {1}".format(description, " ".join(command_line)))
             rv = call(command_line)
-            if rv is not 0:
+            if rv != 0:
                 exit(rv)
 
         if fix_imports:
