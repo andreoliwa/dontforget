@@ -23,12 +23,17 @@ maya = "*"
 prettyconf = "*"
 telepot = "*"
 marshmallow = {version = "*", allows-prereleases = true}
-pyobjc-core = "*"
-pyobjc-framework-cocoa = "*"
+pyobjc-core = {version = "^5.1",optional = true}
+pyobjc-framework-cocoa = {version = "^5.1",optional = true}
 todoist-python = "*"
 tapioca-toggl = "*"
 toml = "*"
 simple-settings = {version = "*", extras = ["toml"]}
+
+# Those optional packages are only available on macOS. To install them:
+# poetry install --extras macos
+[tool.poetry.extras]
+macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [tool.poetry.dev-dependencies]
 black = {version = "*", allows-prereleases = true}

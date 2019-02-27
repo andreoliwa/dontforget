@@ -9,11 +9,9 @@ from subprocess import call
 from flask_migrate import MigrateCommand
 from flask_script import Command, Manager, Option, Shell
 from flask_script.commands import Clean, ShowUrls
-from PyObjCTools import AppHelper
 
 from dontforget.app import create_app
 from dontforget.database import db, db_refresh as real_db_refresh
-from dontforget.menu import Sentinel, suppress_dock_icon
 from dontforget.settings import TELEGRAM_TOKEN, DevConfig, ProdConfig
 
 CONFIG = ProdConfig if os.environ.get("DONTFORGET_ENV") == "prod" else DevConfig
@@ -105,6 +103,9 @@ def telegram():
 @manager.command
 def menu():
     """Display the menu of the application."""
+    from PyObjCTools import AppHelper
+    from dontforget.menu import Sentinel, suppress_dock_icon
+
     if (len(sys.argv) > 1) and (sys.argv[1] == "--suppress-dock-icon"):
         suppress_dock_icon()
     else:

@@ -16,9 +16,8 @@ def go_home(desired_date: Union[date, str, None] = None):
     my_data = api.me_with_related_data().get().data
     timezone = my_data.timezone().data
 
-    if not desired_date:
-        desired_date = arrow.now(timezone)
-    day_start = arrow.get(desired_date).to(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+    final_date = arrow.get(desired_date) if desired_date else arrow.now(timezone)
+    day_start = final_date.to(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
     day_end = day_start.replace(hour=23, minute=59, second=59)
 
     entries = api.time_entries().get(params={"start_date": day_start, "end_date": day_end})
@@ -31,7 +30,7 @@ def go_home(desired_date: Union[date, str, None] = None):
 
     start_dates = [entry["start"] for entry in entries().data if entry["pid"] in client_projects]
     if not start_dates:
-        print(f"No Toggl entries for {', '.join(toggl_clients)} in {desired_date.date().isoformat()}")
+        print(f"No Toggl entries for {', '.join(toggl_clients)} in {final_date.date().isoformat()}")
         return
 
     # Add 8 hours to the first entry.

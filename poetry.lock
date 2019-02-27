@@ -861,7 +861,7 @@ mccabe = "*"
 category = "main"
 description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
-optional = false
+optional = true
 python-versions = "*"
 version = "5.1.2"
 
@@ -869,7 +869,7 @@ version = "5.1.2"
 category = "main"
 description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
-optional = false
+optional = true
 python-versions = "*"
 version = "5.1.2"
 
@@ -1225,8 +1225,11 @@ optional = false
 python-versions = ">=2.7"
 version = "0.3.3"
 
+[extras]
+macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
+
 [metadata]
-content-hash = "6f3d51cea22440ee6bebe1dd3f15d589290594114aed1eef3d0dec55f43e7e2c"
+content-hash = "cd61e2169e06fc79827a38fb0b4cae2c0d881f5c86fc4ab9dbf827034ed87160"
 python-versions = "^3.6"
 
 [metadata.hashes]
