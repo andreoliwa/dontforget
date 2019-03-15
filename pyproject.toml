@@ -8,7 +8,7 @@ description = "Don't forget to complete your tasks, using Todoist, Toggle and No
 authors = ["Augusto Wagner Andreoli <andreoliwa@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6 || ^3.7"
 jinja2 = "*"
 psycopg2 = "*"
 flask = "*"
