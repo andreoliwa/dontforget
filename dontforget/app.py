@@ -4,6 +4,7 @@ from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
+from dontforget import commands
 from dontforget.settings import ProdConfig
 from dontforget.views import blueprint
 
@@ -22,6 +23,7 @@ def create_app(config_object=ProdConfig):
     register_extensions(app)
     # TODO: feat: add missing favicon
     # register_errorhandlers(app)
+    register_commands(app)
     return app
 
 
@@ -50,3 +52,8 @@ def register_errorhandlers(app):
     for errcode in [401, 404, 500]:
         app.errorhandler(errcode)(render_error)
     return None
+
+
+def register_commands(app):
+    """Register Click commands."""
+    app.cli.add_command(commands.desktop)

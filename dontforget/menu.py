@@ -10,7 +10,7 @@ from simple_settings import settings
 from dontforget.utils import UT
 
 
-def suppress_dock_icon():
+def hide_dock_icon():
     """Don't show the dock icon for the app."""
     path_to_current_bundle = objc.currentBundle().bundlePath()
     path_to_plist = "{}/Contents/Info.plist".format(path_to_current_bundle)

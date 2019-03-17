@@ -7,7 +7,7 @@ blueprint = Blueprint("public", __name__, static_folder="../static")
 
 @blueprint.route("/", methods=["GET"])
 def home():
-    """Redirect to user."""
+    """Home page."""
     return jsonify({"Hello": "World!", "FLASK_ENV": config("FLASK_ENV")})
 
 
