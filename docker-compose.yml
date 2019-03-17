@@ -19,7 +19,7 @@ services:
 # TODO refactor: remove unused services and their related dead code
 #telegram:
 #  build: .
-#  command: python manage.py telegram
+#  command: poetry run flask telegram
 #  links:
 #    - postgresql
 #  volumes:
@@ -36,7 +36,7 @@ services:
 #  # docker rmi -f dontforget_postgresql
 #  #
 #  # To load data from SQLite, run this command:
-#  # ./manage.py db_refresh && pgloader -v docker/postgres/sqlite.load
+#  # poetry run flask db_refresh && pgloader -v docker/postgres/sqlite.load
 #  #
 #  # http://pgloader.io/howto/pgloader.1.html
 #  # https://github.com/dimitri/pgloader

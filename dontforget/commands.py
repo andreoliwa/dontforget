@@ -3,10 +3,12 @@ import shlex
 from subprocess import Popen
 
 import click
+from flask import current_app
 from flask.cli import with_appcontext
 from prettyconf import config
 
 from dontforget.constants import DEVELOPMENT, DOCKER_COMMAND, FLASK_COMMAND, START_MODE_DOCKER, START_MODE_FLASK
+from dontforget.settings import TELEGRAM_TOKEN
 
 
 @click.command()
@@ -19,7 +21,11 @@ from dontforget.constants import DEVELOPMENT, DOCKER_COMMAND, FLASK_COMMAND, STA
 @click.option("--icon/--no-icon", default=True, help="Show or hide the status bar icon.")
 @with_appcontext
 def desktop(start_mode: str, icon: bool):
-    """Start the desktop app (menu icon on the status bar) and the Flask server as well."""
+    """Start desktop app and Flask server.
+
+    The desktop app is the menu icon on the status bar.
+    The Flask server can be started with flask or docker.
+    """
     from dontforget import menu
     from PyObjCTools import AppHelper
 
@@ -38,3 +44,32 @@ def desktop(start_mode: str, icon: bool):
 
     # TODO: this line is never reached; find a way to kill the process when we click "Quit" on the menu
     process.kill()
+
+
+@click.command()
+def db_refresh():
+    """Refresh the database (drop and redo the upgrade)."""
+    from dontforget.database import db_refresh as real_db_refresh
+
+    real_db_refresh()
+
+
+@click.command()
+@with_appcontext
+def telegram():
+    """Run Telegram bot loop together with Flask main loop."""
+    if not TELEGRAM_TOKEN:
+        print("Telegram bot token is not defined (TELEGRAM_TOKEN)")
+        return
+
+    from dontforget.telegram_bot import main_loop
+
+    main_loop(current_app)
+
+
+@click.command()
+def go_home():
+    """Determine the time to go home."""
+    from dontforget.home import go_home
+
+    go_home()

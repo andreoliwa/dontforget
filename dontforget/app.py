@@ -57,3 +57,6 @@ def register_errorhandlers(app):
 def register_commands(app):
     """Register Click commands."""
     app.cli.add_command(commands.desktop)
+    app.cli.add_command(commands.db_refresh)
+    app.cli.add_command(commands.telegram)
+    app.cli.add_command(commands.go_home)
