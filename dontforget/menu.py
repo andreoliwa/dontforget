@@ -5,8 +5,8 @@ from typing import Tuple
 import objc
 from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar
 from Foundation import NSRunLoop, NSTimer
-from simple_settings import settings
 
+from dontforget.config import ICONS
 from dontforget.utils import UT
 
 
@@ -22,11 +22,14 @@ def hide_dock_icon():
 
 def get_highest_count() -> Tuple[str, int]:
     """Get the highest count of an icon."""
-    for icon in settings.icons:
-        count = settings.counts.get(icon, 0)
+    from dontforget.config import env
+
+    for icon in ICONS:
+        variable = f"COUNT_{icon}".upper()
+        count = env(variable) or 0
         if count > 0:
             return icon, count
-    return settings.icons[-1], 0
+    return ICONS[-1], 0
 
 
 class Sentinel(NSApplication):

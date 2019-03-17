@@ -5,22 +5,22 @@ Python module: https://github.com/Doist/todoist-python
 """
 from typing import Any, Dict, List, Union
 
-from simple_settings import settings
 from todoist import TodoistAPI
+
+from dontforget.config import TODOIST_API_TOKEN
 
 
 class Todoist:
     """A wrapper for the Todoist API."""
 
     def __init__(self):
-        self.api = TodoistAPI()
+        self.api = TodoistAPI(TODOIST_API_TOKEN)
         self.response = None
 
     def sync(self):
         """Login if needed, then sync."""
         if self.response:
             return
-        self.api.user.login(settings.TODOIST_USER, settings.TODOIST_PASSWORD)
         self.response = self.api.sync()
 
     def fetch(

@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from dontforget import commands
-from dontforget.settings import ProdConfig
+from dontforget.config import ProdConfig
 from dontforget.views import blueprint
 
 db = SQLAlchemy()

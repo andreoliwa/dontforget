@@ -5,10 +5,9 @@ from subprocess import Popen
 import click
 from flask import current_app
 from flask.cli import with_appcontext
-from prettyconf import config
 
+from dontforget.config import FLASK_ENV, TELEGRAM_TOKEN
 from dontforget.constants import DEVELOPMENT, DOCKER_COMMAND, FLASK_COMMAND, START_MODE_DOCKER, START_MODE_FLASK
-from dontforget.settings import TELEGRAM_TOKEN
 
 
 @click.command()
@@ -30,7 +29,7 @@ def desktop(start_mode: str, icon: bool):
     from PyObjCTools import AppHelper
 
     if start_mode is None:
-        start_mode = START_MODE_FLASK if config("FLASK_ENV") == DEVELOPMENT else START_MODE_DOCKER
+        start_mode = START_MODE_FLASK if FLASK_ENV == DEVELOPMENT else START_MODE_DOCKER
 
     if not icon:
         menu.hide_dock_icon()

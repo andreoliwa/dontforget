@@ -7,8 +7,8 @@ import pytest
 from flask_migrate import Migrate
 
 from dontforget.app import create_app
+from dontforget.config import REFRESH_TEST_DATABASE, TestConfig
 from dontforget.database import db, db_refresh
-from dontforget.settings import REFRESH_TEST_DATABASE, TestConfig
 
 
 @pytest.yield_fixture(scope="session", autouse=True)

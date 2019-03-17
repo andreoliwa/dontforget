@@ -5,7 +5,7 @@ line-length = 120
 name = "dontforget"
 version = "0.1.0"
 description = "Don't forget to complete your tasks, using Todoist, Toggle and Node-RED integrations"
-authors = ["Augusto Wagner Andreoli <andreoliwa@gmail.com>"]
+authors = ["W. Augusto Andreoli <andreoliwa@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6 || ^3.7"
@@ -14,21 +14,19 @@ psycopg2 = "*"
 flask = "*"
 flask-migrate = "*"
 flask-sqlalchemy = "*"
-flask-script = "*"
 markupsafe = "*"
 sqlalchemy = "*"
 werkzeug = "*"
 arrow = "*"
 maya = "*"
-prettyconf = "*"
 telepot = "*"
-marshmallow = {version = "*", allows-prereleases = true}
+marshmallow = "*"
 pyobjc-core = {version = "^5.1",optional = true}
 pyobjc-framework-cocoa = {version = "^5.1",optional = true}
 todoist-python = "*"
 tapioca-toggl = "*"
 toml = "*"
-simple-settings = {version = "*", extras = ["toml"]}
+environs = "*"
 
 # Those optional packages are only available on macOS. To install them:
 # poetry install --extras macos
