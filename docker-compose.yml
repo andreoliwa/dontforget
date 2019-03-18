@@ -26,29 +26,3 @@ services:
 #    - .:/dontforget
 #  environment:
 #    - DONTFORGET_ENV=prod
-#
-#postgresql:
-#  # Official PostgreSQL image
-#  # https://registry.hub.docker.com/u/library/postgres/
-#  #
-#  # To run the database initialization again, you have to remove the containers and images. Use this command:
-#  # docker rm -f $(docker ps -a | grep -i dontforget_postgresql | awk '{print $1}')
-#  # docker rmi -f dontforget_postgresql
-#  #
-#  # To load data from SQLite, run this command:
-#  # poetry run flask db_refresh && pgloader -v docker/postgres/sqlite.load
-#  #
-#  # http://pgloader.io/howto/pgloader.1.html
-#  # https://github.com/dimitri/pgloader
-#  image: postgres:9.6.2
-#  environment:
-#    - POSTGRES_USER=dontforget
-#    - POSTGRES_PASSWORD=dontforget
-#  # https://docs.docker.com/compose/compose-file/#/expose
-#  expose:
-#    - "5432"
-#  # https://docs.docker.com/compose/compose-file/#/ports
-#  ports:
-#    - "5433:5432"
-#  volumes:
-#    - ./docker/postgres:/docker-entrypoint-initdb.d

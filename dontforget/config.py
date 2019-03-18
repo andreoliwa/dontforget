@@ -8,7 +8,6 @@ env = Env()
 env.read_env()
 
 FLASK_ENV = env("FLASK_ENV")
-FLASK_DEBUG = env.bool("FLASK_DEBUG", default=False)
 
 LOCAL_TIMEZONE = env("LOCAL_TIMEZONE", default="Europe/Berlin")
 TELEGRAM_TOKEN = env("TELEGRAM_TOKEN", default=None)
@@ -62,7 +61,7 @@ class ProdConfig(Config):
 
     ENV = "prod"
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@postgresql:5432/dontforget"
+    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@localhost:7710/dontforget"
 
 
 class DevConfig(Config):
@@ -70,7 +69,7 @@ class DevConfig(Config):
 
     ENV = "dev"
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@postgresql:5433/dontforget_dev"
+    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@localhost:7710/dontforget_dev"
     DEBUG_TB_ENABLED = True
 
 
@@ -79,5 +78,5 @@ class TestConfig(Config):
 
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@postgresql:5433/dontforget_test"
+    SQLALCHEMY_DATABASE_URI = "postgresql://dontforget:dontforget@localhost:7710/dontforget_test"
     WTF_CSRF_ENABLED = False  # Allows form testing

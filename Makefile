@@ -15,9 +15,6 @@ stop:
 restart: stop
 	docker-compose up -d
 
-database-only: stop
-	docker-compose up -d postgresql
-
 isort:
 	isort -y
 
