@@ -15,19 +15,25 @@ class Todoist:
 
     def __init__(self):
         self.api = TodoistAPI(TODOIST_API_TOKEN)
-        self.response = None
+        self.response: Dict[str, Any] = {}
 
     def sync(self):
         """Login if needed, then sync."""
-        if self.response:
-            return
         self.response = self.api.sync()
+
+    def clear(self):
+        """Reset the state to perform a new sync."""
+        self.api.reset_state()
+
+    def keys(self):
+        """Keys of the response."""
+        return sorted(self.response.keys())
 
     def fetch(
         self,
         element_name: str,
-        return_field: Union[str, None],
-        params: Dict[str, Union[str, List[str]]],
+        return_field: str = None,
+        filters: Dict[str, Union[str, List[str]]] = None,
         index: Union[int, None] = None,
         matching_function=all,
     ) -> List[Any]:
@@ -35,23 +41,25 @@ class Todoist:
 
         :param element_name: Name of the element to search. E.g. 'projects', 'items'.
         :param return_field: Name of the return field. If None, return the whole element.
-        :param params: Parameters for the search.
+        :param filters: Parameters for the search.
         :param index: Desired index to be returned. If nothing was found, return None.
         :param matching_function: ``all`` items by default, but ``any`` can be used as well.
         """
-        self.sync()
-        values_to_list = {key: [value] if not isinstance(value, list) else value for key, value in params.items()}
+        if not filters:
+            values_to_list: Dict[str, Union[str, List[str]]] = {}
+        else:
+            values_to_list = {key: [value] if not isinstance(value, list) else value for key, value in filters.items()}
         found_elements = [
             element[return_field] if return_field else element
             for element in self.response[element_name]
-            if matching_function(element[key] in value for key, value in values_to_list.items())
+            if not filters or matching_function(element[key] in value for key, value in values_to_list.items())
         ]
         if index is not None:
             return found_elements[index] if found_elements else None
         return found_elements
 
     def fetch_first(
-        self, element_name: str, return_field: str, params: Dict[str, Union[str, List[str]]]
+        self, element_name: str, return_field: str = None, filters: Dict[str, Union[str, List[str]]] = None
     ) -> Union[Any, None]:
         """Fetch only the first result from the fetched list, or None if the list is empty."""
-        return self.fetch(element_name, return_field, params, 0)
+        return self.fetch(element_name, return_field, filters, 0)
