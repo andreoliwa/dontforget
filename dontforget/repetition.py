@@ -2,7 +2,7 @@
 """Repetition patterns for chores."""
 import datetime
 import re
-from typing import Union
+from typing import Optional
 
 import arrow
 from dateutil.relativedelta import relativedelta
@@ -87,7 +87,7 @@ def every(reference_date, count, number, unit):
     return results if len(results) > 1 else results[0]
 
 
-def next_dates(natural_language_repetition, reference_date=None, count=1) -> Union[datetime.datetime, None]:
+def next_dates(natural_language_repetition, reference_date=None, count=1) -> Optional[datetime.datetime]:
     """Return the next date(s) by parsing a natural language repetition string.
 
     :param str natural_language_repetition: A string like 'daily', 'every 3 days', 'once a month', etc.

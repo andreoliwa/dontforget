@@ -3,11 +3,14 @@
 Docs: https://developer.todoist.com/sync/v7/
 Python module: https://github.com/Doist/todoist-python
 """
-from typing import Any, Dict, List, Union
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
+from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
 from dontforget.config import TODOIST_API_TOKEN
+from dontforget.target import BaseTarget
 
 
 class Todoist:
@@ -34,7 +37,7 @@ class Todoist:
         element_name: str,
         return_field: str = None,
         filters: Dict[str, Union[str, List[str]]] = None,
-        index: Union[int, None] = None,
+        index: int = None,
         matching_function=all,
     ) -> List[Any]:
         """Fetch elements matching items that satisfy the desired parameters.
@@ -60,6 +63,52 @@ class Todoist:
 
     def fetch_first(
         self, element_name: str, return_field: str = None, filters: Dict[str, Union[str, List[str]]] = None
-    ) -> Union[Any, None]:
+    ) -> Optional[Any]:
         """Fetch only the first result from the fetched list, or None if the list is empty."""
         return self.fetch(element_name, return_field, filters, 0)
+
+
+class TodoistSchema(Schema):
+    """Task schema."""
+
+    project: str = fields.String()
+    project_id: int = fields.Integer()
+    content: str = fields.String()
+    comment: str = fields.String()
+    due: datetime = fields.DateTime()
+    priority: int = fields.Integer()
+
+
+class TodoistTarget(BaseTarget):
+    """Add a task to Todoist."""
+
+    def __init__(self, raw_data: Dict[str, Any]):
+        super().__init__(raw_data)
+        self.todoist = Todoist()
+
+    def process(self) -> bool:
+        """Add a task to Todoist."""
+        schema = TodoistSchema(strict=True)
+        try:
+            self.valid_data, _ = schema.load(self.raw_data)
+        except ValidationError as err:
+            self.validation_error = err
+            return False
+
+        self.todoist.clear()
+        self.todoist.sync()
+        self.set_project_id()
+        self.add_task()
+        return True
+
+    def set_project_id(self):
+        """Set the project ID from the project name."""
+        project = self.valid_data["project"]
+        project_id = self.todoist.fetch_first("projects", "id", {"name": project})
+        if project_id:
+            self.valid_data["project_id"] = project_id
+
+    def add_task(self):
+        """Add a task to Todoist from the valid data."""
+        content = self.valid_data.pop("content", "")
+        self.todoist.api.add_item(content, **self.valid_data)

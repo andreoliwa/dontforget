@@ -19,7 +19,7 @@ from dontforget.config import (
 from dontforget.todoist import Todoist
 
 
-def go_home(desired_date: Union[date, str, None] = None):
+def go_home(desired_date: Union[date, str] = None):
     """Determine the time to go home on the desired day."""
     api = Toggl(access_token=TOGGL_API_TOKEN)
     my_data = api.me_with_related_data().get().data
