@@ -4,13 +4,14 @@ Docs: https://developer.todoist.com/sync/v7/
 Python module: https://github.com/Doist/todoist-python
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
 from dontforget.config import TODOIST_API_TOKEN
 from dontforget.target import BaseTarget
+from dontforget.types import JsonDict
 
 
 class Todoist:
@@ -36,7 +37,7 @@ class Todoist:
         self,
         element_name: str,
         return_field: str = None,
-        filters: Dict[str, Union[str, List[str]]] = None,
+        filters: JsonDict = None,
         index: int = None,
         matching_function=all,
     ) -> List[Any]:
@@ -48,8 +49,10 @@ class Todoist:
         :param index: Desired index to be returned. If nothing was found, return None.
         :param matching_function: ``all`` items by default, but ``any`` can be used as well.
         """
+        # TODO: accept multiple return_fields
+        # TODO: use jmespath to search the JSON?
         if not filters:
-            values_to_list: Dict[str, Union[str, List[str]]] = {}
+            values_to_list: JsonDict = {}
         else:
             values_to_list = {key: [value] if not isinstance(value, list) else value for key, value in filters.items()}
         found_elements = [
@@ -61,11 +64,28 @@ class Todoist:
             return found_elements[index] if found_elements else None
         return found_elements
 
-    def fetch_first(
-        self, element_name: str, return_field: str = None, filters: Dict[str, Union[str, List[str]]] = None
-    ) -> Optional[Any]:
+    def fetch_first(self, element_name: str, return_field: str = None, filters: JsonDict = None) -> Optional[Any]:
         """Fetch only the first result from the fetched list, or None if the list is empty."""
         return self.fetch(element_name, return_field, filters, 0)
+
+    def fetch_project_id_by(self, exact_name: str) -> Optional[int]:
+        """Fetch a project ID by its exact name."""
+        return self.fetch_first("projects", "id", {"name": exact_name})
+
+    def fetch_project_items(self, exact_name: str, return_field: str = None) -> List[JsonDict]:
+        """Fetch all project items."""
+        project_id = self.fetch_project_id_by(exact_name)
+        if not project_id:
+            return []
+        return self.fetch("items", return_field, {"project_id": project_id})
+
+    def find_first_item(self, project_exact_name: str, item_partial_content: str) -> Optional[JsonDict]:
+        """Return the first item on a project by its partial content."""
+        lower_item_partial_content = item_partial_content.lower()
+        for item in self.fetch_project_items(project_exact_name):
+            if lower_item_partial_content in item.get("content", "").lower():
+                return item
+        return None
 
 
 class TodoistSchema(Schema):
