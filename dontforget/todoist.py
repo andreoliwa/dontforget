@@ -6,6 +6,8 @@ Python module: https://github.com/Doist/todoist-python
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import jmespath
+from deprecated import deprecated
 from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
@@ -13,26 +15,33 @@ from dontforget.config import TODOIST_API_TOKEN
 from dontforget.target import BaseTarget
 from dontforget.types import JsonDict
 
+PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
+DictProjectId = Dict[str, int]
+
 
 class Todoist:
     """A wrapper for the Todoist API."""
 
     def __init__(self):
         self.api = TodoistAPI(TODOIST_API_TOKEN)
-        self.response: Dict[str, Any] = {}
+        self.data: JsonDict = {}
+        self.projects: DictProjectId = {}
 
     def sync(self):
         """Login if needed, then sync."""
-        self.response = self.api.sync()
+        self.data = self.api.sync()
+        self.projects = dict(PROJECTS_NAME_ID_JMEX.search(self.data))
 
-    def clear(self):
-        """Reset the state to perform a new sync."""
+    def resync(self):
+        """Reset the state and perform a new sync."""
         self.api.reset_state()
+        self.sync()
 
     def keys(self):
-        """Keys of the response."""
-        return sorted(self.response.keys())
+        """Keys of the data."""
+        return sorted(self.data.keys())
 
+    @deprecated(reason="use find* functions instead")
     def fetch(
         self,
         element_name: str,
@@ -57,35 +66,55 @@ class Todoist:
             values_to_list = {key: [value] if not isinstance(value, list) else value for key, value in filters.items()}
         found_elements = [
             element[return_field] if return_field else element
-            for element in self.response[element_name]
+            for element in self.data[element_name]
             if not filters or matching_function(element[key] in value for key, value in values_to_list.items())
         ]
         if index is not None:
             return found_elements[index] if found_elements else None
         return found_elements
 
+    @deprecated(reason="use find* functions instead")
     def fetch_first(self, element_name: str, return_field: str = None, filters: JsonDict = None) -> Optional[Any]:
         """Fetch only the first result from the fetched list, or None if the list is empty."""
         return self.fetch(element_name, return_field, filters, 0)
 
-    def fetch_project_id_by(self, exact_name: str) -> Optional[int]:
-        """Fetch a project ID by its exact name."""
-        return self.fetch_first("projects", "id", {"name": exact_name})
+    def find_project_id(self, exact_name: str) -> Optional[int]:
+        """Find a project ID by its exact name.
 
-    def fetch_project_items(self, exact_name: str, return_field: str = None) -> List[JsonDict]:
-        """Fetch all project items."""
-        project_id = self.fetch_project_id_by(exact_name)
+        :param exact_name: Exact name of a project.
+        """
+        return self.projects.get(exact_name, None)
+
+    def find_projects(self, partial_name: str = "") -> DictProjectId:
+        """Find projects by partial name.
+
+        :param partial_name: Partial name of a project.
+        """
+        return {
+            name: project_id for name, project_id in self.projects.items() if partial_name.casefold() in name.casefold()
+        }
+
+    def find_project_items(self, exact_name: str, extra_jmes_expression: str = "") -> List[JsonDict]:
+        """Fetch all project items by the exact project name.
+
+        :param exact_name: Exact name of a project.
+        :param extra_jmes_expression: Extra JMESPath expression to filter fields, for instance.
+        """
+        project_id = self.find_project_id(exact_name)
         if not project_id:
             return []
-        return self.fetch("items", return_field, {"project_id": project_id})
+        return jmespath.search(f"items[?project_id==`{project_id}`]{extra_jmes_expression}", self.data)
 
-    def find_first_item(self, project_exact_name: str, item_partial_content: str) -> Optional[JsonDict]:
-        """Return the first item on a project by its partial content."""
-        lower_item_partial_content = item_partial_content.lower()
-        for item in self.fetch_project_items(project_exact_name):
-            if lower_item_partial_content in item.get("content", "").lower():
-                return item
-        return None
+    def find_items_by_content(self, exact_name: str, partial_content: str) -> List[JsonDict]:
+        """Return items of a project by partial content.
+
+        :param exact_name: Exact name of a project.
+        :param partial_content: Partial content of an item.
+        """
+        clean_content = partial_content.casefold()
+        return [
+            item for item in self.find_project_items(exact_name) if clean_content in item.get("content", "").casefold()
+        ]
 
 
 class TodoistSchema(Schema):
@@ -115,8 +144,7 @@ class TodoistTarget(BaseTarget):
             self.validation_error = err
             return False
 
-        self.todoist.clear()
-        self.todoist.sync()
+        self.todoist.resync()
         self.set_project_id()
         self.add_task()
         return True

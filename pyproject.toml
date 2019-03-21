@@ -27,6 +27,7 @@ todoist-python = "*"
 tapioca-toggl = "*"
 toml = "*"
 environs = "*"
+deprecated = "*"
 
 # Those optional packages are only available on macOS. To install them:
 # poetry install --extras macos
