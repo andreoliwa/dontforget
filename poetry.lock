@@ -537,7 +537,7 @@ description = "IPython: Productive Interactive Computing"
 name = "ipython"
 optional = false
 python-versions = ">=3.5"
-version = "7.3.0"
+version = "7.4.0"
 
 [package.dependencies]
 appnope = "*"
@@ -872,7 +872,7 @@ mccabe = ">=0.6,<0.7"
 category = "main"
 description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.1.2"
 
@@ -880,7 +880,7 @@ version = "5.1.2"
 category = "main"
 description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.1.2"
 
@@ -1300,7 +1300,7 @@ idna-ssl = ["a933e3bb13da54383f9e8f35dc4f9cb9eb9b3b78c6b36f311254d6d0d92c6c7c"]
 importlib-metadata = ["a17ce1a8c7bff1e8674cb12c992375d8d0800c9190177ecf0ad93e0097224095", "b50191ead8c70adfa12495fba19ce6d75f2e0275c14c5a7beb653d6799b512bd"]
 importlib-resources = ["6e2783b2538bd5a14678284a3962b0660c715e5a0f10243fd5e00a4b5974f50b", "d3279fd0f6f847cced9f7acc19bd3e5df54d34f93a2e7bb5f238f81545787078"]
 ipdb = ["dce2112557edfe759742ca2d0fee35c59c97b0cc7a05398b791079d78f1519ce"]
-ipython = ["06de667a9e406924f97781bda22d5d76bfb39762b678762d86a466e63f65dc39", "5d3e020a6b5f29df037555e5c45ab1088d6a7cf3bd84f47e0ba501eeb0c3ec82"]
+ipython = ["b038baa489c38f6d853a3cfc4c635b0cda66f2864d136fe8f40c1a6e334e2a6b", "f5102c1cd67e399ec8ea66bcebe6e3968ea25a8977e53f012963e5affeb1fe38"]
 ipython-genutils = ["72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8", "eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8"]
 isort = ["18c796c2cd35eb1a1d3f012a214a542790a1aed95e29768bdcb9f2197eccbd0b", "96151fca2c6e736503981896495d344781b60d18bfda78dc11b290c6125ebdb6"]
 itsdangerous = ["321b033d07f2a4136d3ec762eac9f16a10ccd60f53c0c91af90217ace7ba1f19", "b12271b2047cb23eeb98c8b5622e2e5c5e9abd9784a153e9d8ef9cb4dd09d749"]
