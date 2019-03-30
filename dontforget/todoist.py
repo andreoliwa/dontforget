@@ -58,8 +58,6 @@ class Todoist:
         :param index: Desired index to be returned. If nothing was found, return None.
         :param matching_function: ``all`` items by default, but ``any`` can be used as well.
         """
-        # TODO: accept multiple return_fields
-        # TODO: use jmespath to search the JSON?
         if not filters:
             values_to_list: JsonDict = {}
         else:
@@ -94,32 +92,36 @@ class Todoist:
             name: project_id for name, project_id in self.projects.items() if partial_name.casefold() in name.casefold()
         }
 
-    def find_project_items(self, exact_name: str, extra_jmes_expression: str = "") -> List[JsonDict]:
+    def find_project_items(self, exact_project_name: str, extra_jmes_expression: str = "") -> List[JsonDict]:
         """Fetch all project items by the exact project name.
 
-        :param exact_name: Exact name of a project.
+        :param exact_project_name: Exact name of a project.
         :param extra_jmes_expression: Extra JMESPath expression to filter fields, for instance.
         """
-        project_id = self.find_project_id(exact_name)
+        project_id = self.find_project_id(exact_project_name)
         if not project_id:
             return []
         return jmespath.search(f"items[?project_id==`{project_id}`]{extra_jmes_expression}", self.data)
 
-    def find_items_by_content(self, exact_name: str, partial_content: str) -> List[JsonDict]:
+    def find_items_by_content(self, exact_project_name: str, partial_content: str) -> List[JsonDict]:
         """Return items of a project by partial content.
 
-        :param exact_name: Exact name of a project.
+        :param exact_project_name: Exact name of a project.
         :param partial_content: Partial content of an item.
         """
         clean_content = partial_content.casefold()
         return [
-            item for item in self.find_project_items(exact_name) if clean_content in item.get("content", "").casefold()
+            item
+            for item in self.find_project_items(exact_project_name)
+            if clean_content in item.get("content", "").casefold()
         ]
 
 
 class TodoistSchema(Schema):
     """Task schema."""
 
+    #: Unique ID for the task, determined by the caller.
+    id: str = fields.String(required=True)
     project: str = fields.String()
     project_id: int = fields.Integer()
     content: str = fields.String()
@@ -145,18 +147,20 @@ class TodoistTarget(BaseTarget):
             return False
 
         self.todoist.resync()
-        self.set_project_id()
-        self.add_task()
+        self._set_project_id()
+        if self.todoist.find_items_by_content(self.valid_data["project"], self.unique_key):
+            return False
+
+        self._add_task()
         return True
 
-    def set_project_id(self):
+    def _set_project_id(self):
         """Set the project ID from the project name."""
-        project = self.valid_data["project"]
-        project_id = self.todoist.fetch_first("projects", "id", {"name": project})
+        project_id = self.todoist.find_project_id(self.valid_data["project"])
         if project_id:
             self.valid_data["project_id"] = project_id
 
-    def add_task(self):
+    def _add_task(self):
         """Add a task to Todoist from the valid data."""
         content = self.valid_data.pop("content", "")
-        self.todoist.api.add_item(content, **self.valid_data)
+        self.todoist.api.add_item(f"{content} {self.unique_key}", **self.valid_data)
