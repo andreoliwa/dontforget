@@ -60,7 +60,7 @@ def go_home(desired_date: Union[date, str] = None):
     go_home_at += non_working_time
     print(f"Go home at {go_home_at}")
 
-    todoist = Todoist()
+    todoist = Todoist.get_singleton()
     project_id = todoist.fetch_first("projects", "id", {"name": HOME_TODOIST_PROJECT})
     if not project_id:
         print("No project ID")

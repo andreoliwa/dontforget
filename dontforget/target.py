@@ -21,4 +21,4 @@ class BaseTarget(metaclass=abc.ABCMeta):
     @property
     def unique_key(self):
         """Unique key for the data, based on the ID that was set by the caller."""
-        return f"(^{self.valid_data['id']})"
+        return f"({self.valid_data['id']})"

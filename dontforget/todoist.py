@@ -22,20 +22,52 @@ DictProjectId = Dict[str, int]
 class Todoist:
     """A wrapper for the Todoist API."""
 
+    _allow_creation = False
+    _instance: Optional["Todoist"] = None
+
     def __init__(self):
+        if not self._allow_creation:
+            raise RuntimeError("You cannot create an instance directly. Use get_singleton() instead")
         self.api = TodoistAPI(TODOIST_API_TOKEN)
         self.data: JsonDict = {}
         self.projects: DictProjectId = {}
+        self._allow_creation = False
 
-    def sync(self):
-        """Login if needed, then sync."""
-        self.data = self.api.sync()
+    @classmethod
+    def get_singleton(cls) -> "Todoist":
+        """Get a single instance of this class."""
+        if not cls._instance:
+            cls._allow_creation = True
+            cls._instance = cls()
+        return cls._instance
+
+    def smart_sync(self):
+        """Only perform a full resync if needed."""
+        if not self.data.get("projects", {}):
+            # If internal data has no projects, reset the state and a full (slow) sync will be performed.
+            self.api.reset_state()
+
+        partial_data = self.api.sync()
+        self._merge_new_data(partial_data)
+
         self.projects = dict(PROJECTS_NAME_ID_JMEX.search(self.data))
 
-    def resync(self):
-        """Reset the state and perform a new sync."""
-        self.api.reset_state()
-        self.sync()
+    def _merge_new_data(self, partial_data: JsonDict):
+        if not self.data:
+            self.data = partial_data
+            return
+
+        for key, value in partial_data.items():
+            if isinstance(value, list):
+                if key not in self.data:
+                    self.data[key] = []
+                self.data[key].extend(value)
+            elif isinstance(value, dict):
+                if key not in self.data:
+                    self.data[key] = {}
+                self.data[key].update(value)
+            else:
+                self.data[key] = value
 
     def keys(self):
         """Keys of the data."""
@@ -135,7 +167,7 @@ class TodoistTarget(BaseTarget):
 
     def __init__(self, raw_data: Dict[str, Any]):
         super().__init__(raw_data)
-        self.todoist = Todoist()
+        self.todoist = Todoist.get_singleton()
 
     def process(self) -> bool:
         """Add a task to Todoist."""
@@ -146,7 +178,7 @@ class TodoistTarget(BaseTarget):
             self.validation_error = err
             return False
 
-        self.todoist.resync()
+        self.todoist.smart_sync()
         self._set_project_id()
         if self.todoist.find_items_by_content(self.valid_data["project"], self.unique_key):
             return False
