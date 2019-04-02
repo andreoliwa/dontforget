@@ -6,7 +6,7 @@ import objc
 from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar
 from Foundation import NSRunLoop, NSTimer
 
-from dontforget.config import ICONS
+from dontforget.settings import ICONS
 from dontforget.utils import UT
 
 
@@ -22,7 +22,7 @@ def hide_dock_icon():
 
 def get_highest_count() -> Tuple[str, int]:
     """Get the highest count of an icon."""
-    from dontforget.config import env
+    from dontforget.settings import env
 
     for icon in ICONS:
         variable = f"COUNT_{icon}".upper()

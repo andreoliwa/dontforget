@@ -10,7 +10,7 @@ from sqlalchemy import Column, ForeignKeyConstraint, MetaData, Table, func
 from sqlalchemy.engine import reflection
 from sqlalchemy.sql.ddl import DropConstraint, DropTable
 
-from dontforget.config import TestConfig
+from dontforget.settings import TestConfig
 
 from .app import db
 

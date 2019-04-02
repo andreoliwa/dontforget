@@ -6,8 +6,8 @@ import click
 from flask import current_app
 from flask.cli import with_appcontext
 
-from dontforget.config import FLASK_ENV, TELEGRAM_TOKEN
 from dontforget.constants import DEVELOPMENT, DOCKER_COMMAND, FLASK_COMMAND, START_MODE_DOCKER, START_MODE_FLASK
+from dontforget.settings import FLASK_ENV, TELEGRAM_TOKEN
 
 
 @click.command()

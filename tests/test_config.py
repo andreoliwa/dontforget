@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test configs."""
 from dontforget.app import create_app
-from dontforget.config import DevConfig, ProdConfig
+from dontforget.settings import DevConfig, ProdConfig
 
 
 def test_production_config():

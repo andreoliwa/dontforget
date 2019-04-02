@@ -7,7 +7,7 @@ from typing import Optional
 import arrow
 from dateutil.relativedelta import relativedelta
 
-from dontforget.config import LOCAL_TIMEZONE
+from dontforget.settings import LOCAL_TIMEZONE
 
 
 class Unit(object):

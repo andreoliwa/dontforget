@@ -11,7 +11,7 @@ from deprecated import deprecated
 from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
-from dontforget.config import TODOIST_API_TOKEN
+from dontforget.settings import TODOIST_API_TOKEN
 from dontforget.target import BaseTarget
 from dontforget.types import JsonDict
 

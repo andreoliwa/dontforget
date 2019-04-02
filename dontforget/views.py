@@ -1,7 +1,7 @@
 """Public section, including homepage and signup."""
 from flask import Blueprint, jsonify
 
-from dontforget.config import FLASK_ENV
+from dontforget.settings import FLASK_ENV
 
 blueprint = Blueprint("public", __name__, static_folder="../static")
 
