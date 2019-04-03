@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Application configuration."""
+"""Application settings."""
 import os
 
 from environs import Env
@@ -44,6 +44,9 @@ HOME_TODOIST_PROJECT = env("HOME_TODOIST_PROJECT")
 
 #: Description of the task that will be created
 HOME_TODOIST_TASK = env("HOME_TODOIST_TASK")
+
+#: List of directories with user-configured pipes
+PIPE_DIRS = env.list("PIPE_DIRS")
 
 
 class Config(object):

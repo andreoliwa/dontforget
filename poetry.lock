@@ -872,7 +872,7 @@ mccabe = ">=0.6,<0.7"
 category = "main"
 description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
-optional = false
+optional = true
 python-versions = "*"
 version = "5.1.2"
 
@@ -880,7 +880,7 @@ version = "5.1.2"
 category = "main"
 description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
-optional = false
+optional = true
 python-versions = "*"
 version = "5.1.2"
 
@@ -957,6 +957,17 @@ name = "python-editor"
 optional = false
 python-versions = "*"
 version = "1.0.4"
+
+[[package]]
+category = "main"
+description = "Library for communicating with a Redmine project management application"
+name = "python-redmine"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "2.2.1"
+
+[package.dependencies]
+requests = ">=2.20.0"
 
 [[package]]
 category = "dev"
@@ -1248,7 +1259,7 @@ version = "0.3.3"
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [metadata]
-content-hash = "72acc3d75164d05d9bf39fc18855cbc0234bd943d7693966015ed9551c8efea3"
+content-hash = "b9c43081d159b3610d177b1f318ebeaf8684f6cb25fca7aef5e81f20d59123f0"
 python-versions = "^3.6 || ^3.7"
 
 [metadata.hashes]
@@ -1341,6 +1352,7 @@ pytest-runfailed = ["82ab0740355ecde835d9754bcc510d6993e0b89d71d109894d1d6fbfeb9
 python-dateutil = ["7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb", "c89805f6f4d64db21ed966fda138f8a5ed7a4fdbc1a8ee329ce1b74e3c74da9e"]
 python-dotenv = ["a84569d0e00d178bc5b957f7ff208bf49287cbf61857c31c258c4a91f571527b", "c9b1ddd3cdbe75c7d462cb84674d87130f4b948f090f02c7d7144779afb99ae0"]
 python-editor = ["1bf6e860a8ad52a14c3ee1252d5dc25b2030618ed80c022598f00176adc8367d", "51fda6bcc5ddbbb7063b2af7509e43bd84bfc32a4ff71349ec7847713882327b", "5f98b069316ea1c2ed3f67e7f5df6c0d8f10b689964a4a811ff64f0106819ec8", "c3da2053dbab6b29c94e43c486ff67206eafbe7eb52dbec7390b5e2fb05aac77", "ea87e17f6ec459e780e4221f295411462e0d0810858e055fc514684350a2f522"]
+python-redmine = ["4abba8ef3cf10a878ce8c98d44d7651f60bf6cc9cd62595d80cbb1df14985375", "6a0e2cc80eb0ef4204eb1106a95dde3f88c68b726ad9b2de3d20861885cf71c4"]
 python-slugify = ["f5c5a43e76ea6820c892c30aba6c8bc1f848fbb8e1cba65ed1c8da7bb2b4c522"]
 pytz = ["32b0891edff07e28efe91284ed9c31e123d84bea3fd98e1f72be2508f43ef8d9", "d5f05e487007e29e03409f9398d074e158d920d36eb82eaf66fb1136b0c5374c"]
 pytzdata = ["9626e42fd9df77b16aedbd909d1e5fda839be47966adb7089b990f3452c45dd8", "dddaaf4f1717820a6fdcac94057e03c1a15b3829a44d9eaf19988917977db408"]
