@@ -113,6 +113,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "19.1.0"
 
 [[package]]
+category = "main"
+description = "Makes civilized __repr__, __str__, and __unicode__ methods"
+name = "autorepr"
+optional = false
+python-versions = "*"
+version = "0.3.0"
+
+[[package]]
 category = "dev"
 description = "Specifications for callback functions passed in to an API"
 name = "backcall"
@@ -1259,7 +1267,7 @@ version = "0.3.3"
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [metadata]
-content-hash = "b9c43081d159b3610d177b1f318ebeaf8684f6cb25fca7aef5e81f20d59123f0"
+content-hash = "10702c6fcc4e6b5e2b7798b1df1eeef84e793f8212f0ffb8bb160e0f5d1fccc3"
 python-versions = "^3.6 || ^3.7"
 
 [metadata.hashes]
@@ -1273,6 +1281,7 @@ astroid = ["6560e1e1749f68c64a4b5dee4e091fce798d2f0d84ebe638cf0e0585a343acf4", "
 async-timeout = ["0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f", "4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3"]
 atomicwrites = ["03472c30eb2c5d1ba9227e4c2ca66ab8287fbfbbda3888aa93dc2e28fc6811b4", "75a9445bac02d8d058d5e1fe689654ba5a6556a1dfd8ce6ec55a0ed79866cfa6"]
 attrs = ["69c0dbf2ed392de1cb5ec704444b08a5ef81680a61cb899dc08127123af36a79", "f0b870f674851ecbfbbbd364d6b5cbdff9dcedbc7f3f5e18a6891057f21fe399"]
+autorepr = ["1d9010d14fb325d3961e3aa73692685563f97d6ba4a2f0f735329fb37422599c", "c34567e4073630feb52d9c788fc198085e9e9de4817e3b93b7c4c534fc689f11", "ef770b84793d5433e6bb893054973b8c7ce6b487274f9c3f734f678cae11e85e"]
 backcall = ["38ecd85be2c1e78f77fd91700c76e14667dc21e2713b63876c0eb901196e01e4", "bbbf4b1e5cd2bdb08f915895b51081c041bac22394fdfcfdfbe9f14b77c08bf2"]
 black = ["09a9dcb7c46ed496a9850b76e4e825d6049ecd38b611f1224857a79bd985a8cf", "68950ffd4d9169716bcb8719a56c07a2f4485354fec061cdd5910aa07369731c"]
 certifi = ["59b7658e26ca9c7339e00f8f4636cdfe59d34fa37b9b04f6f9e9926b3cece1a5", "b26104d6835d1f5e49452a26eb2ff87fe7090b89dfcaee5ea2212697e1e1d7ae"]

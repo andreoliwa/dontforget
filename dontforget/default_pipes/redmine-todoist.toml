@@ -1,9 +1,11 @@
-[source.redmine]
-url = "${REDMINE_URL}"
-api_token = "${REDMINE_API_TOKEN}"
+[source]
+class = "redmine"
+url = "{{ env.REDMINE_URL }}"
+api_token = "{{ env.REDMINE_API_TOKEN }}"
 
-[target.todoist]
-api_token = "$TODOIST_API_TOKEN"
+[target]
+class = "todoist"
+api_token = "{{ env.TODOIST_API_TOKEN }}"
 id = "{{ redmine.id }}"
 content = "{{ redmine.subject }}"
 due = "{{ redmine.due_date }}"

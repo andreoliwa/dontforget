@@ -12,8 +12,8 @@ from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
 from dontforget.generic import SingletonMixin
+from dontforget.pipes import BaseTarget
 from dontforget.settings import TODOIST_API_TOKEN
-from dontforget.target import BaseTarget
 from dontforget.typedefs import JsonDict
 
 PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
@@ -156,7 +156,7 @@ class TodoistTarget(BaseTarget):
 
     def __init__(self, raw_data: Dict[str, Any]):
         super().__init__(raw_data)
-        self.todoist = Todoist.get_singleton()
+        self.todoist = Todoist.singleton()
 
     def process(self) -> bool:
         """Add a task to Todoist."""

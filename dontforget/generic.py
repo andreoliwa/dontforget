@@ -50,11 +50,11 @@ class SingletonMixin:
     def __init__(self):
         if not self._allow_creation:
             raise RuntimeError(
-                f"You cannot create an instance of {self.__class__.__name__} directly. Use get_singleton() instead"
+                f"You cannot create an instance of {self.__class__.__name__} directly. Use singleton() instead"
             )
 
     @classmethod
-    def get_singleton(cls):
+    def singleton(cls):
         """Get a single instance of this class."""
         if not cls._instance:
             cls._allow_creation = True

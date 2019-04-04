@@ -72,16 +72,3 @@ def go_home():
     from dontforget.home import go_home
 
     go_home()
-
-
-@click.group()
-def pipe():
-    """Pipes that pull data from a source and push it to a target."""
-
-
-@pipe.command()
-def ls():
-    """List default and user pipes."""
-    from dontforget.pipes import list_pipes
-
-    list_pipes()

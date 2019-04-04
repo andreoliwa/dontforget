@@ -4,7 +4,7 @@ from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from dontforget import commands
+from dontforget import commands, pipes
 from dontforget.settings import ProdConfig
 from dontforget.views import blueprint
 
@@ -60,4 +60,4 @@ def register_commands(app):
     app.cli.add_command(commands.db_refresh)
     app.cli.add_command(commands.telegram)
     app.cli.add_command(commands.go_home)
-    app.cli.add_command(commands.pipe)
+    app.cli.add_command(pipes.pipe)
