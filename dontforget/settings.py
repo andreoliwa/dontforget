@@ -46,7 +46,7 @@ HOME_TODOIST_PROJECT = env("HOME_TODOIST_PROJECT")
 HOME_TODOIST_TASK = env("HOME_TODOIST_TASK")
 
 #: List of directories with user-configured pipes
-PIPE_DIRS = env.list("PIPE_DIRS")
+USER_PIPES_DIR = env.list("USER_PIPES_DIR")
 
 
 class Config(object):

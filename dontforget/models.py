@@ -8,9 +8,9 @@ from sqlalchemy.dialects import postgresql
 
 from dontforget.app import db
 from dontforget.database import CreatedUpdatedMixin, Model, SurrogatePK, reference_col
+from dontforget.generic import DATETIME_FORMAT, UT
 from dontforget.repetition import next_dates, right_now
 from dontforget.settings import LOCAL_TIMEZONE, LONG_OVERDUE, MEDIUM_OVERDUE
-from dontforget.utils import DATETIME_FORMAT, UT
 
 
 class Chore(SurrogatePK, CreatedUpdatedMixin, Model):

@@ -9,10 +9,10 @@ from telepot.helper import ChatHandler
 from telepot.namedtuple import ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 from dontforget.app import db
+from dontforget.generic import DATETIME_FORMAT
 from dontforget.models import AlarmAction, Chore
 from dontforget.repetition import local_right_now
 from dontforget.settings import TELEGRAM_IDLE_TIMEOUT, TELEGRAM_TOKEN
-from dontforget.utils import DATETIME_FORMAT
 
 
 class DispatchAgain(Exception):

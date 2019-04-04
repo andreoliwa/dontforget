@@ -72,3 +72,11 @@ def go_home():
     from dontforget.home import go_home
 
     go_home()
+
+
+@click.command()
+def pipes():
+    """Print the pipes of the app."""
+    from dontforget.pipes import print_pipes
+
+    print_pipes()

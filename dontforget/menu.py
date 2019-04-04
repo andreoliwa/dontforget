@@ -6,8 +6,8 @@ import objc
 from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar
 from Foundation import NSRunLoop, NSTimer
 
+from dontforget.generic import UT
 from dontforget.settings import ICONS
-from dontforget.utils import UT
 
 
 def hide_dock_icon():

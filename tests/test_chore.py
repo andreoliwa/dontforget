@@ -5,9 +5,9 @@ from datetime import timedelta
 import arrow
 
 from dontforget.app import db
+from dontforget.generic import DATETIME_FORMAT
 from dontforget.models import AlarmAction, Chore
 from dontforget.repetition import right_now
-from dontforget.utils import DATETIME_FORMAT
 from tests.factories import LAST_WEEK, NEXT_WEEK, TODAY, YESTERDAY, ChoreFactory
 
 

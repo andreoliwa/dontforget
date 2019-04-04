@@ -11,35 +11,24 @@ from deprecated import deprecated
 from marshmallow import Schema, ValidationError, fields
 from todoist import TodoistAPI
 
+from dontforget.generic import SingletonMixin
 from dontforget.settings import TODOIST_API_TOKEN
 from dontforget.target import BaseTarget
-from dontforget.types import JsonDict
+from dontforget.typedefs import JsonDict
 
 PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
 DictProjectId = Dict[str, int]
 
 
-class Todoist:
+class Todoist(SingletonMixin):
     """A wrapper for the Todoist API."""
 
-    _allow_creation = False
-    _instance: Optional["Todoist"] = None
-
     def __init__(self):
-        if not self._allow_creation:
-            raise RuntimeError("You cannot create an instance directly. Use get_singleton() instead")
+        super().__init__()
         self.api = TodoistAPI(TODOIST_API_TOKEN)
         self.data: JsonDict = {}
         self.projects: DictProjectId = {}
         self._allow_creation = False
-
-    @classmethod
-    def get_singleton(cls) -> "Todoist":
-        """Get a single instance of this class."""
-        if not cls._instance:
-            cls._allow_creation = True
-            cls._instance = cls()
-        return cls._instance
 
     def smart_sync(self):
         """Only perform a full resync if needed."""
