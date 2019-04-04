@@ -110,6 +110,6 @@ class PipeConfig(SingletonMixin):
         return self._pipes_by_name.get(pipe_name.lower(), None)
 
 
-def print_pipes():
-    """Print the pipes of the app."""
+def list_pipes():
+    """List the pipes of the app."""
     PipeConfig.get_singleton().load_pipes().echo("Default pipes", True).echo("User pipes", False)

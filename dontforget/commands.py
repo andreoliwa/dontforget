@@ -74,9 +74,14 @@ def go_home():
     go_home()
 
 
-@click.command()
-def pipes():
-    """Print the pipes of the app."""
-    from dontforget.pipes import print_pipes
+@click.group()
+def pipe():
+    """Pipes that pull data from a source and push it to a target."""
 
-    print_pipes()
+
+@pipe.command()
+def ls():
+    """List default and user pipes."""
+    from dontforget.pipes import list_pipes
+
+    list_pipes()

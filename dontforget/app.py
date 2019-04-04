@@ -60,4 +60,4 @@ def register_commands(app):
     app.cli.add_command(commands.db_refresh)
     app.cli.add_command(commands.telegram)
     app.cli.add_command(commands.go_home)
-    app.cli.add_command(commands.pipes)
+    app.cli.add_command(commands.pipe)
