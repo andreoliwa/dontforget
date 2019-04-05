@@ -3,6 +3,15 @@ from pprint import pprint
 
 from redminelib import Redmine
 
+from dontforget.pipes import BaseSource
+
+
+class RedmineSource(BaseSource):
+    """Redmine source."""
+
+    pass
+
+
 if __name__ == "__main__":
     from environs import Env
 

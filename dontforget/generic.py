@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Generic functions and classes, to be reused."""
 import collections
+from typing import Any, Dict, List, Union
 
 from flask import flash
 
@@ -63,6 +64,15 @@ class SingletonMixin:
         return cls._instance
 
 
+def get_subclasses(cls):
+    """Recursively get subclasses of a parent class."""
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        subclasses.append(subclass)
+        subclasses += get_subclasses(subclass)
+    return subclasses
+
+
 def flatten(dict_, parent_key="", separator="."):
     """Flatten a nested dict.
 
@@ -101,3 +111,71 @@ def unflatten(dict_, separator="."):
         sub_items[keys[-1]] = value
 
     return items
+
+
+def find_partial_keys(
+    list_or_dict: Union[List[str], Dict[str, Any]], partial_key: str, not_found: str = None, multiple: str = None
+) -> List[Union[str, Any]]:
+    """Find a partial string on a list of strings or on a dict with string keys.
+
+    >>> my_list = ["some", "strings", "here"]
+    >>> find_partial_keys(my_list, "tri")
+    ['strings']
+    >>> find_partial_keys(my_list, "s")
+    ['some', 'strings']
+    >>> find_partial_keys(my_list, "x")
+    []
+    >>> find_partial_keys(my_list, "x", not_found="Not found!")
+    Traceback (most recent call last):
+     ...
+    LookupError: Not found!
+    >>> find_partial_keys(my_list, "x", not_found="No keys named {!r}!")
+    Traceback (most recent call last):
+     ...
+    LookupError: No keys named 'x'!
+    >>> find_partial_keys(my_list, "e", multiple="Multiple matches!")
+    Traceback (most recent call last):
+     ...
+    LookupError: Multiple matches!
+    >>> find_partial_keys(my_list, "e", multiple="Multiple matches: {}")
+    Traceback (most recent call last):
+     ...
+    LookupError: Multiple matches: some, here
+
+    >>> my_dict = {"some": 1, "strings": "2", "here": 3}
+    >>> find_partial_keys({"some": 1, "strings": 2, "here": 3}, "tri")
+    [2]
+    >>> find_partial_keys(my_dict, "s")
+    [1, '2']
+    >>> find_partial_keys(my_dict, "x")
+    []
+    >>> find_partial_keys(my_dict, "x", not_found="Not found!")
+    Traceback (most recent call last):
+     ...
+    LookupError: Not found!
+    >>> find_partial_keys(my_dict, "x", not_found="No keys named {}!")
+    Traceback (most recent call last):
+     ...
+    LookupError: No keys named x!
+    >>> find_partial_keys(my_dict, "e", multiple="Multiple matches!")
+    Traceback (most recent call last):
+     ...
+    LookupError: Multiple matches!
+    >>> find_partial_keys(my_dict, "e", multiple="Multiple matches: {}")
+    Traceback (most recent call last):
+     ...
+    LookupError: Multiple matches: some, here
+    """
+    if isinstance(list_or_dict, dict):
+        found_objects = {key: obj for key, obj in list_or_dict.items() if partial_key.casefold() in key.casefold()}
+        result = list(found_objects.values())
+        found_keys = list(found_objects.keys())
+    else:
+        found_keys = [key for key in list_or_dict if partial_key.casefold() in key.casefold()]
+        result = found_keys
+
+    if not_found and not result:
+        raise LookupError(not_found.format(partial_key))
+    if multiple and len(result) > 1:
+        raise LookupError(multiple.format(", ".join(found_keys)))
+    return result

@@ -4,7 +4,7 @@ import itertools
 from enum import Enum
 from pathlib import Path
 from pprint import pprint
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
 import click
 import toml
@@ -13,7 +13,7 @@ from marshmallow import ValidationError
 from sqlalchemy.util import memoized_property
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
-from dontforget.generic import SingletonMixin, flatten, unflatten
+from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, unflatten
 from dontforget.settings import USER_PIPES_DIR
 from dontforget.typedefs import JsonDict
 
@@ -65,11 +65,9 @@ class Pipe:
         if not parent_pipes:
             return original_without_pipes
 
-        pipe_config = PipeConfig.singleton()
-
         rv: JsonDict = {}
         for name in parent_pipes:
-            parent_pipe = pipe_config.get_pipe(name)
+            parent_pipe = PIPE_CONFIG.get_pipe(name)
             rv.update(flatten(parent_pipe.original_dict, separator=UNIQUE_SEPARATOR))
 
         rv.update(flatten(original_without_pipes, separator=UNIQUE_SEPARATOR))
@@ -88,7 +86,7 @@ class Pipe:
         click.secho(f"Running pipe {self.name}", fg="green")
 
         source_class = BaseSource.get_class_from(self.source_class_name)
-        print("Source:", source_class)
+        click.echo(f"Source: {source_class}")
         # TODO: expanded_source_data = Template('redmine' dict).render()
         # TODO: issues = RedmineSource().pull(expanded_source_data)
         # TODO: for each issue, expanded_issue_dict = Template(issue_dict).render()
@@ -120,6 +118,13 @@ class PipeConfig(SingletonMixin):
     def pipes_by_name(self) -> Dict[str, Pipe]:
         """A dict of pipes with the (case insensitive) pipe name as key."""
         return {pipe.name.casefold(): pipe for pipe in itertools.chain(self.default_pipes, self.user_pipes)}
+
+    @memoized_property
+    def sources(self) -> Dict[str, Type["BaseSource"]]:
+        """Configured sources."""
+        from dontforget.redmine import RedmineSource  # noqa
+
+        return {source_class.__name__.casefold(): source_class for source_class in get_subclasses(BaseSource)}
 
     @staticmethod
     def _find_pipes_in(directories: List[Union[str, Path]]) -> Set[Pipe]:
@@ -156,7 +161,10 @@ class PipeConfig(SingletonMixin):
 
     def get_pipes(self, partial_name: str) -> List[Pipe]:
         """Get pipes by its partial name (case insensitive comparison)."""
-        return [pipe for key, pipe in self.pipes_by_name.items() if partial_name.casefold() in key.casefold()]
+        return find_partial_keys(self.pipes_by_name, partial_name, not_found="There are no pipes named {!r}")
+
+
+PIPE_CONFIG = PipeConfig.singleton()
 
 
 class BaseSource(metaclass=abc.ABCMeta):
@@ -165,7 +173,13 @@ class BaseSource(metaclass=abc.ABCMeta):
     @classmethod
     def get_class_from(cls, class_name: str):
         """Get a source class by its case insensitive name."""
-        return class_name  # FIXME: from here: find BaseSource child by class name
+        found = find_partial_keys(
+            PIPE_CONFIG.sources,
+            class_name,
+            not_found="There is no source named {!r}",
+            multiple="There are multiple sources named {!r}",
+        )
+        return found[0]
 
 
 class BaseTarget(metaclass=abc.ABCMeta):
@@ -198,23 +212,21 @@ def pipe():
 @click.option("--user", "-u", "which", flag_value=PipeType.USER, help="User pipes")
 def ls(which: PipeType):
     """List default and user pipes."""
-    config = PipeConfig.singleton()
     if which == PipeType.DEFAULT or which == PipeType.ALL:
-        config.echo("Default pipes", True)
+        PIPE_CONFIG.echo("Default pipes", True)
     if which == PipeType.USER or which == PipeType.ALL:
-        config.echo("User pipes", False)
+        PIPE_CONFIG.echo("User pipes", False)
 
 
 @pipe.command()
 @click.argument("partial_names", nargs=-1)
 def run(partial_names: Tuple[str, ...]):
     """Run the chosen pipes."""
-    config = PipeConfig.singleton()
     chosen_pipes: List[Pipe] = []
     for partial_name in partial_names:
-        chosen_pipes.extend(config.get_pipes(partial_name))
+        chosen_pipes.extend(PIPE_CONFIG.get_pipes(partial_name))
     if not chosen_pipes:
-        chosen_pipes = config.user_pipes
+        chosen_pipes = PIPE_CONFIG.user_pipes
 
     for pipe in chosen_pipes:
         pipe.run()
