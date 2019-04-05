@@ -1,6 +1,8 @@
 """Pipes."""
 import abc
 import itertools
+import json
+import os
 from enum import Enum
 from pathlib import Path
 from pprint import pprint
@@ -9,8 +11,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 import click
 import toml
 from autorepr import autorepr
+from jinja2 import StrictUndefined, Template
 from marshmallow import ValidationError
-from sqlalchemy.util import memoized_property
+from sqlalchemy.util import classproperty, memoized_property
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
 from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, unflatten
@@ -87,10 +90,20 @@ class Pipe:
 
         source_class = BaseSource.get_class_from(self.source_class_name)
         click.echo(f"Source: {source_class}")
-        # TODO: expanded_source_data = Template('redmine' dict).render()
-        # TODO: issues = RedmineSource().pull(expanded_source_data)
-        # TODO: for each issue, expanded_issue_dict = Template(issue_dict).render()
-        # TODO: TodoistTarget().push(expanded_issue_dict)
+
+        source_dict: JsonDict = self.merged_dict.get(self.Key.SOURCE.value).copy()
+        source_dict.pop(self.Key.CLASS.value)
+        source_template = json.dumps(source_dict)
+        expanded_source_dict = json.loads(Template(source_template, undefined=StrictUndefined).render(env=os.environ))
+
+        target_dict: JsonDict = self.merged_dict.get(self.Key.TARGET.value).copy()
+        target_dict.pop(self.Key.CLASS.value)
+        target_template = json.dumps(target_dict)
+
+        for item_dict in source_class().pull(expanded_source_dict):
+            expanded_item_dict = Template(target_template).render({"env": os.environ, source_class.name: item_dict})
+            print(expanded_item_dict)
+        # FIXME: TodoistTarget().push(expanded_issue_dict)
 
 
 class PipeType(Enum):
@@ -124,7 +137,7 @@ class PipeConfig(SingletonMixin):
         """Configured sources."""
         from dontforget.redmine import RedmineSource  # noqa
 
-        return {source_class.__name__.casefold(): source_class for source_class in get_subclasses(BaseSource)}
+        return {source_class.name: source_class for source_class in get_subclasses(BaseSource)}
 
     @staticmethod
     def _find_pipes_in(directories: List[Union[str, Path]]) -> Set[Pipe]:
@@ -170,8 +183,13 @@ PIPE_CONFIG = PipeConfig.singleton()
 class BaseSource(metaclass=abc.ABCMeta):
     """Base source."""
 
+    @classproperty
+    def name(cls) -> str:
+        """Name of this source class."""
+        return cls.__name__.replace("Source", "").casefold()  # type: ignore
+
     @classmethod
-    def get_class_from(cls, class_name: str):
+    def get_class_from(cls, class_name: str) -> Type["BaseSource"]:
         """Get a source class by its case insensitive name."""
         found = find_partial_keys(
             PIPE_CONFIG.sources,
@@ -180,6 +198,10 @@ class BaseSource(metaclass=abc.ABCMeta):
             multiple="There are multiple sources named {!r}",
         )
         return found[0]
+
+    @abc.abstractmethod
+    def pull(self, connection_info: JsonDict) -> List[JsonDict]:
+        """Pull items from the source, using the provided connection info."""
 
 
 class BaseTarget(metaclass=abc.ABCMeta):
@@ -230,14 +252,3 @@ def run(partial_names: Tuple[str, ...]):
 
     for pipe in chosen_pipes:
         pipe.run()
-
-
-if __name__ == "__main__":
-    from jinja2 import Template, StrictUndefined
-    import os
-
-    variables = {"env": os.environ, "redmine": {"id": 666}}
-    rv = Template("Here it goes {{ env.REDMINE_URL }} and {{ redmine.id }}", undefined=StrictUndefined).render(
-        variables
-    )
-    print(rv)

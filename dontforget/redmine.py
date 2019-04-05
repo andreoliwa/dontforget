@@ -1,24 +1,22 @@
 """Redmine."""
-from pprint import pprint
+from typing import Iterator
 
 from redminelib import Redmine
 
 from dontforget.pipes import BaseSource
+from dontforget.typedefs import JsonDict
 
 
 class RedmineSource(BaseSource):
     """Redmine source."""
 
-    pass
+    def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
+        """Pull issues from Redmine."""
+        redmine = Redmine(connection_info["url"], key=connection_info["api_token"], raise_attr_exception=False)
+        project = redmine.project.get(connection_info["project_id"])
+        for item in project.issues.values("id", "subject", "due_date"):
+            # Skip issues without a due date
+            if not item["due_date"]:
+                continue
 
-
-if __name__ == "__main__":
-    from environs import Env
-
-    env = Env()
-    env.read_env()
-
-    redmine = Redmine(env("REDMINE_URL"), key=env("REDMINE_API_TOKEN"), raise_attr_exception=False)
-    project = redmine.project.get("vila-mariana")
-    pprint(list(redmine.issue_status.all().values("id", "name")))
-    pprint(list(project.issues.values("id", "subject", "due_date")))
+            yield item
