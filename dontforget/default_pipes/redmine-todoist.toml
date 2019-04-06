@@ -4,8 +4,9 @@ url = "{{ env.REDMINE_URL }}"
 api_token = "{{ env.REDMINE_API_TOKEN }}"
 
 [target]
+# https://developer.todoist.com/sync/v7/?python#add-an-item
 class = "todoist"
 api_token = "{{ env.TODOIST_API_TOKEN }}"
 id = "{{ redmine.id }}"
 content = "{{ redmine.subject }}"
-due = "{{ redmine.due_date }}"
+date_string = "{{ redmine.due_date }}"

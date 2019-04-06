@@ -22,7 +22,6 @@ MEDIUM_OVERDUE = env.int("MEDIUM_OVERDUE", default=7)
 ICONS = env.list("ICONS")
 
 TOGGL_API_TOKEN = env("TOGGL_API_TOKEN")
-TODOIST_API_TOKEN = env("TODOIST_API_TOKEN")
 
 #: Working hours
 HOME_HOURS = env.int("HOME_HOURS")

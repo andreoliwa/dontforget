@@ -6,13 +6,12 @@ import os
 from enum import Enum
 from pathlib import Path
 from pprint import pprint
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Dict, List, Optional, Set, Tuple, Type, Union
 
 import click
 import toml
 from autorepr import autorepr
 from jinja2 import StrictUndefined, Template
-from marshmallow import ValidationError
 from sqlalchemy.util import classproperty, memoized_property
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
@@ -38,6 +37,7 @@ class Pipe:
         self.name = toml_file.stem
         self.path = toml_file.resolve()
         self.source_class_name: str = ""
+        self.target_class_name: str = ""
 
     @memoized_property
     def original_dict(self) -> JsonDict:
@@ -83,13 +83,19 @@ class Pipe:
         if not self.source_class_name:
             raise RuntimeError("No source class name defined on this pipe")
 
+        self.target_class_name = self.merged_dict.get(self.Key.TARGET.value, {}).get(self.Key.CLASS.value, "")
+        if not self.target_class_name:
+            raise RuntimeError("No target class name defined on this pipe")
+
     def run(self):
         """Run this pipe."""
         self.validate()
-        click.secho(f"Running pipe {self.name}", fg="green")
+        click.secho(f"Pipe: {self.name}", fg="bright_green")
 
         source_class = BaseSource.get_class_from(self.source_class_name)
-        click.echo(f"Source: {source_class}")
+        click.secho(f"Source: {source_class}", fg="bright_green")
+        target_class = BaseTarget.get_class_from(self.target_class_name)
+        click.secho(f"Target: {target_class}", fg="bright_green")
 
         source_dict: JsonDict = self.merged_dict.get(self.Key.SOURCE.value).copy()
         source_dict.pop(self.Key.CLASS.value)
@@ -101,9 +107,16 @@ class Pipe:
         target_template = json.dumps(target_dict)
 
         for item_dict in source_class().pull(expanded_source_dict):
-            expanded_item_dict = Template(target_template).render({"env": os.environ, source_class.name: item_dict})
-            print(expanded_item_dict)
-        # FIXME: TodoistTarget().push(expanded_issue_dict)
+            expanded_item_dict = json.loads(
+                Template(target_template).render({"env": os.environ, source_class.name: item_dict})
+            )
+            click.echo(f"  Pushing", nl=False)
+            target = target_class()
+            success = target.push(expanded_item_dict)
+            if success:
+                click.secho(" ok", fg="green")
+            else:
+                click.secho(f" not saved: {target.validation_error}", fg="yellow")
 
 
 class PipeType(Enum):
@@ -138,6 +151,13 @@ class PipeConfig(SingletonMixin):
         from dontforget.redmine import RedmineSource  # noqa
 
         return {source_class.name: source_class for source_class in get_subclasses(BaseSource)}
+
+    @memoized_property
+    def targets(self) -> Dict[str, Type["BaseTarget"]]:
+        """Configured targets."""
+        from dontforget.todoist import TodoistTarget  # noqa
+
+        return {target_class.name: target_class for target_class in get_subclasses(BaseTarget)}
 
     @staticmethod
     def _find_pipes_in(directories: List[Union[str, Path]]) -> Set[Pipe]:
@@ -207,15 +227,34 @@ class BaseSource(metaclass=abc.ABCMeta):
 class BaseTarget(metaclass=abc.ABCMeta):
     """Base target."""
 
-    def __init__(self, raw_data: Dict[str, Any]):
-        self.raw_data = raw_data
-        self.valid_data: Dict[str, Any] = {}
-        self.validation_error: Optional[ValidationError] = None
+    def __init__(self):
+        # Loaded and validated data, in Python format (e.g. dates are like ``datetime(2019, 4, 6)``).
+        self.valid_data: JsonDict = {}
+
+        # Serialised data (e.g. dates are converted from Python to string).
+        self.serialised_data: JsonDict = {}
+
+        self.validation_error: Optional[str] = None
+
+    @classproperty
+    def name(cls) -> str:
+        """Name of this target class."""
+        return cls.__name__.replace("Target", "").casefold()  # type: ignore
+
+    @classmethod
+    def get_class_from(cls, class_name: str) -> Type["BaseTarget"]:
+        """Get a target class by its case insensitive name."""
+        found = find_partial_keys(
+            PIPE_CONFIG.targets,
+            class_name,
+            not_found="There is no target named {!r}",
+            multiple="There are multiple targets named {!r}",
+        )
+        return found[0]
 
     @abc.abstractmethod
-    def process(self) -> bool:
-        """Process the target data."""
-        pass
+    def push(self, raw_data: JsonDict) -> bool:
+        """Push data to the target."""
 
     @property
     def unique_key(self):
@@ -249,6 +288,5 @@ def run(partial_names: Tuple[str, ...]):
         chosen_pipes.extend(PIPE_CONFIG.get_pipes(partial_name))
     if not chosen_pipes:
         chosen_pipes = PIPE_CONFIG.user_pipes
-
-    for pipe in chosen_pipes:
-        pipe.run()
+    for chosen_pipe in chosen_pipes:
+        chosen_pipe.run()

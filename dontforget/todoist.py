@@ -6,6 +6,7 @@ Python module: https://github.com/Doist/todoist-python
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import click
 import jmespath
 from deprecated import deprecated
 from marshmallow import Schema, ValidationError, fields
@@ -13,7 +14,6 @@ from todoist import TodoistAPI
 
 from dontforget.generic import SingletonMixin
 from dontforget.pipes import BaseTarget
-from dontforget.settings import TODOIST_API_TOKEN
 from dontforget.typedefs import JsonDict
 
 PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
@@ -23,9 +23,9 @@ DictProjectId = Dict[str, int]
 class Todoist(SingletonMixin):
     """A wrapper for the Todoist API."""
 
-    def __init__(self):
+    def __init__(self, api_token: str) -> None:
         super().__init__()
-        self.api = TodoistAPI(TODOIST_API_TOKEN)
+        self.api = TodoistAPI(api_token)
         self.data: JsonDict = {}
         self.projects: DictProjectId = {}
         self._allow_creation = False
@@ -147,29 +147,31 @@ class TodoistSchema(Schema):
     project_id: int = fields.Integer()
     content: str = fields.String()
     comment: str = fields.String()
-    due: datetime = fields.DateTime()
+    date_string: datetime = fields.DateTime(format="rfc")
     priority: int = fields.Integer()
 
 
 class TodoistTarget(BaseTarget):
     """Add a task to Todoist."""
 
-    def __init__(self, raw_data: Dict[str, Any]):
-        super().__init__(raw_data)
-        self.todoist = Todoist.singleton()
+    todoist: Todoist
 
-    def process(self) -> bool:
+    def push(self, raw_data: JsonDict) -> bool:
         """Add a task to Todoist."""
         schema = TodoistSchema(strict=True)
         try:
-            self.valid_data, _ = schema.load(self.raw_data)
+            self.valid_data, _ = schema.load(raw_data)
+            self.serialised_data, _ = schema.dump(self.valid_data)
+            click.echo(f" {self.serialised_data}...", nl=False)
         except ValidationError as err:
-            self.validation_error = err
+            self.validation_error = str(err)
             return False
 
+        self.todoist = Todoist.singleton(raw_data["api_token"])
         self.todoist.smart_sync()
         self._set_project_id()
-        if self.todoist.find_items_by_content(self.valid_data["project"], self.unique_key):
+        if self.todoist.find_items_by_content(self.serialised_data["project"], self.unique_key):
+            self.validation_error = "Task already exists"
             return False
 
         self._add_task()
@@ -177,11 +179,11 @@ class TodoistTarget(BaseTarget):
 
     def _set_project_id(self):
         """Set the project ID from the project name."""
-        project_id = self.todoist.find_project_id(self.valid_data["project"])
+        project_id = self.todoist.find_project_id(self.serialised_data["project"])
         if project_id:
-            self.valid_data["project_id"] = project_id
+            self.serialised_data["project_id"] = project_id
 
     def _add_task(self):
         """Add a task to Todoist from the valid data."""
-        content = self.valid_data.pop("content", "")
-        self.todoist.api.add_item(f"{content} {self.unique_key}", **self.valid_data)
+        content = self.serialised_data.pop("content", "")
+        self.todoist.api.add_item(f"{content} {self.unique_key}", **self.serialised_data)
