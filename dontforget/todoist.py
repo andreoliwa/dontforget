@@ -143,9 +143,10 @@ class TodoistSchema(Schema):
 
     #: Unique ID for the task, determined by the caller.
     id: str = fields.String(required=True)
+    url: str = fields.Url(required=True)
+    content: str = fields.String(required=True)
     project: str = fields.String()
     project_id: int = fields.Integer()
-    content: str = fields.String()
     comment: str = fields.String()
     date_string: datetime = fields.DateTime(format="rfc")
     priority: int = fields.Integer()
@@ -186,4 +187,5 @@ class TodoistTarget(BaseTarget):
     def _add_task(self):
         """Add a task to Todoist from the valid data."""
         content = self.serialised_data.pop("content", "")
-        self.todoist.api.add_item(f"{content} {self.unique_key}", **self.serialised_data)
+        url = self.serialised_data.pop("url", "")
+        self.todoist.api.add_item(f"[{content} {self.unique_key}]({url})", **self.serialised_data)
