@@ -148,15 +148,11 @@ class PipeConfig(SingletonMixin):
     @memoized_property
     def sources(self) -> Dict[str, Type["BaseSource"]]:
         """Configured sources."""
-        from dontforget.redmine import RedmineSource  # noqa
-
         return {source_class.name: source_class for source_class in get_subclasses(BaseSource)}
 
     @memoized_property
     def targets(self) -> Dict[str, Type["BaseTarget"]]:
         """Configured targets."""
-        from dontforget.todoist import TodoistTarget  # noqa
-
         return {target_class.name: target_class for target_class in get_subclasses(BaseTarget)}
 
     @staticmethod

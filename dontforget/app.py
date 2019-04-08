@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """The app module, containing the app factory function."""
+from pathlib import Path
+
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from pluginbase import PluginBase
 
 from dontforget import commands, pipes
+from dontforget.constants import DEFAULT_PIPES_DIR_NAME
 from dontforget.settings import ProdConfig
 from dontforget.views import blueprint
 
@@ -24,6 +28,7 @@ def create_app(config_object=ProdConfig):
     # TODO: feat: add missing favicon
     # register_errorhandlers(app)
     register_commands(app)
+    load_plugins()
     return app
 
 
@@ -61,3 +66,15 @@ def register_commands(app):
     app.cli.add_command(commands.telegram)
     app.cli.add_command(commands.go_home)
     app.cli.add_command(pipes.pipe)
+
+
+def load_plugins():
+    """Load plugins."""
+    plugin_base = PluginBase(package="dontforget.plugins")
+    plugin_source = plugin_base.make_plugin_source(
+        identifier=DEFAULT_PIPES_DIR_NAME,
+        searchpath=[str(Path(__file__).parent / DEFAULT_PIPES_DIR_NAME)],
+        persist=True,
+    )
+    for plugin_module in plugin_source.list_plugins():
+        plugin_source.load_plugin(plugin_module)

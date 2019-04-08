@@ -1,7 +1,7 @@
-"""Todoist API interface.
+"""Todoist target and API interface.
 
-Docs: https://developer.todoist.com/sync/v7/
-Python module: https://github.com/Doist/todoist-python
+- `Docs <https://developer.todoist.com/sync/v7/>`_
+- `Python module <https://github.com/Doist/todoist-python>`_
 """
 from datetime import datetime
 from typing import Any, Dict, List, Optional

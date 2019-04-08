@@ -33,6 +33,7 @@ deprecated = "*"
 # poetry install --extras macos
 python-redmine = "^2.2"
 autorepr = "^0.3.0"
+pluginbase = "^1.0"
 [tool.poetry.extras]
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
