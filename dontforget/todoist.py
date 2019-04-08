@@ -148,7 +148,7 @@ class TodoistSchema(Schema):
     project: str = fields.String()
     project_id: int = fields.Integer()
     comment: str = fields.String()
-    date_string: datetime = fields.DateTime(format="rfc")
+    date_string: datetime = fields.LocalDateTime(format="rfc")
     priority: int = fields.Integer()
 
 
@@ -163,10 +163,11 @@ class TodoistTarget(BaseTarget):
         try:
             self.valid_data, _ = schema.load(raw_data)
             self.serialised_data, _ = schema.dump(self.valid_data)
-            click.echo(f" {self.serialised_data}...", nl=False)
         except ValidationError as err:
             self.validation_error = str(err)
             return False
+
+        click.echo(f" {self.serialised_data}...", nl=False)
 
         self.todoist = Todoist.singleton(raw_data["api_token"])
         self.todoist.smart_sync()
