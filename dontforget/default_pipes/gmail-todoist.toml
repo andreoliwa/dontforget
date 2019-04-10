@@ -2,6 +2,8 @@
 class = "gmail"
 user = "{{ env.GMAIL_USER }}"
 password = "{{ env.GMAIL_PASSWORD }}"
+mark_read = true
+archive = true
 
 [target]
 class = "todoist"

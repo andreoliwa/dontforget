@@ -107,7 +107,8 @@ class Pipe:
         target_template = json.dumps(target_dict)
 
         has_items = False
-        for item_dict in source_class().pull(expanded_source_dict):
+        source_instance = source_class()
+        for item_dict in source_instance.pull(expanded_source_dict):
             expanded_item_dict = json.loads(
                 Template(target_template).render({"env": os.environ, source_class.name: item_dict})
             )
@@ -116,8 +117,10 @@ class Pipe:
             success = target.push(expanded_item_dict)
             if success:
                 click.secho("ok", fg="green")
+                source_instance.on_success()
             else:
                 click.secho(f"not saved: {target.validation_error}", fg="yellow")
+                source_instance.on_failure()
             has_items = True
 
         if not has_items:
@@ -223,6 +226,12 @@ class BaseSource(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def pull(self, connection_info: JsonDict) -> List[JsonDict]:
         """Pull items from the source, using the provided connection info."""
+
+    def on_success(self):
+        """Hook to do something when an item was pushed successfully."""
+
+    def on_failure(self):
+        """Hook to do something when an item failed when pushed."""
 
 
 class BaseTarget(metaclass=abc.ABCMeta):
