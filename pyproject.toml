@@ -28,13 +28,14 @@ tapioca-toggl = "*"
 toml = "*"
 environs = "*"
 deprecated = "*"
-
-# Those optional packages are only available on macOS. To install them:
-# poetry install --extras macos
 python-redmine = "^2.2"
 autorepr = "^0.3.0"
 pluginbase = "^1.0"
+imbox = "^0.9.6"
+
 [tool.poetry.extras]
+# Those optional packages are only available on macOS. To install them:
+# poetry install --extras macos
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [tool.poetry.dev-dependencies]

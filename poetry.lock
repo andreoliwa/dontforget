@@ -505,6 +505,14 @@ version = "1.1.0"
 idna = ">=2.0"
 
 [[package]]
+category = "main"
+description = "Python IMAP for Human beings"
+name = "imbox"
+optional = false
+python-versions = "*"
+version = "0.9.6"
+
+[[package]]
 category = "dev"
 description = "Read metadata from Python packages"
 name = "importlib-metadata"
@@ -1275,7 +1283,7 @@ version = "0.3.3"
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [metadata]
-content-hash = "87fcc8e408b9d8b73fe9a7cbdeffece2517a1943a849de967cb164ff7049870b"
+content-hash = "9dd32c66347d58853319b145e40393f54feeaa899b83c17a36f745e4d8ae7bf9"
 python-versions = "^3.6 || ^3.7"
 
 [metadata.hashes]
@@ -1325,6 +1333,7 @@ humanize = ["a43f57115831ac7c70de098e6ac46ac13be00d69abbf60bdcac251344785bb19"]
 identify = ["244e7864ef59f0c7c50c6db73f58564151d91345cd9b76ed793458953578cadd", "8ff062f90ad4b09cfe79b5dfb7a12e40f19d2e68a5c9598a49be45f16aba7171"]
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
 idna-ssl = ["a933e3bb13da54383f9e8f35dc4f9cb9eb9b3b78c6b36f311254d6d0d92c6c7c"]
+imbox = ["f158bc201b8188be6c5a9b9cb677d6eae9ab9026df8e8aa02a8209b9e7617fe9"]
 importlib-metadata = ["46fc60c34b6ed7547e2a723fc8de6dc2e3a1173f8423246b3ce497f064e9c3de", "bc136180e961875af88b1ab85b4009f4f1278f8396a60526c0009f503a1a96ca"]
 importlib-resources = ["6e2783b2538bd5a14678284a3962b0660c715e5a0f10243fd5e00a4b5974f50b", "d3279fd0f6f847cced9f7acc19bd3e5df54d34f93a2e7bb5f238f81545787078"]
 ipdb = ["dce2112557edfe759742ca2d0fee35c59c97b0cc7a05398b791079d78f1519ce"]
