@@ -148,7 +148,7 @@ class TodoistSchema(Schema):
     project: str = fields.String(missing="Inbox")
     project_id: int = fields.Integer()
     comment: str = fields.String()
-    date_string: datetime = fields.LocalDateTime(format="rfc")
+    date_string: datetime = fields.Date(format="rfc")
     priority: int = fields.Integer()
 
 
