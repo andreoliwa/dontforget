@@ -145,7 +145,7 @@ class TodoistSchema(Schema):
     id: str = fields.String(required=True)
     url: str = fields.Url(required=True)
     content: str = fields.String(required=True)
-    project: str = fields.String()
+    project: str = fields.String(missing="Inbox")
     project_id: int = fields.Integer()
     comment: str = fields.String()
     date_string: datetime = fields.LocalDateTime(format="rfc")
@@ -167,13 +167,14 @@ class TodoistTarget(BaseTarget):
             self.validation_error = str(err)
             return False
 
-        click.echo(f" {self.serialised_data}...", nl=False)
+        click.echo(f" {self.serialised_data}... ", nl=False)
 
         self.todoist = Todoist.singleton(raw_data["api_token"])
         self.todoist.smart_sync()
         self._set_project_id()
-        if self.todoist.find_items_by_content(self.serialised_data["project"], self.unique_key):
-            self.validation_error = "Task already exists"
+        project = self.serialised_data["project"]
+        if self.todoist.find_items_by_content(project, self.unique_key):
+            self.validation_error = f"Task already exists in project {project}"
             return False
 
         self._add_task()
@@ -186,7 +187,10 @@ class TodoistTarget(BaseTarget):
             self.serialised_data["project_id"] = project_id
 
     def _add_task(self):
-        """Add a task to Todoist from the valid data."""
+        """Add a task to Todoist from the valid data.
+
+        See `how add an item <https://developer.todoist.com/sync/v7/?python#add-an-item>`_.
+        """
         content = self.serialised_data.pop("content", "")
         url = self.serialised_data.pop("url", "")
         self.todoist.api.add_item(f"[{content} {self.unique_key}]({url})", **self.serialised_data)

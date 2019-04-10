@@ -1,0 +1,11 @@
+[source]
+class = "gmail"
+user = "{{ env.GMAIL_USER }}"
+password = "{{ env.GMAIL_PASSWORD }}"
+
+[target]
+class = "todoist"
+api_token = "{{ env.TODOIST_API_TOKEN }}"
+id = "{{ gmail.uid }}"
+url = "{{ gmail.url }}"
+content = "{{ gmail.subject }}"

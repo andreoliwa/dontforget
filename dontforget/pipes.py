@@ -89,8 +89,8 @@ class Pipe:
 
     def run(self):
         """Run this pipe."""
-        self.validate()
         click.secho(f"Pipe: {self.name}", fg="bright_green")
+        self.validate()
 
         source_class = BaseSource.get_class_from(self.source_class_name)
         click.secho(f"Source: {source_class}", fg="bright_green")
@@ -106,6 +106,7 @@ class Pipe:
         target_dict.pop(self.Key.CLASS.value)
         target_template = json.dumps(target_dict)
 
+        has_items = False
         for item_dict in source_class().pull(expanded_source_dict):
             expanded_item_dict = json.loads(
                 Template(target_template).render({"env": os.environ, source_class.name: item_dict})
@@ -114,9 +115,13 @@ class Pipe:
             target = target_class()
             success = target.push(expanded_item_dict)
             if success:
-                click.secho(" ok", fg="green")
+                click.secho("ok", fg="green")
             else:
-                click.secho(f" not saved: {target.validation_error}", fg="yellow")
+                click.secho(f"not saved: {target.validation_error}", fg="yellow")
+            has_items = True
+
+        if not has_items:
+            click.echo(f"  No items on source")
 
 
 class PipeType(Enum):
