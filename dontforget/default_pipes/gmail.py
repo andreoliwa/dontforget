@@ -50,10 +50,11 @@ class GmailSource(BaseSource):
             after = date.subtract(days=1)
             before = date.add(days=1)
             url = self.build_search_url(from_, after, before)
+            subject: str = message.subject
             yield {
                 "uid": uid.decode(),
                 "url": url,
-                "subject": message.subject,
+                "subject": " ".join(subject.splitlines()),
                 "parsed_date": message.parsed_date.isoformat(),
             }
 
