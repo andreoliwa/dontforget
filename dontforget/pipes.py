@@ -2,6 +2,7 @@
 import abc
 import itertools
 import json
+import logging
 import os
 from enum import Enum
 from pathlib import Path
@@ -16,8 +17,12 @@ from sqlalchemy.util import classproperty, memoized_property
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
 from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, unflatten
-from dontforget.settings import USER_PIPES_DIR
+from dontforget.settings import LOG_LEVEL, USER_PIPES_DIR
 from dontforget.typedefs import JsonDict
+
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig()
+LOGGER.setLevel(LOG_LEVEL)
 
 
 class Pipe:
@@ -98,9 +103,11 @@ class Pipe:
         click.secho(f"Target: {target_class}", fg="bright_green")
 
         source_dict: JsonDict = self.merged_dict.get(self.Key.SOURCE.value).copy()
+        LOGGER.debug("source_dict: %s", source_dict)
         source_dict.pop(self.Key.CLASS.value)
         source_template = json.dumps(source_dict)
         expanded_source_dict = json.loads(Template(source_template, undefined=StrictUndefined).render(env=os.environ))
+        LOGGER.debug("expanded_source_dict: %s", expanded_source_dict)
 
         target_dict: JsonDict = self.merged_dict.get(self.Key.TARGET.value).copy()
         target_dict.pop(self.Key.CLASS.value)
@@ -109,9 +116,13 @@ class Pipe:
         has_items = False
         source_instance = source_class()
         for item_dict in source_instance.pull(expanded_source_dict):
-            expanded_item_dict = json.loads(
-                Template(target_template).render({"env": os.environ, source_class.name: item_dict})
-            )
+            LOGGER.debug("item_dict: %s", item_dict)
+            LOGGER.debug("target_template: %s", target_template)
+
+            rendered_item = Template(target_template).render({"env": os.environ, source_class.name: item_dict})
+            LOGGER.debug("rendered_item: %s", rendered_item)
+            expanded_item_dict = json.loads(rendered_item)
+            LOGGER.debug("expanded_item_dict: %s", expanded_item_dict)
             click.echo(f"  Pushing", nl=False)
             target = target_class()
             success = target.push(expanded_item_dict)

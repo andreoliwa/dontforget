@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Application settings."""
+import logging
 import os
 
 from environs import Env
@@ -8,6 +9,7 @@ env = Env()
 env.read_env()
 
 FLASK_ENV = env("FLASK_ENV")
+LOG_LEVEL = env("LOG_LEVEL", default=logging.getLevelName(logging.WARNING)).upper()
 
 LOCAL_TIMEZONE = env("LOCAL_TIMEZONE", default="Europe/Berlin")
 TELEGRAM_TOKEN = env("TELEGRAM_TOKEN", default=None)
