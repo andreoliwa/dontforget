@@ -3,6 +3,7 @@
 - `Docs <https://developer.todoist.com/sync/v7/>`_
 - `Python module <https://github.com/Doist/todoist-python>`_
 """
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -14,10 +15,14 @@ from todoist import TodoistAPI
 
 from dontforget.generic import SingletonMixin
 from dontforget.pipes import BaseTarget
+from dontforget.settings import LOG_LEVEL
 from dontforget.typedefs import JsonDict
 
 PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
 DictProjectId = Dict[str, int]
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(LOG_LEVEL)
 
 
 class Todoist(SingletonMixin):
@@ -36,7 +41,15 @@ class Todoist(SingletonMixin):
             # If internal data has no projects, reset the state and a full (slow) sync will be performed.
             self.api.reset_state()
 
-        partial_data = self.api.sync()
+        partial_data = {}
+        for attempt in range(3):
+            # For some reason, sometimes this sync() method returns an empty string instead of a dict.
+            # In this case, let's try again for a few times until we get a dictionary.
+            partial_data = self.api.sync()
+            if isinstance(partial_data, dict):
+                break
+            LOGGER.warning(f"Retrying, attempt {attempt + 1}: partial_data is not a dict(): {partial_data!r}")
+
         self._merge_new_data(partial_data)
 
         self.projects = dict(PROJECTS_NAME_ID_JMEX.search(self.data))

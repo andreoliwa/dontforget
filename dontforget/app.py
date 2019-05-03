@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """The app module, containing the app factory function."""
+import logging
 from pathlib import Path
 
 from flask import Flask, render_template
@@ -27,6 +28,7 @@ def create_app(config_object=ProdConfig):
     register_extensions(app)
     # TODO: feat: add missing favicon
     # register_errorhandlers(app)
+    logging.basicConfig()
     register_commands(app)
     load_plugins()
     return app

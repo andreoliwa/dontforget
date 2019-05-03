@@ -21,7 +21,6 @@ from dontforget.settings import LOG_LEVEL, USER_PIPES_DIR
 from dontforget.typedefs import JsonDict
 
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig()
 LOGGER.setLevel(LOG_LEVEL)
 
 
