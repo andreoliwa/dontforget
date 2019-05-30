@@ -1,4 +1,4 @@
-"""Gmail."""
+"""Email sources (Fastmail, Gmail, etc.)."""
 from typing import Iterator, Optional
 from urllib.parse import quote_plus
 
@@ -9,29 +9,33 @@ from dontforget.pipes import BaseSource
 from dontforget.typedefs import JsonDict
 
 
-class GmailSource(BaseSource):
-    """Gmail source."""
-
-    SEARCH_URL = "https://mail.google.com/mail/u/0/#search/"
-    DATE_FORMAT = "Y/M/D"
+class EmailSource(BaseSource):
+    """Email source."""
 
     imbox: Imbox
     current_uid: Optional[bytes] = None
+    search_url: str
+    search_date_format: str
     mark_read = False
     archive = False
+    archive_folder: str
 
     def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
         """Pull emails from Gmail."""
         self.imbox = Imbox(
-            "imap.gmail.com",
+            connection_info["hostname"],
+            port=connection_info.get("port", None),
             username=connection_info["user"],
             password=connection_info["password"],
             ssl=True,
             ssl_context=None,
             starttls=False,
         )
+        self.search_url = connection_info["search_url"]
+        self.search_date_format = connection_info["search_date_format"]
         self.mark_read = connection_info.get("mark_read", False)
         self.archive = connection_info.get("archive", False)
+        self.archive_folder = connection_info["archive_folder"]
 
         kwargs = {}
         from_ = connection_info.get("from")
@@ -40,6 +44,9 @@ class GmailSource(BaseSource):
         label = connection_info.get("label")
         if label:
             kwargs.update(folder="all", label=label)
+        folder = connection_info.get("folder")
+        if folder:
+            kwargs.update(folder=folder)
         messages = self.imbox.messages(**kwargs)
         if not messages:
             return []
@@ -47,9 +54,7 @@ class GmailSource(BaseSource):
         for uid, message in messages:
             self.current_uid = uid
             date = pendulum.instance(message.parsed_date).date()
-            after = date.subtract(days=1)
-            before = date.add(days=1)
-            url = self.build_search_url(from_, after, before)
+            url = self.build_search_url(from_, date, date.add(days=1))
             subject: str = message.subject
             yield {
                 "uid": uid.decode(),
@@ -64,12 +69,12 @@ class GmailSource(BaseSource):
         if from_:
             search_terms.append(f"from:({from_})")
         if after:
-            search_terms.append(f"after:{after.format(self.DATE_FORMAT)}")
+            search_terms.append(f"after:{after.format(self.search_date_format)}")
         if before:
-            search_terms.append(f"before:{before.format(self.DATE_FORMAT)}")
+            search_terms.append(f"before:{before.format(self.search_date_format)}")
 
         quoted_terms = quote_plus(" ".join(search_terms))
-        return f"{self.SEARCH_URL}{quoted_terms}"
+        return f"{self.search_url}{quoted_terms}"
 
     def on_success(self):
         """Mark email as read and/or archive it, if requested."""
@@ -78,4 +83,4 @@ class GmailSource(BaseSource):
         if self.mark_read:
             self.imbox.mark_seen(self.current_uid)
         if self.archive:
-            self.imbox.move(self.current_uid, "all")
+            self.imbox.move(self.current_uid, self.archive_folder)

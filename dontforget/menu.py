@@ -24,9 +24,11 @@ def get_highest_count() -> Tuple[str, int]:
     """Get the highest count of an icon."""
     from dontforget.settings import env
 
+    env.read_env()
+
     for icon in ICONS:
         variable = f"COUNT_{icon}".upper()
-        count = env(variable) or 0
+        count = env.int(variable, 0) or 0
         if count > 0:
             return icon, count
     return ICONS[-1], 0
