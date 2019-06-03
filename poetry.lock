@@ -788,7 +788,7 @@ description = "A framework for managing and maintaining multi-language pre-commi
 name = "pre-commit"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.16.0"
+version = "1.16.1"
 
 [package.dependencies]
 "aspy.yaml" = "*"
@@ -896,7 +896,7 @@ mccabe = ">=0.6,<0.7"
 category = "main"
 description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.2"
 
@@ -904,7 +904,7 @@ version = "5.2"
 category = "main"
 description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.2"
 
@@ -1025,7 +1025,7 @@ category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "5.1"
 
 [[package]]
@@ -1361,7 +1361,7 @@ pexpect = ["2094eefdfcf37a1fdbfb9aa090862c1a4878e5c7e0e7e7088bdb511c558e5cd1", "
 pickleshare = ["87683d47965c1da65cdacaf31c8441d12b8044cdec9aca500cd78fc2c683afca", "9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"]
 pluggy = ["25a1bc1d148c9a640211872b4ff859878d422bccb59c9965e04eed468a0aa180", "964cedd2b27c492fbf0b7f58b3284a09cf7f99b0f715941fb24a439b3af1bd1a"]
 pluginbase = ["497894df38d0db71e1a4fbbfaceb10c3ef49a3f95a0582e11b75f8adaa030005"]
-pre-commit = ["3fac7032a23c37d3dd9ec15f4c7b8342145e1ae943532c01cf1497277157aa59", "b05c26279a6c36d2043ded6f9f7a1a0af8d4d71ed0bf1274afc5fbd3ca3e0ec7"]
+pre-commit = ["6ca409d1f22d444af427fb023a33ca8b69625d508a50e1b7eaabd59247c93043", "94dd519597f5bff06a4b0df194a79c524b78f4b1534c1ce63241a9d4fb23b926"]
 prompt-toolkit = ["11adf3389a996a6d45cc277580d0d53e8a5afd281d0c9ec71b28e6f121463780", "2519ad1d8038fd5fc8e770362237ad0364d16a7650fb5724af6997ed5515e3c1", "977c6583ae813a37dc1c2e1b715892461fcbdaa57f6fc62f33a528c4886c8f55"]
 psycopg2 = ["00cfecb3f3db6eb76dcc763e71777da56d12b6d61db6a2c6ccbbb0bff5421f8f", "076501fc24ae13b2609ba2303d88d4db79072562f0b8cc87ec1667dedff99dc1", "4e2b34e4c0ddfeddf770d7df93e269700b080a4d2ec514fec668d71895f56782", "5cacf21b6f813c239f100ef78a4132056f93a5940219ec25d2ef833cbeb05588", "61f58e9ecb9e4dc7e30be56b562f8fc10ae3addcfcef51b588eed10a5a66100d", "8954ff6e47247bdd134db602fcadfc21662835bd92ce0760f3842eacfeb6e0f3", "b6e8c854cdc623028e558a409b06ea2f16d13438335941c7765d0a42b5bedd33", "baca21c0f7344576346e260454d0007313ccca8c170684707a63946b27a56c8f", "bb1735378770fb95dbe392d29e71405d45c8bdcfa064f916504833a92ab03c55", "de3d3c46c1ee18f996db42d1eb44cf1565cc9e38fb1dbd9b773ff6b3fa8035d7", "dee885602bb200bdcb1d30f6da6c7bb207360bc786d0a364fe1540dd14af0bab"]
 ptyprocess = ["923f299cc5ad920c68f2bc0bc98b75b9f838b93b599941a6b63ddbc2476394c0", "d7cc528d76e76342423ca640335bd3633420dc1366f258cb31d05e865ef5ca1f"]
