@@ -435,7 +435,7 @@ description = "A simple framework for building complex web applications."
 name = "flask"
 optional = false
 python-versions = "*"
-version = "1.0.2"
+version = "1.0.3"
 
 [package.dependencies]
 Jinja2 = ">=2.10"
@@ -896,7 +896,7 @@ mccabe = ">=0.6,<0.7"
 category = "main"
 description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.2"
 
@@ -904,7 +904,7 @@ version = "5.2"
 category = "main"
 description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
-optional = true
+optional = false
 python-versions = "*"
 version = "5.2"
 
@@ -1025,7 +1025,7 @@ category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "5.1"
 
 [[package]]
@@ -1326,7 +1326,7 @@ flake8-nitpick = ["26ffb06b53acc756263f3ff8e5561364783d7528cf785096c7778bc17ef29
 flake8-polyfill = ["12be6a34ee3ab795b19ca73505e7b55826d5f6ad7230d31b18e106400169b9e9", "e44b087597f6da52ec6393a709e7108b2905317d0c0b744cdca6208e670d8eda"]
 flake8-pytest = ["61686128a79e1513db575b2bcac351081d5a293811ddce2d5dfc25e8c762d33e", "b4d6703f7d7b646af1e2660809e795886dd349df11843613dbe6515efa82c0f3"]
 flake8-quotes = ["10c9af6b472d4302a8e721c5260856c3f985c5c082b04841aefd2f808ac02038"]
-flask = ["2271c0070dbcb5275fad4a82e29f23ab92682dc45f9dfbc22c02ba9b9322ce48", "a080b744b7e345ccfcbc77954861cb05b3c63786e93f2b3875e0913d44b43f05"]
+flask = ["ad7c6d841e64296b962296c2c2dabc6543752985727af86a975072dea984b6f3", "e7d32475d1de5facaa55e3958bc4ec66d3762076b074296aa50ef8fdc5b9df61"]
 flask-migrate = ["a361578cb829681f860e4de5ed2c48886264512f0c16144e404c36ddc95ab49c", "c24d105c5d6cc670de20f8cbfb909e04f4e04b8784d0df070005944de1f21549"]
 flask-sqlalchemy = ["0c9609b0d72871c540a7945ea559c8fdf5455192d2db67219509aed680a3d45a", "8631bbea987bc3eb0f72b1f691d47bd37ceb795e73b59ab48586d76d75a7c605"]
 humanize = ["a43f57115831ac7c70de098e6ac46ac13be00d69abbf60bdcac251344785bb19"]
