@@ -38,9 +38,9 @@ class EmailSource(BaseSource):
         self.archive_folder = connection_info["archive_folder"]
 
         kwargs = {}
-        from_ = connection_info.get("from")
-        if from_:
-            kwargs["sent_from"] = from_
+        search_from = connection_info.get("from")
+        if search_from:
+            kwargs["sent_from"] = search_from
         label = connection_info.get("label")
         if label:
             kwargs.update(folder="all", label=label)
@@ -54,17 +54,24 @@ class EmailSource(BaseSource):
         for uid, message in messages:
             self.current_uid = uid
             date = pendulum.instance(message.parsed_date).date()
-            url = self.build_search_url(from_, date, date.add(days=1))
-            subject: str = message.subject
+            subject: str = " ".join(message.subject.splitlines())
+
+            # First sender of the email
+            message_from = message.sent_from[0].get("email") if message.sent_from else None
+            url = self.build_search_url(search_from or message_from, date, date.add(days=1), subject)
+
             yield {
+                "from_": search_from or message_from,
                 "uid": uid.decode(),
                 "url": url,
-                "subject": " ".join(subject.splitlines()),
+                "subject": subject,
                 "parsed_date": message.parsed_date.isoformat(),
             }
 
-    def build_search_url(self, from_: str = None, after: pendulum.Date = None, before: pendulum.Date = None) -> str:
-        """Build the Gmail search URL."""
+    def build_search_url(
+        self, from_: str = None, after: pendulum.Date = None, before: pendulum.Date = None, subject=None
+    ) -> str:
+        """Build the email search URL."""
         search_terms = []
         if from_:
             search_terms.append(f"from:({from_})")
@@ -72,6 +79,8 @@ class EmailSource(BaseSource):
             search_terms.append(f"after:{after.format(self.search_date_format)}")
         if before:
             search_terms.append(f"before:{before.format(self.search_date_format)}")
+        if subject:
+            search_terms.append(f'subject:"{subject}"')
 
         quoted_terms = quote_plus(" ".join(search_terms))
         return f"{self.search_url}{quoted_terms}"

@@ -16,7 +16,7 @@ from jinja2 import StrictUndefined, Template
 from sqlalchemy.util import classproperty, memoized_property
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
-from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, unflatten
+from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, pretty_plugin_name, unflatten
 from dontforget.settings import LOG_LEVEL, USER_PIPES_DIR
 from dontforget.typedefs import JsonDict
 
@@ -93,13 +93,13 @@ class Pipe:
 
     def run(self):
         """Run this pipe."""
-        click.secho(f"Pipe: {self.name}", fg="bright_green")
         self.validate()
-
         source_class = BaseSource.get_class_from(self.source_class_name)
-        click.secho(f"Source: {source_class}", fg="bright_green")
         target_class = BaseTarget.get_class_from(self.target_class_name)
-        click.secho(f"Target: {target_class}", fg="bright_green")
+        click.secho(
+            f"Pipe: {self.name} ({pretty_plugin_name(source_class)} -> {pretty_plugin_name(target_class)})",
+            fg="bright_green",
+        )
 
         source_dict: JsonDict = self.merged_dict.get(self.Key.SOURCE.value).copy()
         LOGGER.debug("source_dict: %s", source_dict)
