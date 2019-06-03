@@ -43,6 +43,10 @@ class Pipe:
         self.source_class_name: str = ""
         self.target_class_name: str = ""
 
+    def __lt__(self, other):
+        """Less than operator, case insensitive."""
+        return self.name.casefold() < other.name.casefold()
+
     @memoized_property
     def original_dict(self) -> JsonDict:
         """Return the original dict."""
@@ -308,5 +312,5 @@ def run(partial_names: Tuple[str, ...]):
         chosen_pipes.extend(PIPE_CONFIG.get_pipes(partial_name))
     if not chosen_pipes:
         chosen_pipes = PIPE_CONFIG.user_pipes
-    for chosen_pipe in chosen_pipes:
+    for chosen_pipe in sorted(chosen_pipes):
         chosen_pipe.run()
