@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """Alembic migrations main module."""
 from __future__ import with_statement
@@ -12,7 +13,7 @@ from sqlalchemy import engine_from_config, pool
 # add your model's MetaData object here
 # for 'autogenerate' support
 # target_metadata = mymodel.Base.metadata
-import dontforget.models  # noqa # pylint: disable=unused-import
+import dontforget.models  # noqa: F401 # pylint: disable=unused-import
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

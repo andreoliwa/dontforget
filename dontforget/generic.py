@@ -39,7 +39,7 @@ def flash_errors(form, category="warning"):
     """Flash all errors for a form."""
     for field, errors in form.errors.items():
         for error in errors:
-            flash("{0} - {1}".format(getattr(form, field).label.text, error), category)
+            flash("{} - {}".format(getattr(form, field).label.text, error), category)
 
 
 class SingletonMixin:
@@ -115,7 +115,7 @@ def unflatten(dict_, separator="."):
 
 def find_partial_keys(
     list_or_dict: Union[List[str], Dict[str, Any]], partial_key: str, not_found: str = None, multiple: str = None
-) -> List[Union[str, Any]]:
+) -> List[Any]:
     """Find a partial string on a list of strings or on a dict with string keys.
 
     >>> my_list = ["some", "strings", "here"]

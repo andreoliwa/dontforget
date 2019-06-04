@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Create an application instance."""
 from dontforget.app import create_app
 from dontforget.constants import DEVELOPMENT

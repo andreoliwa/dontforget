@@ -29,7 +29,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return "<Chore {0!r} {1!r}, due at {2}, repetition {3!r} from {4}>".format(
+        return "<Chore {!r} {!r}, due at {}, repetition {!r} from {}>".format(
             self.id, self.title, self.due_at, self.repetition, "completed" if self.repeat_from_completed else "due date"
         )
 
@@ -141,7 +141,7 @@ class Chore(SurrogatePK, CreatedUpdatedMixin, Model):
         :rtype: list[Chore]
         """
         like_expressions = [
-            Chore.title.ilike("%{0}%".format(term.lower())) for term in self.title.split(" ") if len(term) >= min_chars
+            Chore.title.ilike("%{}%".format(term.lower())) for term in self.title.split(" ") if len(term) >= min_chars
         ]
         query = Chore.query.filter(or_(*like_expressions))  # pylint: disable=no-member
         return query.all()

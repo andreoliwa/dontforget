@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Pipes."""
 import abc
 import itertools
@@ -7,7 +8,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import click
 import toml
@@ -238,7 +239,7 @@ class BaseSource(metaclass=abc.ABCMeta):
         return found[0]
 
     @abc.abstractmethod
-    def pull(self, connection_info: JsonDict) -> List[JsonDict]:
+    def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
         """Pull items from the source, using the provided connection info."""
 
     def on_success(self):

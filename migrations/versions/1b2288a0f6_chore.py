@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Chore.
 
 Revision ID: 1b2288a0f6

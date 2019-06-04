@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Redmine."""
 from typing import Iterator
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Application menu at the status bar."""
 import plistlib
 from typing import Tuple

@@ -39,27 +39,12 @@ imbox = "^0.9.6"
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "*", allows-prereleases = true}
 faker = "*"
 coverage = "*"
 factory-boy = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-runfailed = "*"
-"flake8-blind-except" = "*"
-"flake8-bugbear" = "*"
-"flake8-comprehensions" = "*"
-"flake8-debugger" = "*"
-"flake8-docstrings" = "*"
-"flake8-isort" = "*"
-"flake8-mypy" = "*"
-"flake8-polyfill" = "*"
-"flake8-pytest" = "*"
-"flake8" = "*"
-flake8-quotes = "*"
-flake8-nitpick = "*"
 pylint = "*"
-mypy = "*"
 ipython = "*"
 ipdb = "*"
-pre-commit = {version = "*", allows-prereleases = true}

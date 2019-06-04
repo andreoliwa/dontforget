@@ -46,7 +46,7 @@ class CRUDMixin(object):
         return commit and db.session.commit()
 
 
-class Model(CRUDMixin, db.Model):
+class Model(CRUDMixin, db.Model):  # type: ignore
     """Base model class that includes CRUD convenience methods."""
 
     __abstract__ = True
@@ -86,7 +86,7 @@ def reference_col(tablename, nullable=False, pk_name="id", **kwargs):
         category_id = reference_col('category')
         category = relationship('Category', backref='categories')
     """
-    return db.Column(db.ForeignKey("{0}.{1}".format(tablename, pk_name)), nullable=nullable, **kwargs)
+    return db.Column(db.ForeignKey("{}.{}".format(tablename, pk_name)), nullable=nullable, **kwargs)
 
 
 def db_refresh(short=False):

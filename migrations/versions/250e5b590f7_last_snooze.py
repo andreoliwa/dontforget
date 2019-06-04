@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Last snooze.
 
 Revision ID: 250e5b590f7

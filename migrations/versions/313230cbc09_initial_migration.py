@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Initial migration.
 
 Revision ID: 313230cbc09

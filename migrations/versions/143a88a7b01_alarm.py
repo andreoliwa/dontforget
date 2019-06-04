@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Alarm.
 
 Revision ID: 143a88a7b01
