@@ -28,10 +28,11 @@ tapioca-toggl = "*"
 toml = "*"
 environs = "*"
 deprecated = "*"
-python-redmine = "^2.2"
-autorepr = "^0.3.0"
-pluginbase = "^1.0"
-imbox = "^0.9.6"
+python-redmine = "*"
+autorepr = "*"
+pluginbase = "*"
+imbox = "*"
+jmespath = "*"
 
 [tool.poetry.extras]
 # Those optional packages are only available on macOS. To install them:
