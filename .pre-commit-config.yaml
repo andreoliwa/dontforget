@@ -5,10 +5,9 @@ repos:
     hooks:
       - id: debug-statements
       - id: end-of-file-fixer
-      - id: fix-encoding-pragma
       - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
-    rev: v1.18.0
+    rev: v1.19.0
     hooks:
       - id: pyupgrade
   - repo: https://github.com/ambv/black
@@ -17,7 +16,7 @@ repos:
       - id: black
         args: [--safe, --quiet]
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.0.0
+    rev: v1.0.0-1
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==19.3b0]
@@ -41,7 +40,21 @@ repos:
     rev: v2.2.3
     hooks:
       - id: flake8
-        additional_dependencies: ['flake8-nitpick', 'flake8-blind-except', 'flake8-bugbear', 'flake8-comprehensions', 'flake8-debugger', 'flake8-docstrings', 'flake8-isort', 'flake8-mypy', 'flake8-polyfill', 'flake8-pytest', 'flake8-quotes', 'yesqa']
+        additional_dependencies:
+          [
+            nitpick,
+            flake8-blind-except,
+            flake8-bugbear,
+            flake8-comprehensions,
+            flake8-debugger,
+            flake8-docstrings,
+            flake8-isort,
+            flake8-mypy,
+            flake8-polyfill,
+            flake8-pytest,
+            flake8-quotes,
+            yesqa,
+          ]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.701
     hooks:
