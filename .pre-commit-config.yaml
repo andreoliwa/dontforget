@@ -10,7 +10,7 @@ repos:
     rev: v1.19.0
     hooks:
       - id: pyupgrade
-  - repo: https://github.com/ambv/black
+  - repo: https://github.com/python/black
     rev: 19.3b0
     hooks:
       - id: black
@@ -36,26 +36,22 @@ repos:
       - id: python-no-eval
       - id: python-no-log-warn
       - id: rst-backticks
+  - repo: https://github.com/andreoliwa/nitpick
+    rev: v0.16.1
+    hooks:
+      - id: nitpick
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.2.3
     hooks:
       - id: flake8
-        additional_dependencies:
-          [
-            nitpick,
-            flake8-blind-except,
-            flake8-bugbear,
-            flake8-comprehensions,
-            flake8-debugger,
-            flake8-docstrings,
-            flake8-isort,
-            flake8-mypy,
-            flake8-polyfill,
-            flake8-pytest,
-            flake8-quotes,
-            yesqa,
-          ]
+        additional_dependencies: [flake8-blind-except, flake8-bugbear, flake8-comprehensions,
+          flake8-debugger, flake8-docstrings, flake8-isort, flake8-mypy, flake8-polyfill,
+          flake8-pytest, flake8-quotes, yesqa]
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.701
     hooks:
       - id: mypy
+  - repo: https://github.com/openstack/bashate
+    rev: 0.6.0
+    hooks:
+      - id: bashate

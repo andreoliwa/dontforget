@@ -25,3 +25,14 @@ test:
 	py.test --verbose --cov dontforget
 
 ilt: isort lint test
+
+update:
+	clear
+	pre-commit autoupdate
+	pre-commit gc
+	poetry update
+
+dev:
+	clear
+	pre-commit run --all-files
+	pytest
