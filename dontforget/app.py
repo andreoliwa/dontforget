@@ -73,8 +73,14 @@ def register_commands(app):
 def load_plugins():
     """Load plugins."""
     plugin_base = PluginBase(package="dontforget.plugins")
-    plugin_source = plugin_base.make_plugin_source(
-        identifier=DEFAULT_PIPES_DIR_NAME, searchpath=[str(Path(__file__).parent / DEFAULT_PIPES_DIR_NAME)]
-    )
+    try:
+        plugin_source = plugin_base.make_plugin_source(
+            identifier=DEFAULT_PIPES_DIR_NAME,
+            searchpath=[str(Path(__file__).parent / DEFAULT_PIPES_DIR_NAME)],
+            persist=True,
+        )
+    except RuntimeError:
+        # Ignore RuntimeError: This plugin source already exists
+        return
     for plugin_module in plugin_source.list_plugins():
         plugin_source.load_plugin(plugin_module)
