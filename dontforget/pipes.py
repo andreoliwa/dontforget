@@ -127,7 +127,7 @@ class Pipe:
             LOGGER.debug("rendered_item: %s", rendered_item)
             expanded_item_dict = json.loads(rendered_item)
             LOGGER.debug("expanded_item_dict: %s", expanded_item_dict)
-            click.echo(f"  Pushing", nl=False)
+            click.echo(f"  Pushing ", nl=False)
             target = target_class()
             success = target.push(expanded_item_dict)
             if success:

@@ -162,8 +162,9 @@ class TodoistSchema(Schema):
     project: str = fields.String(missing="Inbox")
     project_id: int = fields.Integer()
     comment: str = fields.String()
-    date_string: datetime = fields.Date(format="rfc")
+    date_string: datetime = fields.Date()
     priority: int = fields.Integer()
+    api_token: str = fields.String()
 
 
 class TodoistTarget(BaseTarget):
@@ -173,15 +174,15 @@ class TodoistTarget(BaseTarget):
 
     def push(self, raw_data: JsonDict) -> bool:
         """Add a task to Todoist."""
-        schema = TodoistSchema(strict=True)
+        schema = TodoistSchema()
         try:
-            self.valid_data, _ = schema.load(raw_data)
-            self.serialised_data, _ = schema.dump(self.valid_data)
+            self.valid_data = schema.load(raw_data)
+            self.serialised_data = schema.dump(self.valid_data)
         except ValidationError as err:
             self.validation_error = str(err)
             return False
 
-        click.echo(f" {self.serialised_data}... ", nl=False)
+        click.echo(f"{self.serialised_data}... ", nl=False)
 
         self.todoist = Todoist.singleton(raw_data["api_token"])
         self.todoist.smart_sync()
