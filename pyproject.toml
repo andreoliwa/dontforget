@@ -49,3 +49,6 @@ pytest-runfailed = "*"
 pylint = "*"
 ipython = "*"
 ipdb = "*"
+
+[tool.nitpick]
+style = ["https://raw.githubusercontent.com/andreoliwa/nitpick/develop/nitpick-style.toml"]
