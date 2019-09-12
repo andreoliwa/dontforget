@@ -15,9 +15,14 @@ class RedmineSource(BaseSource):
         """Pull issues from Redmine."""
         redmine = Redmine(connection_info["url"], key=connection_info["api_token"], raise_attr_exception=False)
         project = redmine.project.get(connection_info["project_id"])
-        for item in project.issues.values("id", "subject", "due_date"):
+        for item in project.issues.values("id", "subject", "due_date", "parent", "assigned_to"):
             # Skip issues without a due date
             if not item["due_date"]:
                 continue
+
+            if "parent" not in item:
+                item["parent"] = None
+            if "assigned_to" not in item:
+                item["assigned_to"] = None
 
             yield item
