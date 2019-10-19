@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """Alembic migrations main module."""
-from __future__ import with_statement
 
 import logging
 from logging.config import fileConfig
