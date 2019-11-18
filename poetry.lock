@@ -600,10 +600,10 @@ description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
 optional = true
 python-versions = ">=3.6"
-version = "6.0.1"
+version = "6.1"
 
 [package.dependencies]
-pyobjc-core = ">=6.0.1"
+pyobjc-core = ">=6.1"
 
 [[package]]
 category = "dev"
@@ -927,7 +927,7 @@ more-itertools = "*"
 macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
 
 [metadata]
-content-hash = "718290eb792ff9dba30343c713508b5e1c3dc79f79fa3f6e8a22eb4c78cb3fd0"
+content-hash = "342d1064db884bb6ed18cd0f41bcbd67db5c8f52c746c762faf5101edade170e"
 python-versions = "^3.7"
 
 [metadata.hashes]
@@ -989,7 +989,7 @@ py = ["64f65755aee5b381cea27766a3a147c3f15b9b6b9ac88676de66ba2ae36793fa", "dc639
 pygments = ["71e430bc85c88a430f000ac1d9b331d2407f681d6f6aec95e8bcfbc3df5b0127", "881c4c157e45f30af185c1ffe8d549d48ac9127433f2c380c24b84572ad66297"]
 pylint = ["7b76045426c650d2b0f02fc47c14d7934d17898779da95288a74c2a7ec440702", "856476331f3e26598017290fd65bebe81c960e806776f324093a46b76fb2d1c0"]
 pyobjc-core = ["1a0fbf012fb575e0adf8c18cfd4453e657cc2c0deb2660c529bf524ba4c9149a", "470ccd754efb468a59426942673dfc3c5c59f33a5b8cae8a7fc1be975c2d4128", "751cdeb436cb181af2e2413015b072075590577c410c7f345080a38dd028b8ec", "8ccf44511cbe438fa6562c423c0c5f1dad7cfc0eadd6d8f112840f8845b44fda"]
-pyobjc-framework-cocoa = ["6a344805d228b35fd8652a27122d12bcb3fc2e6f57bbb10609a62616a66d40da", "73e6eae7de8de33b2968b0c001aebb8ced4418b8969e791f4cd95f7b722d1a26", "7ad304c2665c5d91b22eb87f85f49b4571acc8a9d08bda52c0c119762243d5d8", "915e0d7d1e21d6ea3bdab08fc548fad96f54b0c1cad3d799946caecc6d58e282"]
+pyobjc-framework-cocoa = ["1dc428f867d35007ddf9de5b24eff5bfdf65c58b1d610abcb08bebd94c343312", "245e19156739f8068db474ad9561079cc698f08ef525e299b8eedc5531e02801", "32ba4d0ce811e2088bf0fc360c9545c06586934e895f7133655b8f2182e7019a", "c4077d2e6f96e4f3fd9780d66778cf51d27f414822498b24410e9df7a6a4d531"]
 pyparsing = ["6f98a7b9397e206d78cc01df10131398f1c8b8510a2f4d97d9abd82e1aacdd80", "d9338df12903bbf5d65a0e4e87c2161968b10d2e489652bb47001d82a9b028b4"]
 pytest = ["27abc3fef618a01bebb1f0d6d303d2816a99aa87a5968ebc32fe971be91eb1e6", "58cee9e09242937e136dbb3dab466116ba20d6b7828c7620f23947f37eb4dae4"]
 pytest-cov = ["cc6742d8bac45070217169f5f72ceee1e0e55b0221f54bcf24845972d3a47f2b", "cdbdef4f870408ebdbfeb44e63e07eb18bb4619fae852f6e760645fa36172626"]
