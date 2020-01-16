@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Application settings."""
 import logging
 import os

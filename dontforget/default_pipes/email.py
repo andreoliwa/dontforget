@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Email sources (Fastmail, Gmail, etc.)."""
 from typing import Iterator, Optional
 from urllib.parse import quote_plus

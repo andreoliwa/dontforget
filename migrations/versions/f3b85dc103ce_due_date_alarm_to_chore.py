@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Add due date and alarm date to the chore (https://github.com/andreoliwa/python-dontforget/issues/98).
 
 Revision ID: f3b85dc103ce

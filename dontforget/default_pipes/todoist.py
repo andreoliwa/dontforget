@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Todoist target and API interface.
 
 - `Docs <https://developer.todoist.com/sync/v7/>`_

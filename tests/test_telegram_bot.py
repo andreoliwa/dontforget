@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test Telegram bot."""
 # pylint: disable=invalid-name,no-member,too-many-arguments
 import time

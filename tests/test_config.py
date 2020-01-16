@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test configs."""
 from dontforget.app import create_app
 from dontforget.settings import DevConfig, ProdConfig

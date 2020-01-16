@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Add original_at date to the alarm.
 
 Revision ID: a2de422d22b8

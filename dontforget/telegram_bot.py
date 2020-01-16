@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Telegram bot module."""
 import re
 from enum import Enum

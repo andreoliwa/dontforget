@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Repetition.
 
 Revision ID: 3362b720863

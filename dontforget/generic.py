@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Generic functions and classes, to be reused."""
 import collections
 from typing import Any, Dict, List, Union

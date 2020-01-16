@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
 """Tests for the repetition module."""
 from datetime import datetime

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=invalid-name,no-member
 """Test chores."""
 from datetime import timedelta

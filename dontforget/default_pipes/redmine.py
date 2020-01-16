@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Redmine."""
 from typing import Iterator
 
@@ -24,5 +23,9 @@ class RedmineSource(BaseSource):
                 item["parent"] = None
             if "assigned_to" not in item:
                 item["assigned_to"] = None
+
+            # Escape double quotes in the subject
+            if "subject" in item:
+                item["subject"] = item["subject"].replace('"', '\\"')
 
             yield item

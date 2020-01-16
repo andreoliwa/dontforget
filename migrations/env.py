@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=no-member
 """Alembic migrations main module."""
 

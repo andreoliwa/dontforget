@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Database models."""
 from datetime import timedelta
 

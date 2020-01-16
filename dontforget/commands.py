@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Click commands."""
 import shlex
 from subprocess import Popen

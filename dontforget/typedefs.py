@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Type definitions."""
 from typing import Any, MutableMapping
 

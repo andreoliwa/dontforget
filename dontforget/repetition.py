@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Repetition patterns for chores."""
 import datetime
 import re

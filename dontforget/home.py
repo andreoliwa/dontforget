@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Create a task when it's time to go home."""
 from datetime import date, timedelta
 from pprint import pprint
