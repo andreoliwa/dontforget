@@ -21,7 +21,7 @@ arrow = "*"
 maya = "*"
 telepot = "*"
 marshmallow = "*"
-pyobjc-core = {version = "^6.1",optional = true}
+pyobjc-core = {version = "^6.2",optional = true}
 pyobjc-framework-cocoa = {version = "^6.1",optional = true}
 todoist-python = "*"
 tapioca-toggl = "*"
