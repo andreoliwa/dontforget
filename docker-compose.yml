@@ -11,7 +11,6 @@ services:
     env_file:
       - .env
     environment:
-      FLASK_APP: autoapp.py
       FLASK_ENV: production
     volumes:
       - .:/dontforget

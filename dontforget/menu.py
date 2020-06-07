@@ -1,11 +1,10 @@
 """Application menu at the status bar."""
-# TODO: remove this module and use only rumps
-import plistlib
+import plistlib  # TODO: remove
 from typing import Tuple
 
-import objc
-from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar
-from Foundation import NSRunLoop, NSTimer
+import objc  # TODO: remove this module
+from AppKit import NSApplication, NSEventTrackingRunLoopMode, NSMenu, NSMenuItem, NSStatusBar  # TODO: remove
+from Foundation import NSRunLoop, NSTimer  # TODO: remove
 
 from dontforget.generic import UT
 from dontforget.settings import ICONS

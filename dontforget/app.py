@@ -1,7 +1,10 @@
 """The app module, containing the app factory function."""
 import logging
+from datetime import datetime
 from pathlib import Path
 
+import rumps
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -9,6 +12,7 @@ from pluginbase import PluginBase
 
 from dontforget import commands, pipes
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME
+from dontforget.generic import UT
 from dontforget.settings import ProdConfig
 from dontforget.views import blueprint
 
@@ -83,3 +87,29 @@ def load_plugins():
         return
     for plugin_module in plugin_source.list_plugins():
         plugin_source.load_plugin(plugin_module)
+
+
+def tick():  # FIXME: this is only a test. Replace this by something useful
+    """Display the current time."""
+    rumps.notification("Tick", "Toc", "The time is: %s" % datetime.now())
+
+
+class DontForgetApp(rumps.App):
+    """The application."""
+
+    def __init__(self):
+        super(DontForgetApp, self).__init__(UT.ReminderRibbon)
+
+    @staticmethod
+    def start_scheduler():
+        """Start the scheduler."""
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(tick, "interval", seconds=10)
+        scheduler.start()
+
+
+def start_on_status_bar():
+    """Main function."""
+    app = DontForgetApp()
+    app.start_scheduler()
+    app.run()

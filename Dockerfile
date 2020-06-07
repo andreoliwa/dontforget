@@ -22,6 +22,6 @@ RUN poetry install --no-dev
 
 # We still need individual COPY commands, because "The directory itself is not copied, just its contents":
 # https://docs.docker.com/engine/reference/builder/#copy
-COPY --chown=dontforget:dontforget autoapp.py manage.py ${APP_DIR}/
+COPY --chown=dontforget:dontforget wsgi.py ${APP_DIR}/
 COPY --chown=dontforget:dontforget dontforget ${APP_DIR}/dontforget/
 COPY --chown=dontforget:dontforget migrations ${APP_DIR}/migrations/

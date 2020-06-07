@@ -37,7 +37,7 @@ rumps = "*"
 apscheduler = "*"
 
 [tool.poetry.scripts]
-dontforget = "menu:main"
+dontforget = "dontforget.app:start_on_status_bar"
 
 [tool.poetry.extras]
 # Those optional packages are only available on macOS. To install them:
