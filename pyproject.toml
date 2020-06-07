@@ -35,6 +35,7 @@ imbox = "*"
 jmespath = "*"
 rumps = "*"
 apscheduler = "*"
+appdirs = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.app:start_on_status_bar"

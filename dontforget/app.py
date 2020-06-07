@@ -1,19 +1,21 @@
 """The app module, containing the app factory function."""
 import logging
-from datetime import datetime
 from pathlib import Path
 
-import rumps
+import toml
+from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from pluginbase import PluginBase
+from rumps import App, debug_mode
 
 from dontforget import commands, pipes
-from dontforget.constants import DEFAULT_PIPES_DIR_NAME
+from dontforget.constants import APP_NAME, CONFIG_TOML, DEFAULT_PIPES_DIR_NAME
+from dontforget.default_pipes.gmail import GmailJob
 from dontforget.generic import UT
-from dontforget.settings import ProdConfig
+from dontforget.settings import DEBUG, ProdConfig
 from dontforget.views import blueprint
 
 db = SQLAlchemy()
@@ -89,27 +91,38 @@ def load_plugins():
         plugin_source.load_plugin(plugin_module)
 
 
-def tick():  # FIXME: this is only a test. Replace this by something useful
-    """Display the current time."""
-    rumps.notification("Tick", "Toc", "The time is: %s" % datetime.now())
-
-
-class DontForgetApp(rumps.App):
+class DontForgetApp(App):
     """The application."""
 
     def __init__(self):
         super(DontForgetApp, self).__init__(UT.ReminderRibbon)
+        self.scheduler = BackgroundScheduler()
+        self.dirs = AppDirs(APP_NAME)
 
-    @staticmethod
-    def start_scheduler():
+    def start_scheduler(self):
         """Start the scheduler."""
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(tick, "interval", seconds=10)
-        scheduler.start()
+        self.add_gmail_jobs()
+        self.scheduler.start()
+        if DEBUG:
+            self.scheduler.print_jobs()
+
+    def add_gmail_jobs(self):
+        """Add Gmail jobs to the background scheduler."""
+        config_file = Path(self.dirs.user_config_dir) / CONFIG_TOML
+        if not config_file.exists():
+            raise RuntimeError(f"Config file not found: {config_file}")
+
+        config_data = toml.loads(config_file.read_text())
+        for gmail_data in config_data["gmail"]:
+            gmail_job = GmailJob(**gmail_data)
+            self.scheduler.add_job(gmail_job, "interval", misfire_grace_time=10, **gmail_job.trigger_args)
 
 
 def start_on_status_bar():
     """Main function."""
+    if DEBUG:
+        debug_mode(True)
+
     app = DontForgetApp()
     app.start_scheduler()
     app.run()

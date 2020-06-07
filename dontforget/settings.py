@@ -8,6 +8,7 @@ env = Env()
 env.read_env()
 
 FLASK_ENV = env("FLASK_ENV")
+DEBUG = "dev" in FLASK_ENV
 LOG_LEVEL = (env("LOG_LEVEL", default="") or logging.getLevelName(logging.WARNING)).upper()
 
 LOCAL_TIMEZONE = env("LOCAL_TIMEZONE", default="Europe/Berlin")
