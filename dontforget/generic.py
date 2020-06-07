@@ -32,6 +32,7 @@ class UT:
     WarningSign = "\u26A0"
     WhiteExclamationMarkOrnament = "\u2755"
     WhiteQuestionMarkOrnament = "\u2754"
+    ReminderRibbon = "\U0001F397"
 
 
 def flash_errors(form, category="warning"):

@@ -126,7 +126,7 @@ class Pipe:
             LOGGER.debug("rendered_item: %s", rendered_item)
             expanded_item_dict = json.loads(rendered_item)
             LOGGER.debug("expanded_item_dict: %s", expanded_item_dict)
-            click.echo(f"  Pushing ", nl=False)
+            click.echo("  Pushing ", nl=False)
             target = target_class()
             success = target.push(expanded_item_dict)
             if success:
@@ -138,7 +138,7 @@ class Pipe:
             has_items = True
 
         if not has_items:
-            click.echo(f"  No items on source")
+            click.echo("  No items on source")
 
 
 class PipeType(Enum):

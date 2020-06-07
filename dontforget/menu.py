@@ -1,4 +1,5 @@
 """Application menu at the status bar."""
+# TODO: remove this module and use only rumps
 import plistlib
 from typing import Tuple
 
