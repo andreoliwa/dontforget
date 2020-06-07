@@ -34,9 +34,10 @@ pluginbase = "*"
 imbox = "*"
 jmespath = "*"
 rumps = "*"
+apscheduler = "*"
 
 [tool.poetry.scripts]
-menu = "menu:main"
+dontforget = "menu:main"
 
 [tool.poetry.extras]
 # Those optional packages are only available on macOS. To install them:

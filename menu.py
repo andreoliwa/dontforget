@@ -1,7 +1,15 @@
 """Application menu at the status bar."""
+from datetime import datetime
+
 import rumps
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from dontforget.generic import UT
+
+
+def tick():  # FIXME: this is only a test. Replace this by something useful
+    """Display the current time."""
+    rumps.notification("Tick", "Toc", "The time is: %s" % datetime.now())
 
 
 class DontForgetApp(rumps.App):
@@ -10,8 +18,16 @@ class DontForgetApp(rumps.App):
     def __init__(self):
         super(DontForgetApp, self).__init__(UT.ReminderRibbon)
 
+    @staticmethod
+    def start_scheduler():
+        """Start the scheduler."""
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(tick, "interval", seconds=10)
+        scheduler.start()
+
 
 def main():
     """Main function."""
-    rumps.debug_mode(True)  # TODO: Remove this once the menu is complete, or use an env variable
-    DontForgetApp().run()
+    app = DontForgetApp()
+    app.start_scheduler()
+    app.run()
