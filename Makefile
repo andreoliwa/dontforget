@@ -1,36 +1,26 @@
-default:
-	@echo "Must call a specific command"
-	@exit 1
+.PHONY: Makefile
 
-build:
-	docker-compose build
+BIN_DIR = ~/.local/bin
 
-logs:
-	docker-compose logs -f --tail 100
+help:
+	@echo 'Choose one of the following targets:'
+	@cat $(MAKEFILE_LIST) | egrep '^[a-z0-9 ./-]*:.*#' | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
+.PHONY: help
 
-stop:
-	docker-compose stop flask
-	docker-compose stop telegram
+install:
+	poetry install
+	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. If not, change your .bashrc or similar file:"
+	@echo PATH=$(PATH)
 
-restart: stop
-	docker-compose up -d
+	mkdir -p $(BIN_DIR)
+	rm -f $(BIN_DIR)/dontforget
+	echo "#!/usr/bin/env bash" > $(BIN_DIR)/dontforget
+	echo "cd $(PWD)" >> $(BIN_DIR)/dontforget
+	echo "poetry run dontforget" >> $(BIN_DIR)/dontforget
+	chmod +x $(BIN_DIR)/dontforget
 
-isort:
-	isort -y
-
-lint:
-	./manage.py lint --pylint
-
-test:
-	py.test --verbose --cov dontforget
-
-ilt: isort lint test
-
-update:
-	clear
-	pre-commit autoupdate
-	pre-commit gc
-	poetry update
+	@echo "The script was created in:"
+	@which dontforget
 
 dev:
 	clear
