@@ -16,7 +16,7 @@ class GmailJob:
 
     def __init__(self, *, email=None, password=None, interval: Dict[str, Any] = None):
         self.email = email
-        self.password = password
+        self.password = password  # FIXME: get password from the keyring instead
         self.trigger_args = interval or {}
 
         # Add a few seconds of delay before triggering the first request to Gmail
@@ -26,8 +26,8 @@ class GmailJob:
         )
 
     def __call__(self, *args, **kwargs):
-        """Send Dramatiq task to check Gmail."""
-        # FIXME: this is only a test. Replace this by the actual Dramatiq task to check email
+        """Check Gmail for new mail on inbox and specific labels."""
+        # FIXME: replace this by the actual email check
         values = "Gmail", f"Email: {self.email}", "The time is: %s" % datetime.now()
         notification(*values)
         print(*values)

@@ -13,7 +13,6 @@ from rumps import App, debug_mode
 
 from dontforget import commands, pipes
 from dontforget.constants import APP_NAME, CONFIG_TOML, DEFAULT_PIPES_DIR_NAME
-from dontforget.default_pipes.gmail import GmailJob
 from dontforget.generic import UT
 from dontforget.settings import DEBUG, ProdConfig
 from dontforget.views import blueprint
@@ -105,12 +104,15 @@ class DontForgetApp(App):
         self.scheduler.start()
         if DEBUG:
             self.scheduler.print_jobs()
+        return self
 
     def add_gmail_jobs(self):
         """Add Gmail jobs to the background scheduler."""
         config_file = Path(self.dirs.user_config_dir) / CONFIG_TOML
         if not config_file.exists():
             raise RuntimeError(f"Config file not found: {config_file}")
+
+        from dontforget.default_pipes.gmail import GmailJob
 
         config_data = toml.loads(config_file.read_text())
         for gmail_data in config_data["gmail"]:
@@ -123,6 +125,4 @@ def start_on_status_bar():
     if DEBUG:
         debug_mode(True)
 
-    app = DontForgetApp()
-    app.start_scheduler()
-    app.run()
+    DontForgetApp().start_scheduler().run()
