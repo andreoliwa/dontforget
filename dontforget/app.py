@@ -131,6 +131,10 @@ class DontForgetApp(rumps.App):
 
             submenu = rumps.MenuItem(job.gmail.email)
             submenu.add("Last checked on ???")  # FIXME:
+            submenu.add(rumps.separator)
+            for label in sorted(job.gmail.labels):
+                submenu.add(label)
+
             self.menu.add(submenu)
 
         self.menu.add(rumps.separator)

@@ -21,7 +21,6 @@ limitations under the License.
 import pickle
 from datetime import datetime, timedelta
 from pathlib import Path
-from pprint import pprint
 from typing import Dict
 
 import click
@@ -48,6 +47,9 @@ class GMailAPI:
         config_dir = Path(AppDirs(APP_NAME).user_config_dir)
         self.token_file = config_dir / f"{self.email}-token.pickle"
         self.credentials_file = config_dir / f"{self.email}-credentials.json"
+
+        self.service = None
+        self.labels: Dict[str, str] = {}
 
     def authenticate(self) -> bool:
         """Authenticate using the GMail API.
@@ -84,20 +86,7 @@ class GMailAPI:
             # Save the credentials for the next run
             pickle.dump(creds, self.token_file.open("wb"))
 
-        service = build("gmail", "v1", credentials=creds)
-
-        # Call the GMail API
-        results = service.users().labels().list(userId="me").execute()
-        labels = results.get("labels", [])
-
-        # FIXME:
-        if not labels:
-            print("No labels found.")
-        else:
-            print("Labels:")
-            for label in labels:
-                pprint((label["name"], label["id"]))
-
+        self.service = build("gmail", "v1", credentials=creds)
         # FIXME:
         # # https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/gmail_v1.users.messages.html#get
         # import base64
@@ -114,6 +103,16 @@ class GMailAPI:
         #         pprint(body.decode(), width=200)
         return True
 
+    def fetch_labels(self) -> bool:
+        """Fetch GMail labels."""
+        if not self.service:
+            return False
+        self.labels = {}
+        results = self.service.users().labels().list(userId="me").execute()
+        for label in results.get("labels") or []:
+            self.labels[label["name"]] = label["id"]
+        return True
+
 
 class GMailJob:
     """A job to check email on GMail."""
@@ -125,6 +124,7 @@ class GMailJob:
     def __init__(self, *, email: str, check: str, labels: Dict[str, str] = None):
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
+        self.gmail.fetch_labels()
         self.trigger_args = parse_interval(check)
 
         # Add a few seconds of delay before triggering the first request to GMail
