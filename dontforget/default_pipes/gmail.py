@@ -1,10 +1,50 @@
 """Gmail checker. It is not a source nor a target... yet."""
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from rumps import notification
 
 from dontforget.constants import DELAY
+
+
+def parse_interval_from(text: Optional[str]) -> Dict[str, Any]:
+    """Parse an interval from text.
+
+    >>> parse_interval_from("10 minutes")
+    {'minutes': 10}
+    >>> parse_interval_from(" hours  5  ")
+    {'hours': 5}
+    >>> parse_interval_from(None)
+    {}
+    >>> parse_interval_from("  ")
+    {}
+    >>> parse_interval_from(" 15 , shenanigans ,,  ")
+    {'shenanigans': 15}
+    >>> parse_interval_from(" ??? 12 ")
+    {}
+    >>> parse_interval_from(" ??? ")
+    {}
+    >>> parse_interval_from(" xxx ")
+    {}
+    >>> parse_interval_from(" 3 ")
+    {}
+
+    :param text: The text to be parsed.
+    :return: Parsed dict.
+    """
+    clean_text = (text or "").strip()
+    if not clean_text:
+        return {}
+    number = 0
+    key = ""
+    for part in clean_text.split(" "):
+        if not part:
+            continue
+        if part.isnumeric():
+            number = int(part)
+        elif part.isalpha():
+            key = part.strip()
+    return {key: number} if key and number else {}
 
 
 class GmailJob:
@@ -14,10 +54,9 @@ class GmailJob:
     #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
     #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
-    def __init__(self, *, email=None, password=None, interval: Dict[str, Any] = None):
+    def __init__(self, *, email: str = None, check: str = None, labels: Dict[str, str] = None):
         self.email = email
-        self.password = password  # FIXME: get password from the keyring instead
-        self.trigger_args = interval or {}
+        self.trigger_args = parse_interval_from(check)
 
         # Add a few seconds of delay before triggering the first request to Gmail
         # Configure the optional delay on the config.toml file

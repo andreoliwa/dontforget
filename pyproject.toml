@@ -36,6 +36,7 @@ jmespath = "*"
 rumps = "*"
 apscheduler = "*"
 appdirs = "*"
+"ruamel.yaml" = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.app:start_on_status_bar"

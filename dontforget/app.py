@@ -2,17 +2,17 @@
 import logging
 from pathlib import Path
 
-import toml
 from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from pluginbase import PluginBase
+from ruamel.yaml import YAML
 from rumps import App, debug_mode
 
 from dontforget import commands, pipes
-from dontforget.constants import APP_NAME, CONFIG_TOML, DEFAULT_PIPES_DIR_NAME
+from dontforget.constants import APP_NAME, CONFIG_YAML, DEFAULT_PIPES_DIR_NAME
 from dontforget.generic import UT
 from dontforget.settings import DEBUG, ProdConfig
 from dontforget.views import blueprint
@@ -108,15 +108,16 @@ class DontForgetApp(App):
 
     def add_gmail_jobs(self):
         """Add Gmail jobs to the background scheduler."""
-        config_file = Path(self.dirs.user_config_dir) / CONFIG_TOML
+        config_file = Path(self.dirs.user_config_dir) / CONFIG_YAML
         if not config_file.exists():
             raise RuntimeError(f"Config file not found: {config_file}")
 
         from dontforget.default_pipes.gmail import GmailJob
 
-        config_data = toml.loads(config_file.read_text())
-        for gmail_data in config_data["gmail"]:
-            gmail_job = GmailJob(**gmail_data)
+        yaml = YAML()
+        config_data = yaml.load(config_file)
+        for gmail_dict in config_data["gmail"]:
+            gmail_job = GmailJob(**gmail_dict)
             self.scheduler.add_job(gmail_job, "interval", misfire_grace_time=10, **gmail_job.trigger_args)
 
 

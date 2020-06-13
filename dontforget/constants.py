@@ -1,6 +1,6 @@
 """Constants."""
 APP_NAME = "dontforget"
-CONFIG_TOML = "config.toml"
+CONFIG_YAML = "config.yaml"
 
 DEVELOPMENT = "development"
 
