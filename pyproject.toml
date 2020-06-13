@@ -37,6 +37,9 @@ rumps = "*"
 apscheduler = "*"
 appdirs = "*"
 "ruamel.yaml" = "*"
+google-api-python-client = "*"
+google-auth-httplib2 = "*"
+google-auth-oauthlib = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.app:start_on_status_bar"

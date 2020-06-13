@@ -1,7 +1,9 @@
 """The app module, containing the app factory function."""
 import logging
+import sys
 from pathlib import Path
 
+import rumps
 from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template
@@ -9,7 +11,6 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from pluginbase import PluginBase
 from ruamel.yaml import YAML
-from rumps import App, debug_mode
 
 from dontforget import commands, pipes
 from dontforget.constants import APP_NAME, CONFIG_YAML, DEFAULT_PIPES_DIR_NAME
@@ -90,7 +91,7 @@ def load_plugins():
         plugin_source.load_plugin(plugin_module)
 
 
-class DontForgetApp(App):
+class DontForgetApp(rumps.App):
     """The application."""
 
     def __init__(self):
@@ -98,32 +99,50 @@ class DontForgetApp(App):
         self.scheduler = BackgroundScheduler()
         self.dirs = AppDirs(APP_NAME)
 
-    def start_scheduler(self):
+    def start_scheduler(self) -> bool:
         """Start the scheduler."""
-        self.add_gmail_jobs()
+        if not self.add_gmail_jobs():
+            return False
+
         self.scheduler.start()
         if DEBUG:
             self.scheduler.print_jobs()
-        return self
+        return True
 
     def add_gmail_jobs(self):
-        """Add Gmail jobs to the background scheduler."""
+        """Add GMail jobs to the background scheduler."""
         config_file = Path(self.dirs.user_config_dir) / CONFIG_YAML
         if not config_file.exists():
             raise RuntimeError(f"Config file not found: {config_file}")
 
-        from dontforget.default_pipes.gmail import GmailJob
+        from dontforget.default_pipes.gmail import GMailJob
 
+        self.menu.add("GMail")
+
+        all_authenticated = True
         yaml = YAML()
         config_data = yaml.load(config_file)
-        for gmail_dict in config_data["gmail"]:
-            gmail_job = GmailJob(**gmail_dict)
-            self.scheduler.add_job(gmail_job, "interval", misfire_grace_time=10, **gmail_job.trigger_args)
+        for data in config_data["gmail"]:
+            job = GMailJob(**data)
+            if not job.authenticated:
+                all_authenticated = False
+            else:
+                self.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
+
+            submenu = rumps.MenuItem(job.gmail.email)
+            submenu.add("Last checked on ???")  # FIXME:
+            self.menu.add(submenu)
+
+        self.menu.add(rumps.separator)
+        return all_authenticated
 
 
 def start_on_status_bar():
     """Main function."""
     if DEBUG:
-        debug_mode(True)
+        rumps.debug_mode(True)
 
-    DontForgetApp().start_scheduler().run()
+    app = DontForgetApp()
+    if not app.start_scheduler():
+        sys.exit(1)
+    app.run()
