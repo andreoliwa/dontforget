@@ -1,7 +1,9 @@
 """The app module, containing the app factory function."""
 import logging
 import sys
+from enum import Enum
 from pathlib import Path
+from subprocess import run
 
 import rumps
 from appdirs import AppDirs
@@ -92,12 +94,32 @@ def load_plugins():
 
 
 class DontForgetApp(rumps.App):
-    """The application."""
+    """The macOS status bar application."""
+
+    class Menu(Enum):
+        """Menu items."""
+
+        Preferences = "Preferences..."
+        GMail = "GMail:"
+        Quit = "Quit Don't Forget"
 
     def __init__(self):
-        super(DontForgetApp, self).__init__(UT.ReminderRibbon)
+        super(DontForgetApp, self).__init__(UT.ReminderRibbon, quit_button=self.Menu.Quit.value)
+
         self.scheduler = BackgroundScheduler()
-        self.dirs = AppDirs(APP_NAME)
+
+        dirs = AppDirs(APP_NAME)
+        self.config_file = Path(dirs.user_config_dir) / CONFIG_YAML
+        if not self.config_file.exists():
+            raise RuntimeError(f"Config file not found: {self.config_file}")
+
+        self.menu.add(self.Menu.Preferences.value)
+        self.menu.add(rumps.separator)
+
+    @rumps.clicked(Menu.Preferences.value)
+    def open_preferences(self, _):
+        """Open the config file on the preferred editor."""
+        run(["open", str(self.config_file)])
 
     def start_scheduler(self) -> bool:
         """Start the scheduler."""
@@ -111,17 +133,13 @@ class DontForgetApp(rumps.App):
 
     def add_gmail_jobs(self):
         """Add GMail jobs to the background scheduler."""
-        config_file = Path(self.dirs.user_config_dir) / CONFIG_YAML
-        if not config_file.exists():
-            raise RuntimeError(f"Config file not found: {config_file}")
-
         from dontforget.default_pipes.gmail import GMailJob
 
-        self.menu.add("GMail")
+        self.menu.add(self.Menu.GMail.value)
 
         all_authenticated = True
         yaml = YAML()
-        config_data = yaml.load(config_file)
+        config_data = yaml.load(self.config_file)
         for data in config_data["gmail"]:
             job = GMailJob(**data)
             if not job.authenticated:
@@ -130,7 +148,8 @@ class DontForgetApp(rumps.App):
                 self.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
 
             submenu = rumps.MenuItem(job.gmail.email)
-            submenu.add("Last checked on ???")  # FIXME:
+            submenu.add("Last checked on ???")  # FIXME: always show current time
+            # FIXME: only fetch labels on the first run, so the UI shows up quickly
             submenu.add(rumps.separator)
             for label in sorted(job.gmail.labels):
                 submenu.add(label)
