@@ -17,13 +17,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+New format documentation:
+https://developers.google.com/gmail/api/v1/reference
+
+Old format documentation:
+https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/index.html
 """
 import logging
 import pickle
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import click
 import rumps
@@ -131,20 +136,6 @@ class GMailAPI:
             pickle.dump(creds, self.token_file.open("wb"))
 
         self.service = build("gmail", "v1", credentials=creds)
-        # FIXME:
-        # # https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/gmail_v1.users.messages.html#get
-        # import base64
-        # messages = service.users().messages()
-        # request = messages.list(userId="me", labelIds="Label_7807279795529054300")
-        # results = request.execute()
-        # for message_dict in results["messages"]:
-        #     # https://developers.google.com/gmail/api/v1/reference/users/messages/get#python
-        #     result_dict = messages.get(userId="me", id=message_dict["id"], format="full").execute()
-        #     parts = result_dict["payload"]["parts"]
-        #     for part in parts:
-        #         body = base64.urlsafe_b64decode(part["body"]["data"].encode("ASCII"))
-        #         print("-" * 50)
-        #         pprint(body.decode(), width=200)
         return True
 
     def fetch_labels(self) -> bool:
@@ -156,6 +147,35 @@ class GMailAPI:
         for label in results.get("labels") or []:
             self.labels[label["name"]] = label["id"]
         return True
+
+    def unread_count(self, label_name: str) -> Tuple[int, int]:
+        """Return the unread message count (threads and messages) for a label.
+
+        See https://developers.google.com/gmail/api/v1/reference/users/messages/list.
+
+        :return: A tuple with unread thread and unread message count.
+        """
+        unread_threads = unread_messages = -1
+        if self.service and self.labels:
+            label_id = self.labels.get(label_name, None)
+            if label_id:
+                request = self.service.users().messages().list(userId="me", labelIds=[label_id], q="is:unread")
+                response = request.execute()
+
+                messages = response.get("messages", [])
+                unread_threads = len({msg["threadId"] for msg in messages})
+                unread_messages = max([len(messages), response["resultSizeEstimate"]])
+        return unread_threads, unread_messages
+
+        # TODO: how to read a single email message
+        # for message_dict in response["messages"]:
+        #     # https://developers.google.com/gmail/api/v1/reference/users/messages/get#python
+        #     result_dict = messages.get(userId="me", id=message_dict["id"], format="full").execute()
+        #     parts = result_dict["payload"]["parts"]
+        #     for part in parts:
+        #         body = base64.urlsafe_b64decode(part["body"]["data"].encode("ASCII"))
+        #         print("-" * 50)
+        #         pprint(body.decode(), width=200)
 
 
 class GMailJob:
@@ -184,7 +204,12 @@ class GMailJob:
             self.labels_fetched = self.gmail.fetch_labels()
             self.menu.add(rumps.separator)
             for label in sorted(self.gmail.labels):
-                self.menu.add(label)
+                threads, messages = self.gmail.unread_count(label)
+
+                # Only show labels with unread messages
+                if threads and messages:
+                    # Show unread count of threads and messages for each label
+                    self.menu.add(f"{label}: {threads} ({messages})")
 
         # FIXME: replace this by the actual email check
         values = "GMail", self.gmail.email, "The time is: %s" % datetime.now()
