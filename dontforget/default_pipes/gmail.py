@@ -18,18 +18,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
+import logging
 import pickle
 from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import click
+import rumps
 from appdirs import AppDirs
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from ruamel.yaml import YAML
 from rumps import notification
 
+from dontforget.app import DontForgetApp
 from dontforget.constants import APP_NAME, DELAY
 from dontforget.generic import parse_interval
 
@@ -37,6 +42,45 @@ PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/pyth
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+
+
+class GMailPlugin:
+    """GMail plugin."""
+
+    class Menu(Enum):
+        """Menu items."""
+
+        GMail = "GMail:"
+        LastChecked = "Last checked on: Never"
+
+    def init_app(self, app: DontForgetApp) -> bool:
+        """Add GMail jobs to the background scheduler.
+
+        :return: True if all GMail accounts were authenticated with OAuth.
+        """
+        logging.debug("Adding GMail menu")
+        app.menu.add(self.Menu.GMail.value)
+
+        all_authenticated = True
+        yaml = YAML()
+        config_data = yaml.load(app.config_file)
+        for data in config_data["gmail"]:
+            logging.debug("%s: Creating GMail job", data["email"])
+            job = GMailJob(**data)
+            if not job.authenticated:
+                all_authenticated = False
+            else:
+                app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
+
+            # Add this email to the app menu
+            logging.debug("%s: Creating GMail menu", job.gmail.email)
+            job_menu = rumps.MenuItem(job.gmail.email)
+            job_menu.add(self.Menu.LastChecked.value)
+            app.menu.add(job_menu)
+            job.menu = job_menu
+
+        app.menu.add(rumps.separator)
+        return all_authenticated
 
 
 class GMailAPI:
@@ -124,8 +168,9 @@ class GMailJob:
     def __init__(self, *, email: str, check: str, labels: Dict[str, str] = None):
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
-        self.gmail.fetch_labels()
+        self.labels_fetched = False
         self.trigger_args = parse_interval(check)
+        self.menu: Optional[rumps.MenuItem] = None
 
         # Add a few seconds of delay before triggering the first request to GMail
         # Configure the optional delay on the config.toml file
@@ -135,6 +180,12 @@ class GMailJob:
 
     def __call__(self, *args, **kwargs):
         """Check GMail for new mail on inbox and specific labels."""
+        if not self.labels_fetched:
+            self.labels_fetched = self.gmail.fetch_labels()
+            self.menu.add(rumps.separator)
+            for label in sorted(self.gmail.labels):
+                self.menu.add(label)
+
         # FIXME: replace this by the actual email check
         values = "GMail", self.gmail.email, "The time is: %s" % datetime.now()
         notification(*values)
