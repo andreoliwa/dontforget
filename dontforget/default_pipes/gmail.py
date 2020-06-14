@@ -28,7 +28,9 @@ import pickle
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from pprint import pformat
+from subprocess import run
+from typing import Dict, Optional
 
 import click
 import rumps
@@ -37,16 +39,20 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from ruamel.yaml import YAML
-from rumps import notification
 
 from dontforget.app import DontForgetApp
 from dontforget.constants import APP_NAME, DELAY
 from dontforget.generic import parse_interval
+from dontforget.settings import LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
+GMAIL_BASE_URL = "https://mail.google.com/"
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+
+logger = logging.getLogger(__name__)
+logger.setLevel(LOG_LEVEL)
 
 
 class GMailPlugin:
@@ -63,14 +69,14 @@ class GMailPlugin:
 
         :return: True if all GMail accounts were authenticated with OAuth.
         """
-        logging.debug("Adding GMail menu")
+        logger.debug("Adding GMail menu")
         app.menu.add(self.Menu.GMail.value)
 
         all_authenticated = True
         yaml = YAML()
         config_data = yaml.load(app.config_file)
         for data in config_data["gmail"]:
-            logging.debug("%s: Creating GMail job", data["email"])
+            logger.debug("%s: Creating GMail job", data["email"])
             job = GMailJob(**data)
             if not job.authenticated:
                 all_authenticated = False
@@ -78,7 +84,7 @@ class GMailPlugin:
                 app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
 
             # Add this email to the app menu
-            logging.debug("%s: Creating GMail menu", job.gmail.email)
+            logger.debug("%s: Creating GMail menu", job.gmail.email)
             job_menu = rumps.MenuItem(job.gmail.email)
             job_menu.add(self.Menu.LastChecked.value)
             app.menu.add(job_menu)
@@ -90,6 +96,23 @@ class GMailPlugin:
 
 class GMailAPI:
     """GMail API wrapper."""
+
+    SPECIAL_LABELS = {
+        "CATEGORY_FORUMS": ("Category/Forums", "category/forums"),
+        "CATEGORY_PERSONAL": ("Category/Personal", None),
+        "CATEGORY_PROMOTIONS": ("Category/Promotions", "category/promotions"),
+        "CATEGORY_SOCIAL": ("Category/Social", "category/social"),
+        "CATEGORY_UPDATES": ("Category/Updates", "category/updates"),
+        "CHAT": ("Chat", "chats"),
+        "DRAFT": ("Drafts", "drafts"),
+        "IMPORTANT": ("Important", "imp"),
+        "INBOX": ("Inbox", "inbox"),
+        "SENT": ("Sent", "sent"),
+        "SPAM": ("Spam", "spam"),
+        "STARRED": ("Starred", "starred"),
+        "TRASH": ("Trash", "trash"),
+        "UNREAD": ("Unread", None),
+    }
 
     def __init__(self, email: str) -> None:
         self.email = email.strip()
@@ -114,10 +137,10 @@ class GMailAPI:
             click.secho(str(self.credentials_file), fg="green")
 
             # Open the URL on the browser
-            run(["open", f"{PYTHON_QUICKSTART_URL}?email={self.email}"])
+            run(["open", f"{PYTHON_QUICKSTART_URL}?email={self.email}"], check=False)
 
             # Open the folder on Finder
-            run(["open", str(self.credentials_file.parent)])
+            run(["open", str(self.credentials_file.parent)], check=False)
             return False
 
         creds = None
@@ -143,29 +166,28 @@ class GMailAPI:
         if not self.service:
             return False
         self.labels = {}
-        results = self.service.users().labels().list(userId="me").execute()
-        for label in results.get("labels") or []:
+        request = self.service.users().labels().list(userId="me")
+        response = request.execute()
+        for label in response.get("labels") or []:
             self.labels[label["name"]] = label["id"]
+        logger.debug("%s: %s", self.email, pformat(self.labels, width=200))
         return True
 
-    def unread_count(self, label_name: str) -> Tuple[int, int]:
-        """Return the unread message count (threads and messages) for a label.
+    def unread_count(self, label_name: str) -> int:
+        """Return the unread thread count for a label.
 
         See https://developers.google.com/gmail/api/v1/reference/users/messages/list.
 
         :return: A tuple with unread thread and unread message count.
         """
-        unread_threads = unread_messages = -1
+        unread = -1
         if self.service and self.labels:
             label_id = self.labels.get(label_name, None)
             if label_id:
-                request = self.service.users().messages().list(userId="me", labelIds=[label_id], q="is:unread")
+                request = self.service.users().labels().get(id=label_id, userId="me")
                 response = request.execute()
-
-                messages = response.get("messages", [])
-                unread_threads = len({msg["threadId"] for msg in messages})
-                unread_messages = max([len(messages), response["resultSizeEstimate"]])
-        return unread_threads, unread_messages
+                unread = response["threadsUnread"]
+        return unread
 
         # TODO: how to read a single email message
         # for message_dict in response["messages"]:
@@ -185,11 +207,11 @@ class GMailJob:
     #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
     #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
-    def __init__(self, *, email: str, check: str, labels: Dict[str, str] = None):
+    def __init__(self, *, email: str, check: str = None, labels: Dict[str, str] = None):
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
         self.labels_fetched = False
-        self.trigger_args = parse_interval(check)
+        self.trigger_args = parse_interval(check or "1 hour")
         self.menu: Optional[rumps.MenuItem] = None
 
         # Add a few seconds of delay before triggering the first request to GMail
@@ -198,20 +220,44 @@ class GMailJob:
             name=f"{self.__class__.__name__}: {email}", start_date=datetime.now() + timedelta(seconds=DELAY)
         )
 
+    def add_to_menu(self, menuitem):
+        """Add a subitem to the menu of this email."""
+        if not self.menu:
+            return
+        self.menu.add(menuitem)
+
     def __call__(self, *args, **kwargs):
         """Check GMail for new mail on inbox and specific labels."""
         if not self.labels_fetched:
             self.labels_fetched = self.gmail.fetch_labels()
-            self.menu.add(rumps.separator)
+            self.add_to_menu(rumps.separator)
             for label in sorted(self.gmail.labels):
-                threads, messages = self.gmail.unread_count(label)
-
                 # Only show labels with unread messages
-                if threads and messages:
+                unread = self.gmail.unread_count(label)
+
+                if unread > 0:
                     # Show unread count of threads and messages for each label
-                    self.menu.add(f"{label}: {threads} ({messages})")
+                    label_menuitem = rumps.MenuItem(label, callback=self.label_clicked)
+                    # TODO: create class LabelMenuItem() with original_label attribute
+                    label_menuitem.original_label = label
+                    self.add_to_menu(label_menuitem)
+
+                    special = self.gmail.SPECIAL_LABELS.get(label)
+                    pretty_name = special[0] if special else label
+                    label_menuitem.title = f"{pretty_name}: {unread}"
 
         # FIXME: replace this by the actual email check
         values = "GMail", self.gmail.email, "The time is: %s" % datetime.now()
-        notification(*values)
+        # from rumps import notification
+        # notification(*values)
         print(*values)
+
+    def label_clicked(self, sender: rumps.MenuItem):
+        """Callback executed when a label menu item is clicked."""
+        label: str = sender.original_label
+        special = self.gmail.SPECIAL_LABELS.get(label)
+        encoded_label = label.replace(" ", "+")
+        anchor = special[1] if special else f"label/{encoded_label}"
+        url = f"{GMAIL_BASE_URL}#{anchor}?_email={self.gmail.email}"
+        logger.debug("Opening URL on browser: %s", url)
+        run(["open", url], check=False)

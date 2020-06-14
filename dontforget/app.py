@@ -22,7 +22,9 @@ from dontforget.views import blueprint
 db = SQLAlchemy()
 migrate = Migrate()  # pylint: disable=invalid-name
 
-logging.basicConfig(level=LOG_LEVEL)
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(LOG_LEVEL)
 
 
 def create_app(config_object=ProdConfig):
@@ -106,16 +108,16 @@ class DontForgetApp(rumps.App):
     def __init__(self):
         super(DontForgetApp, self).__init__(UT.ReminderRibbon, quit_button=self.Menu.Quit.value)
 
-        logging.debug("Creating scheduler")
+        logger.debug("Creating scheduler")
         self.scheduler = BackgroundScheduler()
 
-        logging.debug("Reading config file")
+        logger.debug("Reading config file")
         dirs = AppDirs(APP_NAME)
         self.config_file = Path(dirs.user_config_dir) / CONFIG_YAML
         if not self.config_file.exists():
             raise RuntimeError(f"Config file not found: {self.config_file}")
 
-        logging.debug("Adding preferences menu")
+        logger.debug("Adding preferences menu")
         self.menu.add(self.Menu.Preferences.value)
         self.menu.add(rumps.separator)
 
@@ -126,7 +128,7 @@ class DontForgetApp(rumps.App):
 
     def start_scheduler(self) -> bool:
         """Start the scheduler."""
-        logging.debug("Starting scheduler")
+        logger.debug("Starting scheduler")
         self.scheduler.start()
         if DEBUG:
             self.scheduler.print_jobs()
