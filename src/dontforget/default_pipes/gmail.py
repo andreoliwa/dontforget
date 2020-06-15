@@ -158,7 +158,7 @@ class GMailAPI:
             # Save the credentials for the next run
             pickle.dump(creds, self.token_file.open("wb"))
 
-        self.service = build("gmail", "v1", credentials=creds)
+        self.service = build("gmail", "v1", credentials=creds, cache_discovery=False)
         return True
 
     def fetch_labels(self) -> bool:
