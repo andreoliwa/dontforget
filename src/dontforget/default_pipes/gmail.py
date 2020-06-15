@@ -47,6 +47,7 @@ from dontforget.settings import LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
 GMAIL_BASE_URL = "https://mail.google.com/"
+LAST_CHECKED_ON = "Last checked on: "
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -62,7 +63,7 @@ class GMailPlugin:
         """Menu items."""
 
         GMail = "GMail:"
-        LastChecked = "Last checked on: Never"
+        LastChecked = f"{LAST_CHECKED_ON}Never"
 
     def init_app(self, app: DontForgetApp) -> bool:
         """Add GMail jobs to the background scheduler.
@@ -247,9 +248,11 @@ class GMailJob:
                     label_menuitem.title = f"{pretty_name}: {unread}"
 
         # FIXME: replace this by the actual email check
-        logger.debug("GMail %s The time is: %s", self.gmail.email, datetime.now())
-        # from rumps import notification
-        # notification("Gmail", self.gmail.email, datetime.now())
+        current_time = datetime.now().strftime("%X")
+        logger.debug("GMail %s The time is: %s", self.gmail.email, current_time)
+        if self.menu:
+            last_checked_menu: rumps.MenuItem = self.menu[GMailPlugin.Menu.LastChecked.value]
+            last_checked_menu.title = f"{LAST_CHECKED_ON}{current_time}"
 
     def label_clicked(self, sender: rumps.MenuItem):
         """Callback executed when a label menu item is clicked."""
