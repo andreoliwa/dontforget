@@ -662,7 +662,7 @@ description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
 optional = false
 python-versions = ">=3.5"
-version = "8.3.0"
+version = "8.4.0"
 
 [[package]]
 category = "main"
@@ -810,7 +810,7 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 name = "py"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.8.1"
+version = "1.8.2"
 
 [[package]]
 category = "main"
@@ -860,7 +860,7 @@ description = "Python<->ObjC Interoperability Module"
 name = "pyobjc-core"
 optional = false
 python-versions = ">=3.6"
-version = "6.2"
+version = "6.2.1"
 
 [[package]]
 category = "main"
@@ -868,10 +868,10 @@ description = "Wrappers for the Cocoa frameworks on macOS"
 name = "pyobjc-framework-cocoa"
 optional = false
 python-versions = ">=3.6"
-version = "6.2"
+version = "6.2.1"
 
 [package.dependencies]
-pyobjc-core = ">=6.2"
+pyobjc-core = ">=6.2.1"
 
 [[package]]
 category = "dev"
@@ -1609,8 +1609,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 more-itertools = [
-    {file = "more-itertools-8.3.0.tar.gz", hash = "sha256:558bb897a2232f5e4f8e2399089e35aecb746e1f9191b6584a151647e89267be"},
-    {file = "more_itertools-8.3.0-py3-none-any.whl", hash = "sha256:7818f596b1e87be009031c7653d01acc46ed422e6656b394b0f765ce66ed4982"},
+    {file = "more-itertools-8.4.0.tar.gz", hash = "sha256:68c70cc7167bdf5c7c9d8f6954a7837089c6a36bf565383919bb595efb8a17e5"},
+    {file = "more_itertools-8.4.0-py3-none-any.whl", hash = "sha256:b78134b2063dd214000685165d81c154522c3ee0a1c0d4d113c80361c234c5a2"},
 ]
 multidict = [
     {file = "multidict-4.7.6-cp35-cp35m-macosx_10_14_x86_64.whl", hash = "sha256:275ca32383bc5d1894b6975bb4ca6a7ff16ab76fa622967625baeebcf8079000"},
@@ -1740,8 +1740,8 @@ ptyprocess = [
     {file = "ptyprocess-0.6.0.tar.gz", hash = "sha256:923f299cc5ad920c68f2bc0bc98b75b9f838b93b599941a6b63ddbc2476394c0"},
 ]
 py = [
-    {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
-    {file = "py-1.8.1.tar.gz", hash = "sha256:5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa"},
+    {file = "py-1.8.2-py2.py3-none-any.whl", hash = "sha256:a673fa23d7000440cc885c17dbd34fafcb7d7a6e230b29f6766400de36a33c44"},
+    {file = "py-1.8.2.tar.gz", hash = "sha256:f3b3a4c36512a4c4f024041ab51866f11761cc169670204b235f6b20523d4e6b"},
 ]
 pyasn1 = [
     {file = "pyasn1-0.4.8-py2.4.egg", hash = "sha256:fec3e9d8e36808a28efb59b489e4528c10ad0f480e57dcc32b4de5c9d8c9fdf3"},
@@ -1782,18 +1782,18 @@ pylint = [
     {file = "pylint-2.5.3.tar.gz", hash = "sha256:7dd78437f2d8d019717dbf287772d0b2dbdfd13fc016aa7faa08d67bccc46adc"},
 ]
 pyobjc-core = [
-    {file = "pyobjc-core-6.2.tar.gz", hash = "sha256:843b175e6bd6309c4457090ca52ca8e20cb1e6be19df1bc74d1ed1889f52149c"},
-    {file = "pyobjc_core-6.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:cb130c953c79cb2df4eb3976b7fe28c336b0de0dc550b0574eca8856c76cd147"},
-    {file = "pyobjc_core-6.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:ccfad6cba29652b005bc41e819ad70d203cc3e57a16e75e27bc4e6979034c7c0"},
-    {file = "pyobjc_core-6.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6af32dc491c575346400c29649fffe6e0a1911553b9218529deafc56fa357bdd"},
-    {file = "pyobjc_core-6.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:8dd816c03fcbcbd8da8beb30dffe3aaaf8077d852cca4d636e3d7dd0ab48d39d"},
+    {file = "pyobjc-core-6.2.1.tar.gz", hash = "sha256:ea9ab7839a022668964ca8ab4f37dc75c04743354260370d463ebdce5c05aa38"},
+    {file = "pyobjc_core-6.2.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:492519af43f4364aefacbe1706d55c712f3c6b73e4702a40cebf25bdf0373182"},
+    {file = "pyobjc_core-6.2.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:ce883d94a50b3fc285f39ef0286bbe8c6b50e87f310c1dea8b82996a4f4dd135"},
+    {file = "pyobjc_core-6.2.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:503e42b9592dbc17cadb455fff3cfcc68caa00d3b815375ed9afb159b2722014"},
+    {file = "pyobjc_core-6.2.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e68cec4f6d069fba1b3364b983abc9dff49763b58270f01904fc80ab8e7c4051"},
 ]
 pyobjc-framework-cocoa = [
-    {file = "pyobjc-framework-Cocoa-6.2.tar.gz", hash = "sha256:e15bbf82bfe3a14dfd29c7465cc5d8edab16d546410239b7e1a4db62ded4a5b2"},
-    {file = "pyobjc_framework_Cocoa-6.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:04b994a26bc30c912f2f5165d57a987f35889a36dd9c104674bc449c53649629"},
-    {file = "pyobjc_framework_Cocoa-6.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:09612dd81fafb6e1a8eb597b5e523c9de103a50af79e95afbf13b8a5937e3cfa"},
-    {file = "pyobjc_framework_Cocoa-6.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:cbe4f1917aa5def4a77fd4199a9697f3b4224acf59acf4e01fe9a7c73d49b08c"},
-    {file = "pyobjc_framework_Cocoa-6.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:ef3c21a8b37519e3a3880fc0c5539fe27afd3e0235c8ebc9c87b3d0354cbb4ea"},
+    {file = "pyobjc-framework-Cocoa-6.2.1.tar.gz", hash = "sha256:c41dc4b590a6bd10f60d2b979508a1b02c38664b3bcb2225f914439485a1551f"},
+    {file = "pyobjc_framework_Cocoa-6.2.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:d46b8587aeea09baa998a526d741162141a12660ef57f8114fc9dd67297c6045"},
+    {file = "pyobjc_framework_Cocoa-6.2.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:4c4ecb69f17d3291562fa5adfe55a20f4a9f03e25baac7d9fbe2e54aa1f17081"},
+    {file = "pyobjc_framework_Cocoa-6.2.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:94260a8366569625d5f9380b1b8c3b58a54a883a6412dcc47353f8bcce9da5b7"},
+    {file = "pyobjc_framework_Cocoa-6.2.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:17737dfd80b7e89f654413b52eb934b9c180442f60c728545b5404655a05f229"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
@@ -1870,7 +1870,7 @@ requests-oauthlib = [
     {file = "requests_oauthlib-1.3.0-py3.7.egg", hash = "sha256:fa6c47b933f01060936d87ae9327fead68768b69c6c9ea2109c48be30f2d4dbc"},
 ]
 rsa = [
-    {file = "rsa-4.6-py2.py3-none-any.whl", hash = "sha256:23778f5523461cf86ae075f9482a99317f362bca752ae57cb118044066f4026f"},
+    {file = "rsa-4.6-py3-none-any.whl", hash = "sha256:6166864e23d6b5195a5cfed6cd9fed0fe774e226d8f854fcb23b7bbef0350233"},
     {file = "rsa-4.6.tar.gz", hash = "sha256:109ea5a66744dd859bf16fe904b8d8b627adafb9408753161e766a92e7d681fa"},
 ]
 "ruamel.yaml" = [
