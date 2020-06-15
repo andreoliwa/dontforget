@@ -21,8 +21,12 @@ from dontforget.views import blueprint
 
 db = SQLAlchemy()
 migrate = Migrate()  # pylint: disable=invalid-name
+dirs = AppDirs(APP_NAME)
 
-logging.basicConfig()
+log_file = Path(dirs.user_log_dir) / "app.log"
+log_file.parent.mkdir(parents=True, exist_ok=True)
+
+logging.basicConfig(filename=str(log_file))
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 
@@ -112,7 +116,6 @@ class DontForgetApp(rumps.App):
         self.scheduler = BackgroundScheduler()
 
         logger.debug("Reading config file")
-        dirs = AppDirs(APP_NAME)
         self.config_file = Path(dirs.user_config_dir) / CONFIG_YAML
         if not self.config_file.exists():
             raise RuntimeError(f"Config file not found: {self.config_file}")
@@ -130,8 +133,7 @@ class DontForgetApp(rumps.App):
         """Start the scheduler."""
         logger.debug("Starting scheduler")
         self.scheduler.start()
-        if DEBUG:
-            self.scheduler.print_jobs()
+        self.scheduler.print_jobs(out=log_file.open("a"))
         return True
 
 

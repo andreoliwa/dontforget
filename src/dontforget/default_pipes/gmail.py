@@ -247,10 +247,9 @@ class GMailJob:
                     label_menuitem.title = f"{pretty_name}: {unread}"
 
         # FIXME: replace this by the actual email check
-        values = "GMail", self.gmail.email, "The time is: %s" % datetime.now()
+        logger.debug("GMail %s The time is: %s", self.gmail.email, datetime.now())
         # from rumps import notification
-        # notification(*values)
-        print(*values)
+        # notification("Gmail", self.gmail.email, datetime.now())
 
     def label_clicked(self, sender: rumps.MenuItem):
         """Callback executed when a label menu item is clicked."""
