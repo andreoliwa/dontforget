@@ -25,6 +25,7 @@ https://developers.google.com/resources/api-libraries/documentation/gmail/v1/pyt
 """
 import logging
 import pickle
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -61,6 +62,7 @@ class Menu(Enum):
 
     GMail = "GMail"
     CheckNow = f"{CHECK_NOW_LAST_CHECK}never)"
+    NoNewMail = "No new mail!"
 
 
 class GMailPlugin:
@@ -90,25 +92,63 @@ class GMailPlugin:
         return all_authenticated
 
 
+@dataclass
+class Label:
+    """A GMail label."""
+
+    id: str
+    name: str
+    anchor: Optional[str] = None
+    check_unread: bool = False
+    special: bool = False
+
+
+class LabelCollection:
+    """A collection of GMail labels."""
+
+    SPECIAL_LABELS = (
+        Label("INBOX", "Inbox", "inbox", True),
+        Label("UNREAD", "Unread"),
+        Label("STARRED", "Starred", "starred"),
+        Label("IMPORTANT", "Important", "imp"),
+        Label("CHAT", "Chat", "chats"),
+        Label("SENT", "Sent", "sent"),
+        Label("DRAFT", "Drafts", "drafts"),
+        Label("SPAM", "Spam", "spam"),
+        Label("TRASH", "Trash", "trash"),
+        Label("CATEGORY_PERSONAL", "Category/Personal"),
+        Label("CATEGORY_SOCIAL", "Category/Social", "category/social"),
+        Label("CATEGORY_UPDATES", "Category/Updates", "category/updates"),
+        Label("CATEGORY_FORUMS", "Category/Forums", "category/forums"),
+        Label("CATEGORY_PROMOTIONS", "Category/Promotions", "category/promotions"),
+    )
+
+    def __init__(self):
+        """Init the collection with the special labels."""
+        self._labels: Dict[str, Label] = {}
+        for label in self.SPECIAL_LABELS:
+            label.special = True
+            self.add(label)
+        self.fetched = False
+
+    def add(self, label: Label):
+        """Add a label to the collection."""
+        if label.id in self._labels:
+            return
+
+        if not label.special:
+            label.anchor = "label/" + label.name.replace(" ", "+")
+            label.check_unread = True
+
+        self._labels[label.id] = label
+
+    def items(self):
+        """Return the labels as dictionary items."""
+        return self._labels.items()
+
+
 class GMailAPI:
     """GMail API wrapper."""
-
-    SPECIAL_LABELS = {
-        "CATEGORY_FORUMS": ("Category/Forums", "category/forums"),
-        "CATEGORY_PERSONAL": ("Category/Personal", None),
-        "CATEGORY_PROMOTIONS": ("Category/Promotions", "category/promotions"),
-        "CATEGORY_SOCIAL": ("Category/Social", "category/social"),
-        "CATEGORY_UPDATES": ("Category/Updates", "category/updates"),
-        "CHAT": ("Chat", "chats"),
-        "DRAFT": ("Drafts", "drafts"),
-        "IMPORTANT": ("Important", "imp"),
-        "INBOX": ("Inbox", "inbox"),
-        "SENT": ("Sent", "sent"),
-        "SPAM": ("Spam", "spam"),
-        "STARRED": ("Starred", "starred"),
-        "TRASH": ("Trash", "trash"),
-        "UNREAD": ("Unread", None),
-    }
 
     def __init__(self, email: str) -> None:
         self.email = email.strip()
@@ -117,7 +157,7 @@ class GMailAPI:
         self.credentials_file = config_dir / f"{self.email}-credentials.json"
 
         self.service = None
-        self.labels: Dict[str, str] = {}
+        self.labels = LabelCollection()
 
     def authenticate(self) -> bool:
         """Authenticate using the GMail API.
@@ -125,8 +165,6 @@ class GMailAPI:
         The file token.pickle stores the user's access and refresh tokens, and is created automatically when the
         authorization flow completes for the first time.
         """
-        from subprocess import run
-
         if not self.credentials_file.exists():
             click.secho(f"Credential file not found for {self.email}.", fg="bright_red")
             click.echo("Click on the 'Enable the GMail API' button and save the JSON file as ", nl=False)
@@ -158,18 +196,23 @@ class GMailAPI:
         return True
 
     def fetch_labels(self) -> bool:
-        """Fetch GMail labels."""
-        if not self.service:
+        """Fetch GMail labels.
+
+        :return: True if labels were fetched.
+        """
+        if not self.service or self.labels.fetched:
             return False
-        self.labels = {}
+
         request = self.service.users().labels().list(userId="me")
         response = request.execute()
         for label in response.get("labels") or []:
-            self.labels[label["name"]] = label["id"]
-        logger.debug("%s: %s", self.email, pformat(self.labels, width=200))
+            self.labels.add(Label(label["id"], label["name"]))
+
+        logger.debug("%s: %s", self.email, pformat(dict(self.labels.items()), width=200))
+        self.labels.fetched = True
         return True
 
-    def unread_count(self, label_name: str) -> int:
+    def unread_count(self, label: Label) -> int:
         """Return the unread thread count for a label.
 
         See https://developers.google.com/gmail/api/v1/reference/users/messages/list.
@@ -177,12 +220,10 @@ class GMailAPI:
         :return: A tuple with unread thread and unread message count.
         """
         unread = -1
-        if self.service and self.labels:
-            label_id = self.labels.get(label_name, None)
-            if label_id:
-                request = self.service.users().labels().get(id=label_id, userId="me")
-                response = request.execute()
-                unread = response["threadsUnread"]
+        if self.service and self.labels and label.check_unread:
+            request = self.service.users().labels().get(id=label.id, userId="me")
+            response = request.execute()
+            unread = response["threadsUnread"]
         return unread
 
         # TODO: how to read a single email message
@@ -207,7 +248,6 @@ class GMailJob:
         self.app = app
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
-        self.labels_fetched = False
         self.trigger_args = parse_interval(check or "1 hour")
         self.menu: Optional[rumps.MenuItem] = None
 
@@ -219,67 +259,78 @@ class GMailJob:
 
     def add_to_menu(self, menuitem):
         """Add a sub-item to the menu of this email."""
-        if not self.menu:
+        if self.menu is None:
             return
         self.menu.add(menuitem)
 
     def create_main_menu(self):
         """Create the main menu for this email."""
-        if self.menu:
+        if self.menu is not None:
             return
 
         # Add this email to the app menu
         logger.debug("%s: Creating GMail menu", self.gmail.email)
         self.menu = rumps.MenuItem(self.gmail.email)
-        self.menu.add(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
+
+        self.add_to_menu(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
+        self.add_to_menu(rumps.separator)
 
         self.app.menu.insert_after(Menu.GMail.value, self.menu)
 
     def __call__(self, *args, **kwargs):
         """Check GMail for new mail on inbox and specific labels."""
-        self.create_main_menu()
-
-        if not self.labels_fetched:
-            self.labels_fetched = self.gmail.fetch_labels()
-            self.add_to_menu(rumps.separator)
-            for label in sorted(self.gmail.labels):
-                # Only show labels with unread messages
-                unread = self.gmail.unread_count(label)
-
-                if unread > 0:
-                    # Show unread count of threads and messages for each label
-                    label_menuitem = rumps.MenuItem(label, callback=self.label_clicked)
-                    # TODO: create class LabelMenuItem() with original_label attribute
-                    label_menuitem.original_label = label
-                    self.add_to_menu(label_menuitem)
-
-                    special = self.gmail.SPECIAL_LABELS.get(label)
-                    pretty_name = special[0] if special else label
-                    label_menuitem.title = f"{pretty_name}: {unread}"
-
         self.check_unread_labels()
-
-    def label_clicked(self, sender: rumps.MenuItem):
-        """Callback executed when a label menu item is clicked."""
-        label: str = sender.original_label
-        special = self.gmail.SPECIAL_LABELS.get(label)
-        encoded_label = label.replace(" ", "+")
-        anchor = special[1] if special else f"label/{encoded_label}"
-        url = f"{GMAIL_BASE_URL}#{anchor}?_email={self.gmail.email}"
-        logger.debug("Opening URL on browser: %s", url)
-        run(["open", url], check=False)
 
     def check_now_clicked(self, sender: Optional[rumps.MenuItem]):
         """Callback executed when a check is manually requested."""
         self.check_unread_labels()
 
+    def label_clicked(self, sender: rumps.MenuItem):
+        """Callback executed when a label menu item is clicked."""
+        label: Label = sender.original_label
+        url = f"{GMAIL_BASE_URL}#{label.anchor}?_email={self.gmail.email}"
+        logger.debug("Opening URL on browser: %s", url)
+        run(["open", url], check=False)
+
     def check_unread_labels(self):
         """Check unread labels."""
-        if not self.menu:
+        self.create_main_menu()
+        if self.menu is None:
             return
+
+        self.gmail.fetch_labels()
 
         current_time = datetime.now().strftime("%H:%M:%S")
         logger.debug("Checking email %s at %s", self.gmail.email, current_time)
-        # FIXME: replace this by the actual email check
         last_checked_menu: rumps.MenuItem = self.menu[Menu.CheckNow.value]
         last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
+
+        new_mail = False
+        for _label_id, label in self.gmail.labels.items():
+            menu_already_exists = label.name in self.menu
+            unread = self.gmail.unread_count(label)
+
+            # Only show labels with unread messages
+            if unread <= 0:
+                if menu_already_exists:
+                    # Remove the menu if it exists
+                    del self.menu[label.name]
+                continue
+
+            # Show unread count of threads and messages for each label
+            if not menu_already_exists:
+                label_menuitem = rumps.MenuItem(label.name, callback=self.label_clicked)
+                # TODO: create class LabelMenuItem() with original_label attribute
+                label_menuitem.original_label = label
+                self.add_to_menu(label_menuitem)
+            else:
+                label_menuitem = self.menu[label.name]
+
+            label_menuitem.title = f"{label.name}: {unread}"
+            new_mail = True
+
+        if not new_mail:
+            self.add_to_menu(Menu.NoNewMail.value)
+        else:
+            if Menu.NoNewMail.value in self.menu:
+                del self.menu[Menu.NoNewMail.value]

@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 from subprocess import run
 
+import click
 import rumps
 from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -137,8 +138,9 @@ class DontForgetApp(rumps.App):
         return True
 
 
+@click.command()
 def start_on_status_bar():
-    """Main function."""
+    """Don't forget to do your things."""
     from dontforget.default_pipes.gmail import GMailPlugin
 
     if DEBUG:
@@ -149,3 +151,7 @@ def start_on_status_bar():
     if not app.start_scheduler():
         sys.exit(1)
     app.run()
+
+
+if __name__ == "__main__":
+    start_on_status_bar()
