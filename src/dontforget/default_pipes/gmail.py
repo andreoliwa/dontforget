@@ -62,7 +62,7 @@ class Menu(Enum):
 
     GMail = "GMail"
     CheckNow = f"{CHECK_NOW_LAST_CHECK}never)"
-    NoNewMail = "No new mail!"
+    NoNewMail = "No new mail"
 
 
 class GMailPlugin:
@@ -330,7 +330,8 @@ class GMailJob:
             new_mail = True
 
         if not new_mail:
-            self.add_to_menu(Menu.NoNewMail.value)
+            if Menu.NoNewMail.value not in self.menu:
+                self.add_to_menu(Menu.NoNewMail.value)
         else:
             if Menu.NoNewMail.value in self.menu:
                 del self.menu[Menu.NoNewMail.value]
