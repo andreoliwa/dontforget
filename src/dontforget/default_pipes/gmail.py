@@ -47,7 +47,7 @@ from dontforget.settings import LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
 GMAIL_BASE_URL = "https://mail.google.com/"
-LAST_CHECKED_ON = "Last checked on: "
+CHECK_NOW_LAST_CHECK = "Check now (last check: "
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -56,14 +56,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 
 
+class Menu(Enum):
+    """Menu items."""
+
+    GMail = "GMail"
+    CheckNow = f"{CHECK_NOW_LAST_CHECK}never)"
+
+
 class GMailPlugin:
     """GMail plugin."""
-
-    class Menu(Enum):
-        """Menu items."""
-
-        GMail = "GMail:"
-        LastChecked = f"{LAST_CHECKED_ON}Never"
 
     def init_app(self, app: DontForgetApp) -> bool:
         """Add GMail jobs to the background scheduler.
@@ -71,27 +72,21 @@ class GMailPlugin:
         :return: True if all GMail accounts were authenticated with OAuth.
         """
         logger.debug("Adding GMail menu")
-        app.menu.add(self.Menu.GMail.value)
+        app.menu.add(Menu.GMail.value)
+        app.menu.add(rumps.separator)
 
         all_authenticated = True
         yaml = YAML()
         config_data = yaml.load(app.config_file)
-        for data in config_data["gmail"]:
+        # Read items in reversed order because they will be added to the menu always after the "GMail" menu
+        for data in reversed(config_data["gmail"]):
             logger.debug("%s: Creating GMail job", data["email"])
-            job = GMailJob(**data)
+            job = GMailJob(app=app, **data)
             if not job.authenticated:
                 all_authenticated = False
             else:
                 app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
 
-            # Add this email to the app menu
-            logger.debug("%s: Creating GMail menu", job.gmail.email)
-            job_menu = rumps.MenuItem(job.gmail.email)
-            job_menu.add(self.Menu.LastChecked.value)
-            app.menu.add(job_menu)
-            job.menu = job_menu
-
-        app.menu.add(rumps.separator)
         return all_authenticated
 
 
@@ -208,7 +203,8 @@ class GMailJob:
     #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
     #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
-    def __init__(self, *, email: str, check: str = None, labels: Dict[str, str] = None):
+    def __init__(self, *, app: DontForgetApp, email: str, check: str = None, labels: Dict[str, str] = None):
+        self.app = app
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
         self.labels_fetched = False
@@ -222,13 +218,27 @@ class GMailJob:
         )
 
     def add_to_menu(self, menuitem):
-        """Add a subitem to the menu of this email."""
+        """Add a sub-item to the menu of this email."""
         if not self.menu:
             return
         self.menu.add(menuitem)
 
+    def create_main_menu(self):
+        """Create the main menu for this email."""
+        if self.menu:
+            return
+
+        # Add this email to the app menu
+        logger.debug("%s: Creating GMail menu", self.gmail.email)
+        self.menu = rumps.MenuItem(self.gmail.email)
+        self.menu.add(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
+
+        self.app.menu.insert_after(Menu.GMail.value, self.menu)
+
     def __call__(self, *args, **kwargs):
         """Check GMail for new mail on inbox and specific labels."""
+        self.create_main_menu()
+
         if not self.labels_fetched:
             self.labels_fetched = self.gmail.fetch_labels()
             self.add_to_menu(rumps.separator)
@@ -247,12 +257,7 @@ class GMailJob:
                     pretty_name = special[0] if special else label
                     label_menuitem.title = f"{pretty_name}: {unread}"
 
-        # FIXME: replace this by the actual email check
-        current_time = datetime.now().strftime("%X")
-        logger.debug("GMail %s The time is: %s", self.gmail.email, current_time)
-        if self.menu:
-            last_checked_menu: rumps.MenuItem = self.menu[GMailPlugin.Menu.LastChecked.value]
-            last_checked_menu.title = f"{LAST_CHECKED_ON}{current_time}"
+        self.check_unread_labels()
 
     def label_clicked(self, sender: rumps.MenuItem):
         """Callback executed when a label menu item is clicked."""
@@ -263,3 +268,18 @@ class GMailJob:
         url = f"{GMAIL_BASE_URL}#{anchor}?_email={self.gmail.email}"
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
+
+    def check_now_clicked(self, sender: Optional[rumps.MenuItem]):
+        """Callback executed when a check is manually requested."""
+        self.check_unread_labels()
+
+    def check_unread_labels(self):
+        """Check unread labels."""
+        if not self.menu:
+            return
+
+        current_time = datetime.now().strftime("%H:%M:%S")
+        logger.debug("Checking email %s at %s", self.gmail.email, current_time)
+        # FIXME: replace this by the actual email check
+        last_checked_menu: rumps.MenuItem = self.menu[Menu.CheckNow.value]
+        last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
