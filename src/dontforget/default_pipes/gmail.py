@@ -43,7 +43,7 @@ from ruamel.yaml import YAML
 
 from dontforget.app import DontForgetApp
 from dontforget.constants import APP_NAME, DELAY
-from dontforget.generic import parse_interval
+from dontforget.generic import UT, parse_interval
 from dontforget.settings import LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
@@ -306,6 +306,7 @@ class GMailJob:
         last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
 
         new_mail = False
+        total_unread = 0
         for _label_id, label in self.gmail.labels.items():
             menu_already_exists = label.name in self.menu
             unread = self.gmail.unread_count(label)
@@ -317,7 +318,6 @@ class GMailJob:
                     del self.menu[label.name]
                 continue
 
-            # Show unread count of threads and messages for each label
             if not menu_already_exists:
                 label_menuitem = rumps.MenuItem(label.name, callback=self.label_clicked)
                 # TODO: create class LabelMenuItem() with original_label attribute
@@ -326,8 +326,15 @@ class GMailJob:
             else:
                 label_menuitem = self.menu[label.name]
 
+            # Show unread count of threads for each label
+            total_unread += unread
             label_menuitem.title = f"{label.name}: {unread}"
             new_mail = True
+
+        envelope = ""
+        if total_unread > 0:
+            envelope = f"{UT.Envelope} ({total_unread}) "
+        self.menu.title = f"{envelope}{self.gmail.email}"
 
         if not new_mail:
             if Menu.NoNewMail.value not in self.menu:

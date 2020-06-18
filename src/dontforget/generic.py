@@ -33,6 +33,7 @@ class UT:
     WhiteExclamationMarkOrnament = "\u2755"
     WhiteQuestionMarkOrnament = "\u2754"
     ReminderRibbon = "\U0001F397"
+    Envelope = "\u2709\ufe0f\ufe0f"
 
 
 def flash_errors(form, category="warning"):
