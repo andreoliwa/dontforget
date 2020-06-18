@@ -31,7 +31,7 @@ from enum import Enum
 from pathlib import Path
 from pprint import pformat
 from subprocess import run
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import click
 import rumps
@@ -101,6 +101,7 @@ class Label:
     anchor: Optional[str] = None
     check_unread: bool = False
     special: bool = False
+    ignore: bool = False
 
 
 class LabelCollection:
@@ -244,12 +245,17 @@ class GMailJob:
     #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
     #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
-    def __init__(self, *, app: DontForgetApp, email: str, check: str = None, labels: Dict[str, str] = None):
+    def __init__(self, *, app: DontForgetApp, email: str, check: str = None, labels: List[Dict[str, str]] = None):
         self.app = app
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
         self.trigger_args = parse_interval(check or "1 hour")
         self.menu: Optional[rumps.MenuItem] = None
+
+        self.config_labels: List[Label] = []
+        for data in labels or []:
+            data.setdefault("id", data.get("name", ""))
+            self.config_labels.append(Label(**data))  # type: ignore
 
         # Add a few seconds of delay before triggering the first request to GMail
         # Configure the optional delay on the config.toml file
@@ -308,6 +314,14 @@ class GMailJob:
         new_mail = False
         total_unread = 0
         for _label_id, label in self.gmail.labels.items():
+            ignore = False
+            for config_label in self.config_labels:
+                if label.name.casefold() == config_label.name.casefold() and config_label.ignore:
+                    ignore = True
+                    break
+            if ignore:
+                continue
+
             menu_already_exists = label.name in self.menu
             unread = self.gmail.unread_count(label)
 
