@@ -116,19 +116,19 @@ class DontForgetApp(rumps.App):
         logger.debug("Creating scheduler")
         self.scheduler = BackgroundScheduler()
 
-        logger.debug("Reading config file")
         self.config_file = Path(dirs.user_config_dir) / CONFIG_YAML
         if not self.config_file.exists():
             raise RuntimeError(f"Config file not found: {self.config_file}")
-
-        logger.debug("Adding preferences menu")
-        self.menu.add(self.Menu.Preferences.value)
-        self.menu.add(rumps.separator)
 
     @rumps.clicked(Menu.Preferences.value)
     def open_preferences(self, _):
         """Open the config file on the preferred editor."""
         run(["open", str(self.config_file)])
+
+    def create_preferences_menu(self):
+        """Create the preferences menu."""
+        self.menu.add(self.Menu.Preferences.value)
+        self.menu.add(rumps.separator)
 
     def start_scheduler(self) -> bool:
         """Start the scheduler."""
@@ -148,6 +148,7 @@ def start_on_status_bar():
 
     app = DontForgetApp()
     GMailPlugin().init_app(app)
+    app.create_preferences_menu()
     if not app.start_scheduler():
         sys.exit(1)
     app.run()
