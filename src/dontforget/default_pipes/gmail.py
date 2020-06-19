@@ -310,6 +310,9 @@ class GMailJob:
         if self.menu is None:
             return
 
+        previous_title = self.app.title
+        self.app.title = UT.Hourglass
+
         self.gmail.fetch_labels()
 
         current_time = datetime.now().strftime("%H:%M:%S")
@@ -363,3 +366,5 @@ class GMailJob:
         else:
             if Menu.NoNewMail.value in self.menu:
                 del self.menu[Menu.NoNewMail.value]
+
+        self.app.title = previous_title
