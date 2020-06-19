@@ -31,7 +31,7 @@ from enum import Enum
 from pathlib import Path
 from pprint import pformat
 from subprocess import run
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import click
 import rumps
@@ -213,19 +213,18 @@ class GMailAPI:
         self.labels.fetched = True
         return True
 
-    def unread_count(self, label: Label) -> int:
-        """Return the unread thread count for a label.
+    def unread_count(self, label: Label) -> Tuple[int, int]:
+        """Return the unread thread/message count for a label.
 
-        See https://developers.google.com/gmail/api/v1/reference/users/messages/list.
+        See https://developers.google.com/gmail/api/v1/reference/users/labels/get.
 
         :return: A tuple with unread thread and unread message count.
         """
-        unread = -1
         if self.service and self.labels and label.check_unread:
             request = self.service.users().labels().get(id=label.id, userId="me")
             response = request.execute()
-            unread = response["threadsUnread"]
-        return unread
+            return response["threadsUnread"], response["messagesUnread"]
+        return -1, -1
 
         # TODO: how to read a single email message
         # for message_dict in response["messages"]:
@@ -298,6 +297,13 @@ class GMailJob:
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
 
+    @staticmethod
+    def format_unread(threads: int, messages: int) -> str:
+        """Format unread threads and messages."""
+        if threads == messages:
+            return str(threads)
+        return f"{threads} ({messages})"
+
     def check_unread_labels(self):
         """Check unread labels."""
         self.create_main_menu()
@@ -312,7 +318,7 @@ class GMailJob:
         last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
 
         new_mail = False
-        total_unread = 0
+        total_unread_threads = total_unread_messages = 0
         for _label_id, label in self.gmail.labels.items():
             ignore = False
             for config_label in self.config_labels:
@@ -323,10 +329,10 @@ class GMailJob:
                 continue
 
             menu_already_exists = label.name in self.menu
-            unread = self.gmail.unread_count(label)
+            unread_threads, unread_messages = self.gmail.unread_count(label)
 
             # Only show labels with unread messages
-            if unread <= 0:
+            if unread_threads <= 0 or unread_messages <= 0:
                 if menu_already_exists:
                     # Remove the menu if it exists
                     del self.menu[label.name]
@@ -341,13 +347,14 @@ class GMailJob:
                 label_menuitem = self.menu[label.name]
 
             # Show unread count of threads for each label
-            total_unread += unread
-            label_menuitem.title = f"{label.name}: {unread}"
+            total_unread_threads += unread_threads
+            total_unread_messages += unread_messages
+            label_menuitem.title = f"{label.name}: {self.format_unread(unread_threads, unread_messages)}"
             new_mail = True
 
         envelope = ""
-        if total_unread > 0:
-            envelope = f"{UT.Envelope} ({total_unread}) "
+        if total_unread_threads > 0 or total_unread_messages > 0:
+            envelope = f"{UT.Envelope} {self.format_unread(total_unread_threads, total_unread_messages)} | "
         self.menu.title = f"{envelope}{self.gmail.email}"
 
         if not new_mail:
