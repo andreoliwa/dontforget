@@ -104,6 +104,8 @@ def load_plugins():
 class DontForgetApp(rumps.App):
     """The macOS status bar application."""
 
+    DEFAULT_TITLE = UT.ReminderRibbon
+
     class Menu(Enum):
         """Menu items."""
 
@@ -111,7 +113,7 @@ class DontForgetApp(rumps.App):
         Quit = f"Quit {APP_NAME}"
 
     def __init__(self):
-        super(DontForgetApp, self).__init__(UT.ReminderRibbon, quit_button=self.Menu.Quit.value)
+        super(DontForgetApp, self).__init__(self.DEFAULT_TITLE, quit_button=self.Menu.Quit.value)
 
         logger.debug("Creating scheduler")
         self.scheduler = BackgroundScheduler()
