@@ -13,10 +13,19 @@ import click
 import toml
 from autorepr import autorepr
 from jinja2 import StrictUndefined, Template
-from sqlalchemy.util import classproperty, memoized_property
+from memoized_property import memoized_property
 
+from dontforget.app import load_plugins
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
-from dontforget.generic import SingletonMixin, find_partial_keys, flatten, get_subclasses, pretty_plugin_name, unflatten
+from dontforget.generic import (
+    SingletonMixin,
+    classproperty,
+    find_partial_keys,
+    flatten,
+    get_subclasses,
+    pretty_plugin_name,
+    unflatten,
+)
 from dontforget.settings import LOG_LEVEL, USER_PIPES_DIR
 from dontforget.typedefs import JsonDict
 
@@ -289,6 +298,7 @@ class BaseTarget(metaclass=abc.ABCMeta):
 @click.group()
 def pipe():
     """Pipes that pull data from a source and push it to a target."""
+    load_plugins()
 
 
 @pipe.command()

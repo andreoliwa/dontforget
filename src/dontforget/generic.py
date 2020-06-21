@@ -2,8 +2,6 @@
 import collections
 from typing import Any, Dict, List, Optional, Union
 
-from flask import flash
-
 DATETIME_FORMAT = "ddd DD/MM HH:mm"
 
 
@@ -34,13 +32,6 @@ class UT:
     WhiteQuestionMarkOrnament = "\u2754"
     ReminderRibbon = "\U0001F397"
     Envelope = "\u2709\ufe0f\ufe0f"
-
-
-def flash_errors(form, category="warning"):
-    """Flash all errors for a form."""
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash("{} - {}".format(getattr(form, field).label.text, error), category)
 
 
 class SingletonMixin:
@@ -226,3 +217,53 @@ def parse_interval(text: Optional[str]) -> Dict[str, Any]:
         elif part.isalpha():
             key = part.strip()
     return {key: number} if key and number else {}
+
+
+class ClassPropertyDescriptor(object):
+    """Class property.
+
+    Shamelessly copied from https://stackoverflow.com/questions/5189699/how-to-make-a-class-property#5191224.
+    And I don't even know if this works.
+    Quick and dirty fix to be able to remove SQLAlchemy from this project:
+
+        from sqlalchemy.utils import classproperty
+    """
+
+    def __init__(self, fget, fset=None):
+        self.fget = fget
+        self.fset = fset
+
+    def __get__(self, obj, klass=None):
+        """Getter for the class property."""
+        if klass is None:
+            klass = type(obj)
+        return self.fget.__get__(obj, klass)()
+
+    def __set__(self, obj, value):
+        """Setter for the class property."""
+        if not self.fset:
+            raise AttributeError("can't set attribute")
+        type_ = type(obj)
+        return self.fset.__get__(obj, type_)(value)
+
+    def setter(self, func):
+        """Setter for the class property."""
+        if not isinstance(func, (classmethod, staticmethod)):
+            func = classmethod(func)
+        self.fset = func
+        return self
+
+
+def classproperty(func):
+    """Class property decorator.
+
+    Shamelessly copied from https://stackoverflow.com/questions/5189699/how-to-make-a-class-property#5191224.
+    And I don't even know if this works.
+    Quick and dirty fix to be able to remove SQLAlchemy from this project:
+
+        from sqlalchemy.utils import classproperty
+    """
+    if not isinstance(func, (classmethod, staticmethod)):
+        func = classmethod(func)
+
+    return ClassPropertyDescriptor(func)

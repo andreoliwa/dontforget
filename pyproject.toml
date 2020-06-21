@@ -11,18 +11,12 @@ authors = ["W. Augusto Andreoli <andreoliwa@gmail.com>"]
 python = "^3.7"
 jinja2 = "*"
 psycopg2-binary = "*"
-flask = "*"
-flask-migrate = "*"
-flask-sqlalchemy = "*"
+click = "*"
 markupsafe = "*"
-sqlalchemy = "*"
-werkzeug = "*"
+memoized-property = "*"
 arrow = "*"
-maya = "*"
-telepot = "*"
+pendulum = "*"
 marshmallow = "*"
-pyobjc-core = {version = "^6.1",optional = true}
-pyobjc-framework-cocoa = {version = "^6.1",optional = true}
 todoist-python = "*"
 tapioca-toggl = "*"
 toml = "*"
@@ -43,11 +37,7 @@ google-auth-oauthlib = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.app:start_on_status_bar"
-
-[tool.poetry.extras]
-# Those optional packages are only available on macOS. To install them:
-# poetry install --extras macos
-macos = ["pyobjc-core", "pyobjc-framework-cocoa"]
+pipe = "dontforget.pipes:pipe"
 
 [tool.poetry.dev-dependencies]
 faker = "*"

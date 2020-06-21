@@ -1,10 +1,9 @@
-.PHONY: Makefile
-
+APP_NAME = dontforget
 BIN_DIR = $(HOME)/.local/bin
 
 help: # Display this help
 	@echo 'Choose one of the following targets:'
-	@cat $(MAKEFILE_LIST) | egrep '^[a-z0-9 ./-]*:.*#' | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
+	@egrep '^[a-z0-9 ./-]*:.*#' $(lastword $(MAKEFILE_LIST)) | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 install: # Install the project on ~/.local/bin
@@ -15,21 +14,26 @@ endif
 	poetry install
 
 	mkdir -p $(BIN_DIR)
-	rm -f $(BIN_DIR)/dontforget
-	echo "#!/usr/bin/env bash" > $(BIN_DIR)/dontforget
-	echo "cd $(PWD)" >> $(BIN_DIR)/dontforget
-	echo "poetry run dontforget \$$*" >> $(BIN_DIR)/dontforget
-	chmod +x $(BIN_DIR)/dontforget
+	rm -f $(BIN_DIR)/$(APP_NAME)
+	echo "#!/usr/bin/env bash" > $(BIN_DIR)/$(APP_NAME)
+	echo "cd $(PWD)" >> $(BIN_DIR)/$(APP_NAME)
+	echo "poetry run $(APP_NAME) \$$*" >> $(BIN_DIR)/$(APP_NAME)
+	chmod +x $(BIN_DIR)/$(APP_NAME)
 
 	@echo "The script was created in:"
-	@which dontforget
+	@which $(APP_NAME)
+.PHONY: install
 
-setup: # Install dev dependencies
+pre-commit: # Install pre-commit hooks
 	pre-commit install --install-hooks
 	pre-commit install --hook-type commit-msg
+	pre-commit gc
+.PHONY: pre-commit
 
-build: # Build the project
+build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
 	clear
 	pre-commit run --all-files
-	# TODO: tests failing because they can't connect to Postgres
-#	poetry run pytest
+	poetry run pytest
+	poetry run pipe ls
+	poetry run pipe run weekly
+.PHONY: build
