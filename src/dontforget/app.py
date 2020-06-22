@@ -89,10 +89,11 @@ def start_on_status_bar():
         rumps.debug_mode(True)
 
     app = DontForgetApp()
-    GMailPlugin().init_app(app)
+    if not GMailPlugin(app).init_app():
+        sys.exit(1)
     app.create_preferences_menu()
     if not app.start_scheduler():
-        sys.exit(1)
+        sys.exit(2)
     app.run()
 
 

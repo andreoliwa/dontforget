@@ -65,31 +65,67 @@ class Menu(Enum):
     NoNewMail = "No new mail"
 
 
+# TODO: format_count() should be the str() or repr() of this dataclass
+# @dataclass
+# class MessageCount:
+#     threads: int = 0
+#     messages: int = 0
+def format_count(threads: int, messages: int) -> str:
+    """Format the count of threads and messages."""
+    if threads == messages:
+        return str(threads) if threads else ""
+    return f"{threads} ({messages})"
+
+
 class GMailPlugin:
     """GMail plugin."""
 
-    def init_app(self, app: DontForgetApp) -> bool:
+    def __init__(self, app: DontForgetApp) -> None:
+        self.app = app
+        # TODO: self.important: Dict[str, MessageCount] = {}
+        self.important: Dict[str, List[int]] = {}
+
+    def init_app(self) -> bool:
         """Add GMail jobs to the background scheduler.
 
         :return: True if all GMail accounts were authenticated with OAuth.
         """
         logger.debug("Adding GMail menu")
-        app.menu.add(Menu.GMail.value)
-        app.menu.add(rumps.separator)
+        self.app.menu.add(Menu.GMail.value)
+        self.app.menu.add(rumps.separator)
 
         all_authenticated = True
         yaml = YAML()
-        config_data = yaml.load(app.config_file)
+        config_data = yaml.load(self.app.config_file)
         # Read items in reversed order because they will be added to the menu always after the "GMail" menu
         for data in reversed(config_data["gmail"]):
             logger.debug("%s: Creating GMail job", data["email"])
-            job = GMailJob(app=app, **data)
+            job = GMailJob(plugin=self, app=self.app, **data)
             if not job.authenticated:
                 all_authenticated = False
             else:
-                app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
+                self.app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
 
         return all_authenticated
+
+    def update_important(self, email: str, threads: int = 0, messages: int = 0, clear: bool = False) -> None:
+        """Update the count of important messages, grouped by email."""
+        if clear:
+            self.important[email] = [0, 0]
+            return
+
+        self.important[email][0] += threads
+        self.important[email][1] += messages
+
+        sum_threads = sum_messages = 0
+        for count_threads, count_messages in self.important.values():
+            sum_threads += count_threads
+            sum_messages += count_messages
+        important = format_count(sum_threads, sum_messages)
+        if important:
+            self.app.title = f"{UT.DoubleExclamationMark} {important}"
+            return
+        self.app.title = self.app.DEFAULT_TITLE
 
 
 @dataclass
@@ -102,6 +138,8 @@ class Label:
     check_unread: bool = False
     special: bool = False
     ignore: bool = False
+    min_threads: int = 0
+    min_messages: int = 0
 
 
 class LabelCollection:
@@ -244,7 +282,16 @@ class GMailJob:
     #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
     #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
-    def __init__(self, *, app: DontForgetApp, email: str, check: str = None, labels: List[Dict[str, str]] = None):
+    def __init__(
+        self,
+        *,
+        plugin: GMailPlugin,
+        app: DontForgetApp,
+        email: str,
+        check: str = None,
+        labels: List[Dict[str, str]] = None,
+    ):
+        self.plugin = plugin
         self.app = app
         self.gmail = GMailAPI(email)
         self.authenticated = self.gmail.authenticate()
@@ -297,13 +344,6 @@ class GMailJob:
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
 
-    @staticmethod
-    def format_unread(threads: int, messages: int) -> str:
-        """Format unread threads and messages."""
-        if threads == messages:
-            return str(threads)
-        return f"{threads} ({messages})"
-
     def check_unread_labels(self):
         """Check unread labels."""
         self.create_main_menu()
@@ -319,15 +359,16 @@ class GMailJob:
         last_checked_menu: rumps.MenuItem = self.menu[Menu.CheckNow.value]
         last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
 
-        new_mail = False
+        new_mail = has_important = False
         total_unread_threads = total_unread_messages = 0
+        self.plugin.update_important(self.gmail.email, clear=True)
         for _label_id, label in self.gmail.labels.items():
-            ignore = False
-            for config_label in self.config_labels:
-                if label.name.casefold() == config_label.name.casefold() and config_label.ignore:
-                    ignore = True
+            config_label: Optional[Label] = None
+            for i in self.config_labels:
+                if label.name.casefold() == i.name.casefold():
+                    config_label = i
                     break
-            if ignore:
+            if config_label and config_label.ignore:
                 continue
 
             menu_already_exists = label.name in self.menu
@@ -348,15 +389,25 @@ class GMailJob:
             else:
                 label_menuitem = self.menu[label.name]
 
+            important = ""
+            if config_label:
+                if (config_label.min_threads and unread_threads >= config_label.min_threads) or (
+                    config_label.min_messages and unread_messages >= config_label.min_messages
+                ):
+                    important = f"{UT.HeavyExclamationMarkSymbol}"
+                    has_important = True
+                    self.plugin.update_important(self.gmail.email, unread_threads, unread_messages)
+
             # Show unread count of threads for each label
             total_unread_threads += unread_threads
             total_unread_messages += unread_messages
-            label_menuitem.title = f"{label.name}: {self.format_unread(unread_threads, unread_messages)}"
+            label_menuitem.title = f"{important}{label.name}: {format_count(unread_threads, unread_messages)}"
             new_mail = True
 
+        important = f"{UT.HeavyExclamationMarkSymbol}" if has_important else ""
         envelope = ""
         if total_unread_threads > 0 or total_unread_messages > 0:
-            envelope = f"{UT.Envelope} {self.format_unread(total_unread_threads, total_unread_messages)} | "
+            envelope = f"{important}{UT.Envelope} {format_count(total_unread_threads, total_unread_messages)} | "
         self.menu.title = f"{envelope}{self.gmail.email}"
 
         if not new_mail:
@@ -366,4 +417,4 @@ class GMailJob:
             if Menu.NoNewMail.value in self.menu:
                 del self.menu[Menu.NoNewMail.value]
 
-        self.app.title = self.app.DEFAULT_TITLE
+        self.plugin.update_important(self.gmail.email)
