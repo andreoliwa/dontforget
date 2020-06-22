@@ -120,7 +120,7 @@ class LabelCollection:
         Label("CATEGORY_PERSONAL", "Category/Personal"),
         Label("CATEGORY_SOCIAL", "Category/Social", "category/social"),
         Label("CATEGORY_UPDATES", "Category/Updates", "category/updates"),
-        Label("CATEGORY_FORUMS", "Category/Forums", "category/forums"),
+        Label("CATEGORY_FORUMS", "Category/Forums", "category/forums", True),
         Label("CATEGORY_PROMOTIONS", "Category/Promotions", "category/promotions"),
     )
 
