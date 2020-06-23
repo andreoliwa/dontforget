@@ -25,6 +25,7 @@ https://developers.google.com/resources/api-libraries/documentation/gmail/v1/pyt
 """
 import logging
 import pickle
+import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -94,11 +95,18 @@ class GMailPlugin:
         self.app.menu.add(Menu.GMail.value)
         self.app.menu.add(rumps.separator)
 
+        current_host = socket.gethostname()
+
         all_authenticated = True
         yaml = YAML()
         config_data = yaml.load(self.app.config_file)
         # Read items in reversed order because they will be added to the menu always after the "GMail" menu
         for data in reversed(config_data["gmail"]):
+            hosts = data.get("hosts")
+            if hosts and current_host not in hosts:
+                logger.debug("%s: Ignoring email check on this host %s", data["email"], current_host)
+                continue
+
             logger.debug("%s: Creating GMail job", data["email"])
             job = GMailJob(plugin=self, app=self.app, **data)
             if not job.authenticated:
