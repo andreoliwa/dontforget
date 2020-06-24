@@ -102,7 +102,7 @@ class GMailPlugin:
         config_data = yaml.load(self.app.config_file)
         # Read items in reversed order because they will be added to the menu always after the "GMail" menu
         for data in reversed(config_data["gmail"]):
-            hosts = data.get("hosts")
+            hosts = data.pop("hosts", None)
             if hosts and current_host not in hosts:
                 logger.debug("%s: Ignoring email check on this host %s", data["email"], current_host)
                 continue
