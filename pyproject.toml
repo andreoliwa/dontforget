@@ -34,6 +34,8 @@ appdirs = "*"
 google-api-python-client = "*"
 google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
+TogglPy = "*"
+keyring = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.app:start_on_status_bar"

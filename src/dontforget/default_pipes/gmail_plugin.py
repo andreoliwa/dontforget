@@ -40,10 +40,9 @@ from appdirs import AppDirs
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from ruamel.yaml import YAML
 
 from dontforget.app import DontForgetApp
-from dontforget.constants import APP_NAME, DELAY
+from dontforget.constants import APP_NAME, DELAY, MISFIRE_GRACE_TIME
 from dontforget.generic import UT, parse_interval
 from dontforget.settings import LOG_LEVEL
 
@@ -61,7 +60,6 @@ logger.setLevel(LOG_LEVEL)
 class Menu(Enum):
     """Menu items."""
 
-    GMail = "GMail"
     CheckNow = f"{CHECK_NOW_LAST_CHECK}never)"
     NoNewMail = "No new mail"
 
@@ -81,27 +79,23 @@ def format_count(threads: int, messages: int) -> str:
 class GMailPlugin:
     """GMail plugin."""
 
+    name = "GMail"
+
     def __init__(self, app: DontForgetApp) -> None:
         self.app = app
         # TODO: self.important: Dict[str, MessageCount] = {}
         self.important: Dict[str, List[int]] = {}
 
-    def init_app(self) -> bool:
+    def init_app(self, config_list: List[dict]) -> bool:
         """Add GMail jobs to the background scheduler.
 
         :return: True if all GMail accounts were authenticated with OAuth.
         """
-        logger.debug("Adding GMail menu")
-        self.app.menu.add(Menu.GMail.value)
-        self.app.menu.add(rumps.separator)
-
         current_host = socket.gethostname()
 
         all_authenticated = True
-        yaml = YAML()
-        config_data = yaml.load(self.app.config_file)
         # Read items in reversed order because they will be added to the menu always after the "GMail" menu
-        for data in reversed(config_data["gmail"]):
+        for data in reversed(config_list):
             hosts = data.pop("hosts", None)
             if hosts and current_host not in hosts:
                 logger.debug("%s: Ignoring email check on this host %s", data["email"], current_host)
@@ -112,7 +106,7 @@ class GMailPlugin:
             if not job.authenticated:
                 all_authenticated = False
             else:
-                self.app.scheduler.add_job(job, "interval", misfire_grace_time=10, **job.trigger_args)
+                self.app.scheduler.add_job(job, "interval", misfire_grace_time=MISFIRE_GRACE_TIME, **job.trigger_args)
 
         return all_authenticated
 
@@ -312,7 +306,7 @@ class GMailJob:
             self.config_labels.append(Label(**data))  # type: ignore
 
         # Add a few seconds of delay before triggering the first request to GMail
-        # Configure the optional delay on the config.toml file
+        # TODO: Configure the optional delay on the config.toml file
         self.trigger_args.update(
             name=f"{self.__class__.__name__}: {email}", start_date=datetime.now() + timedelta(seconds=DELAY)
         )
@@ -335,7 +329,7 @@ class GMailJob:
         self.add_to_menu(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
         self.add_to_menu(rumps.separator)
 
-        self.app.menu.insert_after(Menu.GMail.value, self.menu)
+        self.app.menu.insert_after(self.plugin.name, self.menu)
 
     def __call__(self, *args, **kwargs):
         """Check GMail for new mail on inbox and specific labels."""

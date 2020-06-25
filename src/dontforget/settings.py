@@ -7,8 +7,7 @@ from environs import Env
 env = Env()
 env.read_env()
 
-FLASK_ENV = env("FLASK_ENV")
-DEBUG = "dev" in FLASK_ENV
+DEBUG = env.bool("DEBUG")
 LOG_LEVEL = (env("LOG_LEVEL", default="") or logging.getLevelName(logging.DEBUG if DEBUG else logging.WARNING)).upper()
 
 LOCAL_TIMEZONE = env("LOCAL_TIMEZONE", default="Europe/Berlin")

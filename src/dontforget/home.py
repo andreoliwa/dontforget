@@ -6,7 +6,7 @@ from typing import Union
 import arrow
 from tapioca_toggl import Toggl
 
-from dontforget.plugins.todoist import Todoist
+from dontforget.default_pipes.todoist import Todoist
 from dontforget.settings import (
     HOME_HOURS,
     HOME_MINUTES_BEFORE,

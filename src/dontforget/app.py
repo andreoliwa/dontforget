@@ -10,6 +10,7 @@ import rumps
 from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
 from pluginbase import PluginBase
+from ruamel.yaml import YAML
 
 from dontforget.constants import APP_NAME, CONFIG_YAML, DEFAULT_PIPES_DIR_NAME
 from dontforget.generic import UT
@@ -83,14 +84,21 @@ class DontForgetApp(rumps.App):
 @click.command()
 def start_on_status_bar():
     """Don't forget to do your things."""
-    from dontforget.default_pipes.gmail import GMailPlugin
+    from dontforget.default_pipes.gmail_plugin import GMailPlugin
+    from dontforget.default_pipes.toggl_plugin import TogglPlugin
 
     if DEBUG:
         rumps.debug_mode(True)
 
     app = DontForgetApp()
-    if not GMailPlugin(app).init_app():
-        sys.exit(1)
+    yaml = YAML()
+    config_data = yaml.load(app.config_file)
+
+    for plugin in (GMailPlugin, TogglPlugin):
+        app.menu.add(plugin.name)
+        app.menu.add(rumps.separator)
+        if not plugin(app).init_app(config_data[plugin.name.lower()]):
+            sys.exit(1)
     app.create_preferences_menu()
     if not app.start_scheduler():
         sys.exit(2)
