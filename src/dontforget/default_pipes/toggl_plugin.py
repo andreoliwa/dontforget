@@ -17,7 +17,6 @@ from typing import Dict, List, Optional
 
 import click
 import keyring
-import rumps
 from rumps import MenuItem
 from toggl.TogglPy import Toggl
 
@@ -39,6 +38,12 @@ class TogglEntry:
     client_id: Optional[int] = None
     project: Optional[str] = None
     project_id: Optional[int] = None
+
+
+class TogglMenuItem(MenuItem):
+    """A Toggl menu item."""
+
+    entry: TogglEntry
 
 
 class TogglPlugin:
@@ -75,11 +80,12 @@ class TogglPlugin:
             entry.client_id = project_data["data"]["cid"]
 
             self.entries[entry.name] = entry
-            self.app.menu.insert_after(self.name, MenuItem(entry.name, callback=self.start_entry))
+            menuitem = TogglMenuItem(f"{entry.name} ({entry.client}/{entry.project})", callback=self.start_entry)
+            menuitem.entry = entry
+            self.app.menu.insert_after(self.name, menuitem)
         return True
 
-    def start_entry(self, sender: rumps.MenuItem):
+    def start_entry(self, menu: TogglMenuItem):
         """Callback executed when a menu entry is clicked."""
-        entry_name = sender.title
-        logger.debug("Starting Toggl entry: %s", entry_name)
-        self.toggl.startTimeEntry(entry_name, self.entries[entry_name].project_id)
+        logger.debug("Starting Toggl entry: %s", menu.entry.name)
+        self.toggl.startTimeEntry(menu.entry.name, self.entries[menu.entry.name].project_id)

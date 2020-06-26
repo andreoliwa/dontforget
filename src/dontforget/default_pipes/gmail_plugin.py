@@ -143,6 +143,12 @@ class Label:
     min_messages: int = 0
 
 
+class LabelMenuItem(rumps.MenuItem):
+    """A menu item for a GMail label."""
+
+    label: Label
+
+
 # TODO: inherit from UserList and keep internal dicts to search by id/name
 #  from collections import UserList
 class LabelCollection:
@@ -343,9 +349,9 @@ class GMailJob:
         """Callback executed when a check is manually requested."""
         self.check_unread_labels()
 
-    def label_clicked(self, sender: rumps.MenuItem):
+    def label_clicked(self, menu: LabelMenuItem):
         """Callback executed when a label menu item is clicked."""
-        label: Label = sender.original_label
+        label: Label = menu.label
         url = f"{GMAIL_BASE_URL}#{label.anchor}?_email={self.gmail.email}"
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
@@ -393,9 +399,8 @@ class GMailJob:
                 continue
 
             if not menu_already_exists:
-                label_menuitem = rumps.MenuItem(label.name, callback=self.label_clicked)
-                # TODO: create class LabelMenuItem() with original_label attribute
-                label_menuitem.original_label = label
+                label_menuitem = LabelMenuItem(label.name, callback=self.label_clicked)
+                label_menuitem.label = label
                 self.add_to_menu(label_menuitem)
             else:
                 label_menuitem = self.menu[label.name]
