@@ -137,18 +137,19 @@ class Label:
     id: str
     name: str
     anchor: Optional[str] = None
-    check_unread: bool = False
+    check_unread: bool = True
     special: bool = False
-    ignore: bool = False
     min_threads: int = 0
     min_messages: int = 0
 
 
+# TODO: inherit from UserList and keep internal dicts to search by id/name
+#  from collections import UserList
 class LabelCollection:
     """A collection of GMail labels."""
 
     SPECIAL_LABELS = (
-        Label("INBOX", "Inbox", "inbox", True),
+        Label("INBOX", "Inbox", "inbox"),
         Label("UNREAD", "Unread"),
         Label("STARRED", "Starred", "starred"),
         Label("IMPORTANT", "Important", "imp"),
@@ -160,7 +161,7 @@ class LabelCollection:
         Label("CATEGORY_PERSONAL", "Category/Personal"),
         Label("CATEGORY_SOCIAL", "Category/Social", "category/social"),
         Label("CATEGORY_UPDATES", "Category/Updates", "category/updates"),
-        Label("CATEGORY_FORUMS", "Category/Forums", "category/forums", True),
+        Label("CATEGORY_FORUMS", "Category/Forums", "category/forums"),
         Label("CATEGORY_PROMOTIONS", "Category/Promotions", "category/promotions"),
     )
 
@@ -169,6 +170,8 @@ class LabelCollection:
         self._labels: Dict[str, Label] = {}
         for label in self.SPECIAL_LABELS:
             label.special = True
+            # On special labels, only check the inbox by default
+            label.check_unread = label.id == "INBOX"
             self.add(label)
         self.fetched = False
 
@@ -300,6 +303,7 @@ class GMailJob:
         self.trigger_args = parse_interval(check or "1 hour")
         self.menu: Optional[rumps.MenuItem] = None
 
+        # TODO: update the existing labels in self.gmail.labels instead
         self.config_labels: List[Label] = []
         for data in labels or []:
             data.setdefault("id", data.get("name", ""))
@@ -370,7 +374,12 @@ class GMailJob:
                 if label.name.casefold() == i.name.casefold():
                     config_label = i
                     break
-            if config_label and config_label.ignore:
+            if config_label:
+                if not config_label.check_unread:
+                    continue
+                # TODO: config labels and labels should be a single collection
+                label.check_unread = config_label.check_unread
+            elif not label.check_unread:
                 continue
 
             menu_already_exists = label.name in self.menu

@@ -55,7 +55,10 @@ class TogglPlugin:
         """Init the plugin."""
         api_token = keyring.get_password(self.name, API_TOKEN)
         if not api_token:
-            message = f"Toggl API token is not set on the keyring (service: '{self.name}', username: '{API_TOKEN}')"
+            message = (
+                "The Toggl API token is not set on the keyring."
+                f" Run this command and paste the token: poetry run keyring set {self.name} {API_TOKEN}"
+            )
             logger.error(message)
             click.secho(message, fg="bright_red")
             return False
