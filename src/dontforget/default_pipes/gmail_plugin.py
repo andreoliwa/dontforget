@@ -110,6 +110,11 @@ class GMailPlugin:
 
         return all_authenticated
 
+    def reload_config(self, config_list: List[dict]) -> bool:
+        """Reload the config file."""
+        # TODO: update jobs with new intervals, trigger email check again
+        return True
+
     def update_important(self, email: str, threads: int = 0, messages: int = 0, clear: bool = False) -> None:
         """Update the count of important messages, grouped by email."""
         if clear:

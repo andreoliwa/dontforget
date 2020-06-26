@@ -11,6 +11,7 @@ from appdirs import AppDirs
 from apscheduler.schedulers.background import BackgroundScheduler
 from pluginbase import PluginBase
 from ruamel.yaml import YAML
+from rumps import MenuItem
 
 from dontforget.constants import APP_NAME, CONFIG_YAML, DEFAULT_PIPES_DIR_NAME
 from dontforget.generic import UT
@@ -51,6 +52,7 @@ class DontForgetApp(rumps.App):
         """Menu items."""
 
         Preferences = "Preferences..."
+        ReloadConfigFile = "Reload config file"
         Quit = f"Quit {APP_NAME}"
 
     def __init__(self):
@@ -58,20 +60,32 @@ class DontForgetApp(rumps.App):
 
         logger.debug("Creating scheduler")
         self.scheduler = BackgroundScheduler()
+        self.plugins: list = []
 
         self.config_file = Path(dirs.user_config_dir) / CONFIG_YAML
         if not self.config_file.exists():
             raise RuntimeError(f"Config file not found: {self.config_file}")
 
-    @rumps.clicked(Menu.Preferences.value)
+    def load_config(self):
+        """Load the config file."""
+        yaml = YAML()
+        return yaml.load(self.config_file)
+
+    def create_preferences_menu(self):
+        """Create the preferences menu."""
+        self.menu.add(MenuItem(self.Menu.Preferences.value, callback=self.open_preferences))
+        self.menu.add(MenuItem(self.Menu.ReloadConfigFile.value, callback=self.reload_config_file))
+        self.menu.add(rumps.separator)
+
     def open_preferences(self, _):
         """Open the config file on the preferred editor."""
         run(["open", str(self.config_file)])
 
-    def create_preferences_menu(self):
-        """Create the preferences menu."""
-        self.menu.add(self.Menu.Preferences.value)
-        self.menu.add(rumps.separator)
+    def reload_config_file(self, _):
+        """Reload the config file and send it again to each loaded plugin."""
+        config_data = self.load_config()
+        for plugin in self.plugins:
+            plugin.reload_config(config_data[plugin.name.lower()])
 
     def start_scheduler(self) -> bool:
         """Start the scheduler."""
@@ -91,13 +105,14 @@ def start_on_status_bar():
         rumps.debug_mode(True)
 
     app = DontForgetApp()
-    yaml = YAML()
-    config_data = yaml.load(app.config_file)
+    config_data = app.load_config()
 
-    for plugin in (GMailPlugin, TogglPlugin):
-        app.menu.add(plugin.name)
+    for plugin_class in (GMailPlugin, TogglPlugin):
+        app.menu.add(plugin_class.name)
         app.menu.add(rumps.separator)
-        if not plugin(app).init_app(config_data[plugin.name.lower()]):
+        plugin = plugin_class(app)
+        app.plugins.append(plugin)
+        if not plugin.init_app(config_data[plugin_class.name.lower()]):
             sys.exit(1)
     app.create_preferences_menu()
     if not app.start_scheduler():

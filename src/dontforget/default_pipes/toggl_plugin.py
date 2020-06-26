@@ -44,6 +44,7 @@ class TogglMenuItem(MenuItem):
     """A Toggl menu item."""
 
     entry: TogglEntry
+    updated: bool = True
 
 
 class TogglPlugin:
@@ -55,6 +56,7 @@ class TogglPlugin:
         self.app = app
         self.toggl = Toggl()
         self.entries: Dict[str, TogglEntry] = {}
+        self.menu_items: Dict[str, TogglMenuItem] = {}
 
     def init_app(self, config_list: List[dict]) -> bool:
         """Init the plugin."""
@@ -69,7 +71,13 @@ class TogglPlugin:
             return False
         self.toggl.setAPIKey(api_token)
 
-        # Read items in reversed order because they will be added to the menu always after the main menu
+        return self.create_menu(config_list)
+
+    def create_menu(self, config_list: List[dict]) -> bool:
+        """Create menu items.
+
+        Read items in reversed order because they will be added to the menu always after the main menu.
+        """
         for data in reversed(config_list):
             entry = TogglEntry(**data)
             logger.debug("Toggl entry: %s", entry)
@@ -79,11 +87,34 @@ class TogglPlugin:
             entry.project_id = project_data["data"]["id"]
             entry.client_id = project_data["data"]["cid"]
 
-            self.entries[entry.name] = entry
-            menuitem = TogglMenuItem(f"{entry.name} ({entry.client}/{entry.project})", callback=self.start_entry)
+            menu_key = f"{entry.name} ({entry.client}/{entry.project})"
+            menuitem = TogglMenuItem(menu_key, callback=self.start_entry)
             menuitem.entry = entry
+            menuitem.updated = True
             self.app.menu.insert_after(self.name, menuitem)
+
+            self.entries[entry.name] = entry
+            self.menu_items[menu_key] = menuitem
         return True
+
+    def reload_config(self, config_list: List[dict]) -> bool:
+        """Replace menus when the configuration is reloaded."""
+        self.entries = {}
+        for menu in self.menu_items.values():
+            menu.updated = False
+
+        rv = self.create_menu(config_list)
+
+        # Remove menu items that were not updated
+        old_menus = self.menu_items.copy()
+        self.menu_items.clear()
+        for key, menu in old_menus.items():
+            if menu.updated:
+                self.menu_items[key] = menu
+            else:
+                del self.app.menu[key]
+
+        return rv
 
     def start_entry(self, menu: TogglMenuItem):
         """Callback executed when a menu entry is clicked."""
