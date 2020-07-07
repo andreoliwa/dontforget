@@ -24,6 +24,10 @@ endif
 	@which $(APP_NAME)
 .PHONY: install
 
+update: # Update the project
+	poetry update
+.PHONY: pre-commit
+
 pre-commit: # Install pre-commit hooks
 	pre-commit install --install-hooks
 	pre-commit install --hook-type commit-msg
@@ -33,7 +37,7 @@ pre-commit: # Install pre-commit hooks
 build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
 	clear
 	pre-commit run --all-files
-	poetry run pytest
+	poetry run python -m pytest
 	poetry run pipe ls
 	poetry run pipe run weekly
 .PHONY: build
