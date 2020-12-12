@@ -6,22 +6,15 @@ help: # Display this help
 	@egrep '^[a-z0-9 ./-]*:.*#' $(lastword $(MAKEFILE_LIST)) | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
-install: # Install the project on ~/.local/bin
+install: # Install the project on ~/.local/bin using pipx
 ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
 	@exit -1
 endif
 	poetry install
 
-	mkdir -p $(BIN_DIR)
-	rm -f $(BIN_DIR)/$(APP_NAME)
-	echo "#!/usr/bin/env bash" > $(BIN_DIR)/$(APP_NAME)
-	echo "cd $(PWD)" >> $(BIN_DIR)/$(APP_NAME)
-	echo "poetry run $(APP_NAME) \$$*" >> $(BIN_DIR)/$(APP_NAME)
-	chmod +x $(BIN_DIR)/$(APP_NAME)
-
-	@echo "The script was created in:"
-	@which $(APP_NAME)
+	pipx uninstall dontforget
+	pipx install --verbose .
 .PHONY: install
 
 update: # Update the project

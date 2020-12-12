@@ -10,9 +10,7 @@ authors = ["W. Augusto Andreoli <andreoliwa@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.7"
 jinja2 = "*"
-psycopg2-binary = "*"
 click = "*"
-markupsafe = "*"
 memoized-property = "*"
 arrow = "*"
 pendulum = "*"
