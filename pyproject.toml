@@ -38,7 +38,7 @@ TogglPy = "*"
 keyring = "*"
 
 [tool.poetry.scripts]
-dontforget = "dontforget.app:start_on_status_bar"
+dontforget = "dontforget.app:main"
 pipe = "dontforget.pipes:pipe"
 
 [tool.poetry.dev-dependencies]

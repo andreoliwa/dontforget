@@ -95,9 +95,14 @@ class DontForgetApp(rumps.App):
         return True
 
 
-@click.command()
-def start_on_status_bar():
+@click.group()
+def main():
     """Don't forget to do your things."""
+
+
+@main.command()
+def status():
+    """Start app on the status bar."""
     from dontforget.default_pipes.gmail_plugin import GMailPlugin
     from dontforget.default_pipes.toggl_plugin import TogglPlugin
 
@@ -121,4 +126,4 @@ def start_on_status_bar():
 
 
 if __name__ == "__main__":
-    start_on_status_bar()
+    main()
