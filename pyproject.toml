@@ -38,6 +38,7 @@ keyring = "*"
 clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develop" }
 
 [tool.poetry.scripts]
+fo = "dontforget.cli:main"
 dontforget = "dontforget.cli:main"
 pipe = "dontforget.pipes:pipe"
 
