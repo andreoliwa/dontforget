@@ -12,18 +12,21 @@ File "~/Library/Caches/pypoetry/virtualenvs/dontforget-KBL7kC6p-py3.7/lib/python
 AttributeError: module 'toggl.utils' has no attribute 'SubCommandsGroup'
 """
 import logging
+import sys
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import click
 import keyring
+from clib.files import fzf
 from rumps import MenuItem
 from toggl.TogglPy import Toggl
 
 from dontforget.app import DontForgetApp
-from dontforget.settings import LOG_LEVEL
+from dontforget.plugins.base import BasePlugin
+from dontforget.settings import LOG_LEVEL, load_config_file
 
-API_TOKEN = "api_token"
+KEYRING_API_TOKEN = "api_token"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
@@ -47,63 +50,75 @@ class TogglMenuItem(MenuItem):
     updated: bool = True
 
 
-class TogglPlugin:
+class TogglPlugin(BasePlugin):
     """Toggl plugin."""
 
-    name = "Toggl"
+    toggl = Toggl()
+    entries: Dict[str, TogglEntry] = {}
+    menu_items: Dict[str, TogglMenuItem] = {}
 
-    def __init__(self, app: DontForgetApp) -> None:
-        self.app = app
-        self.toggl = Toggl()
-        self.entries: Dict[str, TogglEntry] = {}
-        self.menu_items: Dict[str, TogglMenuItem] = {}
+    @property
+    def name(self) -> str:
+        """Plugin name."""
+        return "Toggl"
 
-    def init_app(self, config_list: List[dict]) -> bool:
+    def init_app(self, app: DontForgetApp) -> bool:
         """Init the plugin."""
-        api_token = keyring.get_password(self.name, API_TOKEN)
+        self.app = app
+        if not self.set_api_token():
+            return False
+        return self.create_menu()
+
+    def set_api_token(self):
+        """Set the API token to communicate with the Toggl API."""
+        api_token = keyring.get_password(self.name, KEYRING_API_TOKEN)
         if not api_token:
             message = (
                 "The Toggl API token is not set on the keyring."
-                f" Run this command and paste the token: poetry run keyring set {self.name} {API_TOKEN}"
+                f" Run this command and paste the token: keyring set {self.name} {KEYRING_API_TOKEN}"
             )
             logger.error(message)
             click.secho(message, fg="bright_red")
             return False
         self.toggl.setAPIKey(api_token)
+        return True
 
-        return self.create_menu(config_list)
-
-    def create_menu(self, config_list: List[dict]) -> bool:
+    def create_menu(self) -> bool:
         """Create menu items.
 
         Read items in reversed order because they will be added to the menu always after the main menu.
         """
-        for data in reversed(config_list):
+        self.fetch_entries()
+
+        for entry in self.entries.values():  # type: TogglEntry
+            menu_key = f"{entry.name} ({entry.client}/{entry.project})"
+            menuitem = TogglMenuItem(menu_key, callback=self.entry_clicked)
+            menuitem.entry = entry
+            menuitem.updated = True
+            self.app.menu.insert_after(self.name, menuitem)
+            self.menu_items[menu_key] = menuitem
+        return True
+
+    def fetch_entries(self) -> Dict[str, TogglEntry]:
+        """Fetch client and projects from Toggl entries."""
+        self.entries = {}
+        for data in reversed(self.plugin_config):
             entry = TogglEntry(**data)
-            logger.debug("Toggl entry: %s", entry)
+            logger.debug("Fetching client/project for Toggl entry: %s", entry)
 
             # TODO: this method is completely not optimized; it makes lots of requests and there is no cache
             project_data = self.toggl.getClientProject(entry.client, entry.project)
             entry.project_id = project_data["data"]["id"]
             entry.client_id = project_data["data"]["cid"]
-
-            menu_key = f"{entry.name} ({entry.client}/{entry.project})"
-            menuitem = TogglMenuItem(menu_key, callback=self.start_entry)
-            menuitem.entry = entry
-            menuitem.updated = True
-            self.app.menu.insert_after(self.name, menuitem)
-
             self.entries[entry.name] = entry
-            self.menu_items[menu_key] = menuitem
-        return True
+        return self.entries
 
-    def reload_config(self, config_list: List[dict]) -> bool:
+    def reload_config(self) -> bool:
         """Replace menus when the configuration is reloaded."""
-        self.entries = {}
         for menu in self.menu_items.values():
             menu.updated = False
 
-        rv = self.create_menu(config_list)
+        rv = self.create_menu()
 
         # Remove menu items that were not updated
         old_menus = self.menu_items.copy()
@@ -116,7 +131,37 @@ class TogglPlugin:
 
         return rv
 
-    def start_entry(self, menu: TogglMenuItem):
+    def entry_clicked(self, menu: TogglMenuItem):
         """Callback executed when a menu entry is clicked."""
-        logger.debug("Starting Toggl entry: %s", menu.entry.name)
-        self.toggl.startTimeEntry(menu.entry.name, self.entries[menu.entry.name].project_id)
+        self.track_entry(menu.entry)
+
+    @classmethod
+    def register_cli_commands(cls):
+        """Register CLI commands for this plugin."""
+        return [track]
+
+    def track_entry(self, entry: TogglEntry, echo=False):
+        """Track an entry on Toggl."""
+        msg = f"Starting Toggl entry: {entry.name}"
+        if echo:
+            click.echo(msg)
+        logger.debug(msg)
+        self.toggl.startTimeEntry(entry.name, self.entries[entry.name].project_id)
+
+
+@click.command()
+@click.argument("entry", nargs=-1, required=True)
+def track(entry):
+    """Track your work with Toggl."""
+    joined_text = "".join(entry)
+
+    config_yaml = load_config_file()
+    plugin = TogglPlugin(config_yaml)
+    if not plugin.set_api_token():
+        sys.exit(-1)
+    entries = plugin.fetch_entries()
+    chosen = fzf(list(entries.keys()), query=joined_text)
+    if not chosen:
+        return
+    entry = plugin.entries[chosen]
+    plugin.track_entry(entry, True)

@@ -1,7 +1,12 @@
 """Application settings."""
 import logging
+from pathlib import Path
 
+from appdirs import AppDirs
 from environs import Env
+from ruamel.yaml import YAML
+
+from dontforget.constants import APP_NAME, CONFIG_YAML
 
 env = Env()
 env.read_env()
@@ -36,3 +41,14 @@ HOME_TODOIST_TASK = env("HOME_TODOIST_TASK")
 
 #: List of directories with user-configured pipes
 USER_PIPES_DIR = env.list("USER_PIPES_DIR")
+
+DEFAULT_DIRS = AppDirs(APP_NAME)
+CONFIG_FILE_PATH = Path(DEFAULT_DIRS.user_config_dir) / CONFIG_YAML
+if not CONFIG_FILE_PATH.exists():
+    raise RuntimeError(f"Config file not found: {CONFIG_FILE_PATH}")
+
+
+def load_config_file():
+    """Load the YAML config file."""
+    yaml = YAML()
+    return yaml.load(CONFIG_FILE_PATH)

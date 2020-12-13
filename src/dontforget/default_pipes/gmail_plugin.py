@@ -44,6 +44,7 @@ from googleapiclient.discovery import build
 from dontforget.app import DontForgetApp
 from dontforget.constants import APP_NAME, DELAY, MISFIRE_GRACE_TIME
 from dontforget.generic import UT, parse_interval
+from dontforget.plugins.base import BasePlugin
 from dontforget.settings import LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
@@ -76,26 +77,28 @@ def format_count(threads: int, messages: int) -> str:
     return f"{threads} ({messages})"
 
 
-class GMailPlugin:
+class GMailPlugin(BasePlugin):
     """GMail plugin."""
 
-    name = "GMail"
+    # TODO: self.important: Dict[str, MessageCount] = {}
+    important: Dict[str, List[int]] = {}
 
-    def __init__(self, app: DontForgetApp) -> None:
-        self.app = app
-        # TODO: self.important: Dict[str, MessageCount] = {}
-        self.important: Dict[str, List[int]] = {}
+    @property
+    def name(self) -> str:
+        """Plugin name."""
+        return "GMail"
 
-    def init_app(self, config_list: List[dict]) -> bool:
+    def init_app(self, app: DontForgetApp) -> bool:
         """Add GMail jobs to the background scheduler.
 
         :return: True if all GMail accounts were authenticated with OAuth.
         """
+        self.app = app
         current_host = socket.gethostname()
 
         all_authenticated = True
         # Read items in reversed order because they will be added to the menu always after the "GMail" menu
-        for data in reversed(config_list):
+        for data in reversed(self.plugin_config):
             hosts = data.pop("hosts", None)
             if hosts and current_host not in hosts:
                 logger.debug("%s: Ignoring email check on this host %s", data["email"], current_host)
@@ -110,9 +113,8 @@ class GMailPlugin:
 
         return all_authenticated
 
-    def reload_config(self, config_list: List[dict]) -> bool:
-        """Reload the config file."""
-        # TODO: update jobs with new intervals, trigger email check again
+    def reload_config(self) -> bool:
+        """Update jobs with new intervals, trigger email check again."""  # TODO
         return True
 
     def update_important(self, email: str, threads: int = 0, messages: int = 0, clear: bool = False) -> None:

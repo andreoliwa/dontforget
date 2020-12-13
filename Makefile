@@ -1,6 +1,14 @@
 APP_NAME = dontforget
 BIN_DIR = $(HOME)/.local/bin
 
+build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
+	clear
+	pre-commit run --all-files
+	poetry run python -m pytest
+	poetry run pipe ls
+	poetry run pipe run weekly
+.PHONY: build
+
 help: # Display this help
 	@echo 'Choose one of the following targets:'
 	@egrep '^[a-z0-9 ./-]*:.*#' $(lastword $(MAKEFILE_LIST)) | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
@@ -27,10 +35,7 @@ pre-commit: # Install pre-commit hooks
 	pre-commit gc
 .PHONY: pre-commit
 
-build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
-	clear
-	pre-commit run --all-files
-	poetry run python -m pytest
-	poetry run pipe ls
-	poetry run pipe run weekly
-.PHONY: build
+clib: # Force a reinstall of the clib dependency; use when developing locally.
+	poetry run pip uninstall --yes clib
+	poetry install --no-root
+.PHONY: clib
