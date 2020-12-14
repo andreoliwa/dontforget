@@ -21,17 +21,16 @@ completion: # Install Bash completion
 	mkdir -p ~/.local/share/bash-completion/completions/
 	ln -fs ${PWD}/dontforget-completion.sh ~/.local/share/bash-completion/completions/
 	ls -l ~/.local/share/bash-completion/completions/
-#	ls -l /usr/local/etc/profile.d
 	cat ${PWD}/dontforget-completion.sh
 .PHONY: completion
 
-install: completion # Install the project on ~/.local/bin using pipx
+install: # Install the project on ~/.local/bin using pipx
 ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
 	@exit -1
 endif
 	poetry install
-
+	$(MAKE) completion
 	pipx uninstall dontforget
 	pipx install --verbose .
 .PHONY: install
