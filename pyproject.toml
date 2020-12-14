@@ -34,8 +34,9 @@ google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
 TogglPy = "*"
 keyring = "*"
-#clib = { path = "../python-clib" } # For local development
+#clib = { path = "../python-clib", develop = true }
 clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develop" }
+vcrpy = "*"
 
 [tool.poetry.scripts]
 fo = "dontforget.cli:main"

@@ -2,15 +2,18 @@
 root = true
 
 [*]
-end_of_line = lf
-trim_trailing_whitespace = true
-insert_final_newline = true
+# https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#max_line_length
+# This is not recognized by Visual Studio Code; use .prettierrc.toml instead
+max_line_length = 120
 indent_style = space
 indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
 charset = utf-8
+end_of_line = lf
 
-[*.{bat,cmd,ps1}]
-end_of_line = crlf
-
-[*.{y*ml,js*}]
+[*.{y*ml,js,json,md}]
 indent_size = 2
+
+[Makefile]
+indent_style = tab
