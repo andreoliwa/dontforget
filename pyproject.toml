@@ -15,7 +15,7 @@ memoized-property = "*"
 arrow = "*"
 pendulum = "*"
 marshmallow = "*"
-todoist-python = { git = "https://github.com/andreoliwa/todoist-python.git", branch = "use-environment-markers" }
+todoist-python = "*"
 tapioca-toggl = "*"
 toml = "*"
 environs = "*"
@@ -34,7 +34,7 @@ google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
 TogglPy = "*"
 keyring = "*"
-#clib = { path = "../python-clib" } # For local development
+# clib = { path = "../python-clib" } # For local development
 clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develop" }
 
 [tool.poetry.scripts]

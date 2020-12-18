@@ -1274,21 +1274,14 @@ python-versions = "*"
 
 [[package]]
 name = "todoist-python"
-version = "8.1.2"
-description = ""
+version = "8.1.3"
+description = "todoist-python - The official Todoist Python API library"
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
 
 [package.dependencies]
 requests = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/andreoliwa/todoist-python.git"
-reference = "use-environment-markers"
-resolved_reference = "2580765991a6f2f4ae0dcce3855043dab3f6d2ed"
 
 [[package]]
 name = "togglpy"
@@ -1437,7 +1430,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "58ffc027f3fbbca75873923027b282b0da185e861a1343ee3c8ec9986f997213"
+content-hash = "8567f0ac4577cc5719556863bb61834381b74b0b73f3d283d9e948c75544cb78"
 
 [metadata.files]
 appdirs = [
@@ -2148,7 +2141,10 @@ text-unidecode = [
     {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
     {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
 ]
-todoist-python = []
+todoist-python = [
+    {file = "todoist-python-8.1.3.tar.gz", hash = "sha256:00544a0395510fa8f28a0b9960fed6390396a87ab51a35336ee7b3d1fd74ef45"},
+    {file = "todoist_python-8.1.3-py2.py3-none-any.whl", hash = "sha256:41293b5110420ec4c9a6c4c46b40da6341a17c09840c0c6b624f0cf1d53807db"},
+]
 togglpy = [
     {file = "TogglPy-0.1.1-py3-none-any.whl", hash = "sha256:5ee5ee22cee416ff268ae00fc74db35e49129712a476e37e656844d4bc046302"},
     {file = "TogglPy-0.1.1.tar.gz", hash = "sha256:fda2b4d2508a95f5ec3e86128af8ba0006686b69423824bc4967445776f69811"},
