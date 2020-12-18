@@ -29,6 +29,7 @@ var/
 .installed.cfg
 *.egg
 pip-wheel-metadata/
+*.whl
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

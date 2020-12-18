@@ -1,5 +1,7 @@
 APP_NAME = dontforget
 BIN_DIR = $(HOME)/.local/bin
+SDKROOT = /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk
+CFLAGS = "-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk"
 
 build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
 	clear
@@ -29,7 +31,18 @@ ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
 	@exit -1
 endif
+	# https://stackoverflow.com/questions/65066708/error-installing-pyobjc-on-macos-11-0-big-sur
+	# https://github.com/ronaldoussoren/pyobjc/issues/333
+
+	# SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk pip wheel pyobjc-core
+	# SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk CFLAGS="-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk" pip wheel pyobjc-framework-cocoa
+
+	@echo ${SDKROOT}
+	@echo ${CFLAGS}
+	poetry run pip wheel pyobjc-core pyobjc-framework-cocoa
+	poetry env use python3.9
 	poetry install
+
 	$(MAKE) completion
 	pipx uninstall dontforget
 	pipx install --verbose .
