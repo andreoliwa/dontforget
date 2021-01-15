@@ -48,9 +48,9 @@ endif
 	pipx install --verbose .
 .PHONY: install
 
-update: # Update the project
+poetry: # Update Poetry
 	poetry update
-.PHONY: pre-commit
+.PHONY: poetry
 
 pre-commit: # Install pre-commit hooks
 	pre-commit install --install-hooks

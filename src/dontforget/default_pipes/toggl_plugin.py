@@ -58,15 +58,17 @@ import click
 import keyring
 import vcr
 from clib.files import fzf
+from click import ClickException
 from rumps import MenuItem
 from toggl.TogglPy import Toggl
 from vcr.persisters.filesystem import FilesystemPersister
 
 from dontforget.app import DontForgetApp
 from dontforget.plugins.base import BasePlugin
-from dontforget.settings import LOG_LEVEL, load_config_file
+from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL, load_config_file
 
 KEYRING_API_TOKEN = "api_token"
+CACHE_EXPIRATION_SECONDS = 60 * 60
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
@@ -74,7 +76,6 @@ logger.setLevel(LOG_LEVEL)
 my_vcr = vcr.VCR()
 
 
-# FIXME[AA]: save file on Library/Caches/ dir
 class ExpiredCassettePersister(FilesystemPersister):
     """Expired cassette persister."""
 
@@ -85,7 +86,7 @@ class ExpiredCassettePersister(FilesystemPersister):
         if path.exists():
             file_stat = path.stat()
             delta = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
-            if delta.total_seconds() > 60:
+            if delta.total_seconds() > CACHE_EXPIRATION_SECONDS:
                 raise ValueError("TTL expired, recreating the cassette")
         return super().load_cassette(cassette_path, serializer)
 
@@ -165,7 +166,7 @@ class TogglPlugin(BasePlugin):
             self.menu_items[menu_key] = menuitem
         return True
 
-    @my_vcr.use_cassette()
+    @my_vcr.use_cassette(path=str(Path(DEFAULT_DIRS.user_cache_dir) / "toggl_entries.yaml"))
     def fetch_entries(self) -> Dict[str, TogglEntry]:
         """Fetch client and projects from Toggl entries."""
         self.entries = {}
@@ -217,18 +218,20 @@ class TogglPlugin(BasePlugin):
 
 
 @click.command()
-@click.argument("entry", nargs=-1, required=True)
+@click.argument("entry", nargs=-1)
 def track(entry):
     """Track your work with Toggl."""
-    joined_text = "".join(entry)
+    joined_text = "".join(entry).strip().lower()
 
     config_yaml = load_config_file()
     plugin = TogglPlugin(config_yaml)
     if not plugin.set_api_token():
-        sys.exit(-1)
+        raise ClickException("Failed to set API token")
+
     entries = plugin.fetch_entries()
     chosen = fzf(list(entries.keys()), query=joined_text)
     if not chosen:
-        return
+        raise ClickException("No entry chosen")
+
     entry = plugin.entries[chosen]
     plugin.track_entry(entry, True)
