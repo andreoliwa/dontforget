@@ -10,26 +10,93 @@ Why is it loading the CLI if I'm using the API wrapper?
 File "~/Library/Caches/pypoetry/virtualenvs/dontforget-KBL7kC6p-py3.7/lib/python3.7/site-packages/toggl/cli/commands.py", line 49, in <module>
     @click.group(cls=utils.SubCommandsGroup)
 AttributeError: module 'toggl.utils' has no attribute 'SubCommandsGroup'
+
+Caching attempts:
+
+1. https://github.com/scidam/cachepy (last commit: 27.06.2019)
+   There is a FileCache class, but it doesn't work between executions.
+   It raises UserWarning: The file already exists. Its content will be overwritten.
+
+```python
+from cachepy import FileCache
+
+cached_entries = FileCache("mycache", ttl=600)
+
+
+@cached_entries
+def fetch_entries(self) -> Dict[str, TogglEntry]:
+    pass
+```
+
+2. https://github.com/bofm/python-caching (last commit 03.10.2018)
+   Same problem: cache file is overwritten on every execution
+
+```python
+@Cache(ttl=600, filepath="/tmp/mycache")
+def fetch_entries(self) -> Dict[str, TogglEntry]:
+    pass
+```
+
+Memory-only, no file based cache:
+
+3. https://github.com/tkem/cachetools
+4. https://github.com/dgilland/cacheout
+
+Requests only (this Toggl module uses urllib...):
+
+5. https://github.com/reclosedev/requests-cache
+6. https://github.com/ionrock/cachecontrol
 """
 import logging
 import sys
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional
 
 import click
 import keyring
+import vcr
 from clib.files import fzf
+from click import ClickException
 from rumps import MenuItem
 from toggl.TogglPy import Toggl
+from vcr.persisters.filesystem import FilesystemPersister
 
 from dontforget.app import DontForgetApp
 from dontforget.plugins.base import BasePlugin
-from dontforget.settings import LOG_LEVEL, load_config_file
+from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL, load_config_file
 
 KEYRING_API_TOKEN = "api_token"
+CACHE_EXPIRATION_SECONDS = 60 * 60
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
+
+my_vcr = vcr.VCR()
+
+
+class ExpiredCassettePersister(FilesystemPersister):
+    """Expired cassette persister."""
+
+    @classmethod
+    def load_cassette(cls, cassette_path, serializer):
+        """Load the cassette if it's within the expected TTL."""
+        path = Path(cassette_path)
+        if path.exists():
+            file_stat = path.stat()
+            delta = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
+            if delta.total_seconds() > CACHE_EXPIRATION_SECONDS:
+                raise ValueError("TTL expired, recreating the cassette")
+        return super().load_cassette(cassette_path, serializer)
+
+    @classmethod
+    def save_cassette(cls, cassette_path, cassette_dict, serializer):
+        """Save the cassette."""
+        super().save_cassette(cassette_path, cassette_dict, serializer)
+
+
+my_vcr.register_persister(ExpiredCassettePersister)
 
 
 @dataclass
@@ -99,6 +166,7 @@ class TogglPlugin(BasePlugin):
             self.menu_items[menu_key] = menuitem
         return True
 
+    @my_vcr.use_cassette(path=str(Path(DEFAULT_DIRS.user_cache_dir) / "toggl_entries.yaml"))
     def fetch_entries(self) -> Dict[str, TogglEntry]:
         """Fetch client and projects from Toggl entries."""
         self.entries = {}
@@ -150,18 +218,20 @@ class TogglPlugin(BasePlugin):
 
 
 @click.command()
-@click.argument("entry", nargs=-1, required=True)
+@click.argument("entry", nargs=-1)
 def track(entry):
     """Track your work with Toggl."""
-    joined_text = "".join(entry)
+    joined_text = "".join(entry).strip().lower()
 
     config_yaml = load_config_file()
     plugin = TogglPlugin(config_yaml)
     if not plugin.set_api_token():
-        sys.exit(-1)
+        raise ClickException("Failed to set API token")
+
     entries = plugin.fetch_entries()
     chosen = fzf(list(entries.keys()), query=joined_text)
     if not chosen:
-        return
+        raise ClickException("No entry chosen")
+
     entry = plugin.entries[chosen]
     plugin.track_entry(entry, True)

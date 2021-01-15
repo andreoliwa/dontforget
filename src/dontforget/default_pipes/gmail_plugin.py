@@ -36,7 +36,6 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 import rumps
-from appdirs import AppDirs
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -45,7 +44,7 @@ from dontforget.app import DontForgetApp
 from dontforget.constants import APP_NAME, DELAY, MISFIRE_GRACE_TIME
 from dontforget.generic import UT, parse_interval
 from dontforget.plugins.base import BasePlugin
-from dontforget.settings import LOG_LEVEL
+from dontforget.settings import LOG_LEVEL, DEFAULT_DIRS
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
 GMAIL_BASE_URL = "https://mail.google.com/"
@@ -209,7 +208,7 @@ class GMailAPI:
 
     def __init__(self, email: str) -> None:
         self.email = email.strip()
-        config_dir = Path(AppDirs(APP_NAME).user_config_dir)
+        config_dir = Path(DEFAULT_DIRS.user_config_dir)
         self.token_file = config_dir / f"{self.email}-token.pickle"
         self.credentials_file = config_dir / f"{self.email}-credentials.json"
 
