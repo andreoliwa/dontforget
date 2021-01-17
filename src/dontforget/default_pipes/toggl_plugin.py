@@ -48,7 +48,6 @@ Requests only (this Toggl module uses urllib...):
 6. https://github.com/ionrock/cachecontrol
 """
 import logging
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -56,6 +55,7 @@ from typing import Dict, Optional
 
 import click
 import keyring
+import maya
 import vcr
 from clib.files import fzf
 from click import ClickException
@@ -206,7 +206,7 @@ class TogglPlugin(BasePlugin):
     @classmethod
     def register_cli_commands(cls):
         """Register CLI commands for this plugin."""
-        return [track]
+        return [track, what_i_did]
 
     def track_entry(self, entry: TogglEntry, echo=False):
         """Track an entry on Toggl."""
@@ -235,3 +235,12 @@ def track(entry):
 
     entry = plugin.entries[chosen]
     plugin.track_entry(entry, True)
+
+
+@click.command()
+@click.argument("date", nargs=1)
+@click.argument("report", nargs=1)
+def what_i_did(date, report):
+    """Display a report of Toggl entries since the date."""
+    click.echo(maya.when(date).date)
+    click.echo(report)
