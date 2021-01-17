@@ -216,6 +216,14 @@ class TogglPlugin(BasePlugin):
         logger.debug(msg)
         self.toggl.startTimeEntry(entry.name, self.entries[entry.name].project_id)
 
+    @classmethod
+    def init_cli(cls):
+        config_yaml = load_config_file()
+        plugin = cls(config_yaml)
+        if not plugin.set_api_token():
+            raise ClickException("Failed to set API token")
+        return plugin
+
 
 @click.command()
 @click.argument("entry", nargs=-1)
@@ -223,11 +231,7 @@ def track(entry):
     """Track your work with Toggl."""
     joined_text = "".join(entry).strip().lower()
 
-    config_yaml = load_config_file()
-    plugin = TogglPlugin(config_yaml)
-    if not plugin.set_api_token():
-        raise ClickException("Failed to set API token")
-
+    plugin = TogglPlugin.init_cli()
     entries = plugin.fetch_entries()
     chosen = fzf(list(entries.keys()), query=joined_text)
     if not chosen:
@@ -242,5 +246,7 @@ def track(entry):
 @click.argument("report", nargs=1)
 def what_i_did(date, report):
     """Display a report of Toggl entries since the date."""
+    plugin = TogglPlugin.init_cli()
+
     click.echo(maya.when(date).date)
     click.echo(report)
