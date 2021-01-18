@@ -24,7 +24,7 @@ cached_entries = FileCache("mycache", ttl=600)
 
 
 @cached_entries
-def fetch_entries(self) -> Dict[str, TogglEntry]:
+def fetch_clients_projects(self) -> Dict[str, TogglEntry]:
     pass
 ```
 
@@ -33,7 +33,7 @@ def fetch_entries(self) -> Dict[str, TogglEntry]:
 
 ```python
 @Cache(ttl=600, filepath="/tmp/mycache")
-def fetch_entries(self) -> Dict[str, TogglEntry]:
+def fetch_clients_projects(self) -> Dict[str, TogglEntry]:
     pass
 ```
 
@@ -51,7 +51,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import click
 import keyring
@@ -59,8 +59,11 @@ import maya
 import vcr
 from clib.files import fzf
 from click import ClickException
+from iterfzf import BUNDLED_EXECUTABLE, EXECUTABLE_NAME, iterfzf
+from joblib import Memory
 from rumps import MenuItem
-from toggl.TogglPy import Toggl
+# FIXME[AA]: # from toggl.TogglPy import Toggl
+from toggl import api
 from vcr.persisters.filesystem import FilesystemPersister
 
 from dontforget.app import DontForgetApp
@@ -68,12 +71,14 @@ from dontforget.plugins.base import BasePlugin
 from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL, load_config_file
 
 KEYRING_API_TOKEN = "api_token"
+CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
 CACHE_EXPIRATION_SECONDS = 60 * 60
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 
 my_vcr = vcr.VCR()
+memory = Memory(CACHE_DIR / "joblib", verbose=0)
 
 
 class ExpiredCassettePersister(FilesystemPersister):
@@ -110,6 +115,23 @@ class TogglEntry:
     project_id: Optional[int] = None
 
 
+@dataclass
+class ClientData:
+    """A client on Toggl."""
+
+    id: int
+    name: str
+
+
+@dataclass
+class ProjectData:
+    """A project on Toggl."""
+
+    id: int
+    name: str
+    client: ClientData
+
+
 class TogglMenuItem(MenuItem):
     """A Toggl menu item."""
 
@@ -120,7 +142,7 @@ class TogglMenuItem(MenuItem):
 class TogglPlugin(BasePlugin):
     """Toggl plugin."""
 
-    toggl = Toggl()
+    # FIXME[AA]: # toggl = Toggl()
     entries: Dict[str, TogglEntry] = {}
     menu_items: Dict[str, TogglMenuItem] = {}
 
@@ -147,7 +169,7 @@ class TogglPlugin(BasePlugin):
             logger.error(message)
             click.secho(message, fg="bright_red")
             return False
-        self.toggl.setAPIKey(api_token)
+        # FIXME[AA]: # self.toggl.setAPIKey(api_token)
         return True
 
     def create_menu(self) -> bool:
@@ -155,7 +177,8 @@ class TogglPlugin(BasePlugin):
 
         Read items in reversed order because they will be added to the menu always after the main menu.
         """
-        self.fetch_entries()
+        return  # FIXME[AA]:
+        self.fetch_clients_projects()
 
         for entry in self.entries.values():  # type: TogglEntry
             menu_key = f"{entry.name} ({entry.client}/{entry.project})"
@@ -166,8 +189,8 @@ class TogglPlugin(BasePlugin):
             self.menu_items[menu_key] = menuitem
         return True
 
-    @my_vcr.use_cassette(path=str(Path(DEFAULT_DIRS.user_cache_dir) / "toggl_entries.yaml"))
-    def fetch_entries(self) -> Dict[str, TogglEntry]:
+    @my_vcr.use_cassette(path=str(CACHE_DIR / "toggl_clients_projects.yaml"))
+    def fetch_clients_projects(self) -> Dict[str, TogglEntry]:
         """Fetch client and projects from Toggl entries."""
         self.entries = {}
         for data in reversed(self.plugin_config):
@@ -232,7 +255,7 @@ def track(entry):
     joined_text = "".join(entry).strip().lower()
 
     plugin = TogglPlugin.init_cli()
-    entries = plugin.fetch_entries()
+    entries = plugin.fetch_clients_projects()
     chosen = fzf(list(entries.keys()), query=joined_text)
     if not chosen:
         raise ClickException("No entry chosen")
@@ -241,12 +264,48 @@ def track(entry):
     plugin.track_entry(entry, True)
 
 
+@memory.cache
+def fetch_all_toggl_clients() -> Dict[int, ClientData]:
+    return {c.id: ClientData(c.id, c.name) for c in api.Client.objects.all()}
+
+
+@memory.cache
+def fetch_all_toggl_projects() -> Dict[int, ProjectData]:
+    all_clients = fetch_all_toggl_clients()
+    return {p.id: ProjectData(p.id, p.name, all_clients[p.cid]) for p in api.Project.objects.all()}
+
+
 @click.command()
 @click.argument("date", nargs=1)
 @click.argument("report", nargs=1)
 def what_i_did(date, report):
     """Display a report of Toggl entries since the date."""
-    plugin = TogglPlugin.init_cli()
+    config_yaml = load_config_file()
 
-    click.echo(maya.when(date).date)
-    click.echo(report)
+    report_config = config_yaml["toggl"]["what_i_did"][report]
+
+    expected_client_names = set(report_config["clients"])
+    chosen_client_ids = {
+        client.id for client in fetch_all_toggl_clients().values() if client.name in expected_client_names
+    }
+
+    all_projects = fetch_all_toggl_projects()
+    exclude_project_names = report_config["exclude_projects"]
+    chosen_project_ids = {project.id for project in all_projects.values() if project.client.id in chosen_client_ids}
+
+    start_date = maya.when(date).datetime()
+    lines = set()
+    for entry in api.TimeEntry.objects.filter(start=start_date):
+        if entry.pid not in chosen_project_ids:
+            continue
+        entry_project = all_projects[entry.pid]
+        if entry_project.name in exclude_project_names:
+            continue
+        lines.add(f"- {all_projects[entry.pid].name}: {entry.description}")
+
+    for line in sorted(lines):
+        click.echo(line)
+
+
+if __name__ == "__main__":
+    what_i_did()
