@@ -1,6 +1,6 @@
 """Base plugin."""
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
     from dontforget.app import DontForgetApp
@@ -21,7 +21,7 @@ class BasePlugin(ABC):
         self.config_yaml = config_yaml
 
     @property
-    def plugin_config(self) -> List[Dict[str, Any]]:
+    def plugin_config(self) -> Any:
         """Only the plugin configuration from the YAML file."""
         return self.config_yaml[self.name.lower()]
 
