@@ -4,20 +4,17 @@ Followed some suggestions from https://github.com/toggl/toggl_api_docs#python.
 """
 import logging
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Union
 
 import click
 import keyring
 import maya
-import vcr
 from clib.files import fzf
 from click import ClickException
 from joblib import Memory
 from rumps import MenuItem
 from toggl import api
-from vcr.persisters.filesystem import FilesystemPersister
 
 from dontforget.app import DontForgetApp
 from dontforget.plugins.base import BasePlugin
@@ -30,31 +27,7 @@ CACHE_EXPIRATION_SECONDS = 60 * 60
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 
-my_vcr = vcr.VCR()
 memory = Memory(CACHE_DIR, verbose=0)
-
-
-class ExpiredCassettePersister(FilesystemPersister):
-    """Expired cassette persister."""
-
-    @classmethod
-    def load_cassette(cls, cassette_path, serializer):
-        """Load the cassette if it's within the expected TTL."""
-        path = Path(cassette_path)
-        if path.exists():
-            file_stat = path.stat()
-            delta = datetime.now() - datetime.fromtimestamp(file_stat.st_mtime)
-            if delta.total_seconds() > CACHE_EXPIRATION_SECONDS:
-                raise ValueError("TTL expired, recreating the cassette")
-        return super().load_cassette(cassette_path, serializer)
-
-    @classmethod
-    def save_cassette(cls, cassette_path, cassette_dict, serializer):
-        """Save the cassette."""
-        super().save_cassette(cassette_path, cassette_dict, serializer)
-
-
-my_vcr.register_persister(ExpiredCassettePersister)
 
 
 @dataclass

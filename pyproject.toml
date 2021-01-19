@@ -35,7 +35,6 @@ google-auth-oauthlib = "*"
 keyring = "*"
 #clib = { path = "../python-clib", develop = true }
 clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develop" }
-vcrpy = "*"
 maya = "*"
 joblib = "*"
 
