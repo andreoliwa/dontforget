@@ -1,16 +1,24 @@
 """Command-line."""
 import sys
+from pathlib import Path
 
 import click
 import rumps
+from joblib import Memory
 
 from dontforget.app import DontForgetApp
-from dontforget.settings import DEBUG, load_config_file
+from dontforget.settings import DEBUG, DEFAULT_DIRS, load_config_file
+
+CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
+JOBLIB_MEMORY = Memory(CACHE_DIR)  # , verbose=0
 
 
 @click.group()
-def main():
+@click.option("--clear-cache", "-c", is_flag=True, default=False, help="Clear the cache before starting")
+def main(clear_cache):
     """Don't forget to do your things."""
+    if clear_cache:
+        JOBLIB_MEMORY.clear()
 
 
 @main.command()

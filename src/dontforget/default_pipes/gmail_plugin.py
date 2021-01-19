@@ -41,10 +41,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 from dontforget.app import DontForgetApp
-from dontforget.constants import APP_NAME, DELAY, MISFIRE_GRACE_TIME
+from dontforget.constants import DELAY, MISFIRE_GRACE_TIME
 from dontforget.generic import UT, parse_interval
 from dontforget.plugins.base import BasePlugin
-from dontforget.settings import LOG_LEVEL, DEFAULT_DIRS
+from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
 GMAIL_BASE_URL = "https://mail.google.com/"
