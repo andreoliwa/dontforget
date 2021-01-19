@@ -1,10 +1,10 @@
 """Toggl plugin.
 
-Followed some suggestions from https://github.com/toggl/toggl_api_docs#python.
+* https://github.com/toggl/toggl_api_docs#python
+* https://github.com/AuHau/toggl-cli/blob/master/toggl/api/models.py
 """
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Dict, Optional, Union
 
 import click
@@ -12,22 +12,18 @@ import keyring
 import maya
 from clib.files import fzf
 from click import ClickException
-from joblib import Memory
 from rumps import MenuItem
 from toggl import api
 
 from dontforget.app import DontForgetApp
+from dontforget.cli import JOBLIB_MEMORY
 from dontforget.plugins.base import BasePlugin
-from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL, load_config_file
+from dontforget.settings import LOG_LEVEL, load_config_file
 
 KEYRING_API_TOKEN = "api_token"
-CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
-CACHE_EXPIRATION_SECONDS = 60 * 60
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
-
-memory = Memory(CACHE_DIR, verbose=0)
 
 
 @dataclass
@@ -71,7 +67,7 @@ class TogglMenuItem(MenuItem):
     updated: bool = True
 
 
-@memory.cache
+@JOBLIB_MEMORY.cache
 def fetch_all_clients() -> ClientStore:
     """Cache all Toggl clients."""
     rv = {c.id: ClientDC(c.id, c.name) for c in api.Client.objects.all()}
@@ -79,7 +75,7 @@ def fetch_all_clients() -> ClientStore:
     return rv
 
 
-@memory.cache
+@JOBLIB_MEMORY.cache
 def fetch_all_projects() -> ProjectStore:
     """Cache all Toggl projects."""
     all_clients = fetch_all_clients()
