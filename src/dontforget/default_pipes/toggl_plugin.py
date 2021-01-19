@@ -195,8 +195,7 @@ class TogglPlugin(BasePlugin):
         if echo:
             click.echo(msg)
         logger.debug(msg)
-        # FIXME[AA]:
-        # self.toggl.startTimeEntry(entry.name, self.shortcuts[entry.name].project_id)
+        api.TimeEntry.start_and_save(description=entry.name, pid=self.shortcuts[entry.name].project_id)
 
 
 @click.command()
