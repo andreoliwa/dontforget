@@ -296,8 +296,6 @@ class GMailJob:
     """A job to check email on GMail."""
 
     # TODO: turn this into a source... the "source" concept should be revamped and cleaned.
-    #  So many things have to be cleaned/redesigned in this project... it is currently a *huge* pile of mess.
-    #  Flask/Docker/Telegram/PyObjC... they are either not needed anymore or they need refactoring to be used again.
 
     def __init__(
         self,

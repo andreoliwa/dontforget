@@ -4,7 +4,7 @@ line-length = 120
 [tool.poetry]
 name = "dontforget"
 version = "0.1.0"
-description = "Don't forget to complete your tasks, using Todoist, Toggle and Node-RED integrations"
+description = "Don't forget to do your chores (using Gmail, Toggl and more tools to come)"
 authors = ["W. Augusto Andreoli <andreoliwa@gmail.com>"]
 
 [tool.poetry.dependencies]
@@ -12,7 +12,7 @@ python = "^3.7"
 jinja2 = "*"
 click = "*"
 memoized-property = "*"
-arrow = "*"
+arrow = "*"  # TODO: replace by pendulum
 pendulum = "*"
 marshmallow = "*"
 todoist-python = "*"

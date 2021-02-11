@@ -1,6 +1,6 @@
 # Don't Forget
 
-Don't forget to complete your tasks, using Todoist, Toggle and Node-RED integrations.
+Don't forget to do your chores (using Gmail, Toggl and more tools to come).
 
 To install the script:
 

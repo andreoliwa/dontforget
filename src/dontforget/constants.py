@@ -1,14 +1,6 @@
 """Constants."""
-APP_NAME = "dontforget"
+PROJECT_NAME = "dontforget"
 CONFIG_YAML = "config.yaml"
-
-DEVELOPMENT = "development"
-
-START_MODE_FLASK = "flask"
-START_MODE_DOCKER = "docker"
-
-FLASK_COMMAND = "flask run --port 8008"
-DOCKER_COMMAND = "docker-compose up --build dontforget"
 
 DEFAULT_PIPES_DIR_NAME = "default_pipes"
 

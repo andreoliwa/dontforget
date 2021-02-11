@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pluginbase import PluginBase
 from rumps import MenuItem
 
-from dontforget.constants import APP_NAME, DEFAULT_PIPES_DIR_NAME
+from dontforget.constants import DEFAULT_PIPES_DIR_NAME, PROJECT_NAME
 from dontforget.generic import UT
 from dontforget.plugins.base import BasePlugin
 from dontforget.settings import CONFIG_FILE_PATH, DEFAULT_DIRS, LOG_LEVEL, load_config_file
@@ -48,7 +48,7 @@ class DontForgetApp(rumps.App):
 
         Preferences = "Preferences..."
         ReloadConfigFile = "Reload config file"
-        Quit = f"Quit {APP_NAME}"
+        Quit = f"Quit {PROJECT_NAME}"
 
     def __init__(self):
         super(DontForgetApp, self).__init__(self.DEFAULT_TITLE, quit_button=self.Menu.Quit.value)
