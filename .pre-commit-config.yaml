@@ -34,7 +34,7 @@ repos:
       - id: python-no-log-warn
       - id: rst-backticks
   - repo: https://github.com/andreoliwa/nitpick
-    rev: v0.23.1
+    rev: v0.26.0
     hooks:
       - id: nitpick
   - repo: https://gitlab.com/pycqa/flake8
