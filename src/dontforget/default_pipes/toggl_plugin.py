@@ -231,7 +231,11 @@ def what_i_did(date, report):
     start_date = maya.when(date).datetime()
     lines = set()
     for entry in api.TimeEntry.objects.filter(start=start_date):
-        if entry.pid not in chosen_project_ids:
+        try:
+            if entry.pid not in chosen_project_ids:
+                continue
+        except AttributeError as err:
+            logger.error(f"This entry has no project: {entry}")
             continue
         lines.add(f"- {plugin.project_store[entry.pid].name}: {entry.description}")
 
