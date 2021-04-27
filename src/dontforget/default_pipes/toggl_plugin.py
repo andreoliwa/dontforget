@@ -234,7 +234,7 @@ def what_i_did(date, report):
         try:
             if entry.pid not in chosen_project_ids:
                 continue
-        except AttributeError as err:
+        except AttributeError:
             logger.error(f"This entry has no project: {entry}")
             continue
         lines.add(f"- {plugin.project_store[entry.pid].name}: {entry.description}")
