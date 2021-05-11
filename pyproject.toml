@@ -38,6 +38,10 @@ clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develo
 maya = "*"
 joblib = "*"
 
+[tool.poetry.dependencies.pylint]
+optional = true
+version = "*"
+
 [tool.poetry.scripts]
 fo = "dontforget.cli:main"
 dontforget = "dontforget.cli:main"
@@ -54,6 +58,9 @@ pylint = "*"
 ipython = "*"
 ipdb = "*"
 
+
+[tool.poetry.extras]
+lint = ["pylint"]
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -2,8 +2,8 @@ _dontforget_completion() {
     local IFS=$'
 '
     COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
-                    COMP_CWORD=$COMP_CWORD \
-                    _DONTFORGET_COMPLETE=complete $1 ) )
+                   COMP_CWORD=$COMP_CWORD \
+                   _DONTFORGET_COMPLETE=complete $1 ) )
     return 0
 }
 
@@ -23,8 +23,8 @@ _fo_completion() {
     local IFS=$'
 '
     COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
-                    COMP_CWORD=$COMP_CWORD \
-                    _FO_COMPLETE=complete $1 ) )
+                   COMP_CWORD=$COMP_CWORD \
+                   _FO_COMPLETE=complete $1 ) )
     return 0
 }
 
