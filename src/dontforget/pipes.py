@@ -15,7 +15,6 @@ from autorepr import autorepr
 from jinja2 import StrictUndefined, Template
 from memoized_property import memoized_property
 
-from dontforget.app import load_plugins
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, UNIQUE_SEPARATOR
 from dontforget.generic import (
     SingletonMixin,
@@ -298,6 +297,8 @@ class BaseTarget(metaclass=abc.ABCMeta):
 @click.group()
 def pipe():
     """Pipes that pull data from a source and push it to a target."""
+    from dontforget.app import load_plugins
+
     load_plugins()
 
 

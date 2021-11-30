@@ -35,7 +35,7 @@ endif
 	poetry install
 
 	$(MAKE) completion
-	pipx uninstall dontforget
+	-pipx uninstall dontforget
 	pipx install --verbose .
 .PHONY: install
 

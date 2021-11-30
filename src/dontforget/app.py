@@ -1,8 +1,10 @@
 """The app module, containing the app factory function."""
 import logging
+from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
 from subprocess import run
+from typing import Any, Dict
 
 import rumps
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -11,7 +13,6 @@ from rumps import MenuItem
 
 from dontforget.constants import DEFAULT_PIPES_DIR_NAME, PROJECT_NAME
 from dontforget.generic import UT
-from dontforget.plugins.base import BasePlugin
 from dontforget.settings import CONFIG_FILE_PATH, DEFAULT_DIRS, LOG_LEVEL, load_config_file
 
 log_file = Path(DEFAULT_DIRS.user_log_dir) / "app.log"
@@ -80,3 +81,33 @@ class DontForgetApp(rumps.App):
         self.scheduler.start()
         self.scheduler.print_jobs(out=log_file.open("a"))
         return True
+
+
+class BasePlugin(ABC):
+    """Base class for plugins."""
+
+    app: "DontForgetApp"
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Plugin name."""
+        return ""
+
+    def __init__(self, config_yaml: Dict[str, Any]) -> None:
+        self.config_yaml = config_yaml
+
+    @property
+    def plugin_config(self) -> Any:
+        """Only the plugin configuration from the YAML file."""
+        return self.config_yaml[self.name.lower()]
+
+    @abstractmethod
+    def init_app(self, app: "DontForgetApp") -> bool:
+        """Init the plugin with application info."""
+        pass
+
+    @abstractmethod
+    def reload_config(self) -> bool:
+        """Actions to perform when the YAML config is reloaded."""
+        pass

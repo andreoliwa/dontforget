@@ -15,9 +15,8 @@ from click import ClickException
 from rumps import MenuItem
 from toggl import api
 
-from dontforget.app import DontForgetApp
+from dontforget.app import BasePlugin, DontForgetApp
 from dontforget.cli import JOBLIB_MEMORY
-from dontforget.plugins.base import BasePlugin
 from dontforget.settings import LOG_LEVEL, load_config_file
 
 KEYRING_API_TOKEN = "api_token"
