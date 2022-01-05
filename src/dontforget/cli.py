@@ -25,7 +25,6 @@ def main(clear_cache):
 def menu():
     """Show the app menu on the status bar."""
     from dontforget.default_pipes.gmail_plugin import GMailPlugin
-    from dontforget.default_pipes.toggl_plugin import TogglPlugin
 
     if DEBUG:
         rumps.debug_mode(True)
@@ -33,7 +32,7 @@ def menu():
     app = DontForgetApp()
     config_yaml = load_config_file()
 
-    for plugin_class in (GMailPlugin, TogglPlugin):
+    for plugin_class in (GMailPlugin,):  # FIXME: TogglPlugin):
         plugin = plugin_class(config_yaml)
         app.plugins.append(plugin)
 

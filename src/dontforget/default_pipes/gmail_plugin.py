@@ -24,7 +24,6 @@ Old format documentation:
 https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/index.html
 """
 import logging
-import pickle
 import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -37,6 +36,7 @@ from typing import Dict, List, Optional, Tuple
 import click
 import rumps
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
@@ -46,6 +46,7 @@ from dontforget.generic import UT, parse_interval
 from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL
 
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
+CONSOLE_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
 GMAIL_BASE_URL = "https://mail.google.com/"
 CHECK_NOW_LAST_CHECK = "Check now (last check: "
 
@@ -208,7 +209,7 @@ class GMailAPI:
     def __init__(self, email: str) -> None:
         self.email = email.strip()
         config_dir = Path(DEFAULT_DIRS.user_config_dir)
-        self.token_file = config_dir / f"{self.email}-token.pickle"
+        self.token_file = config_dir / f"{self.email}-token.json"
         self.credentials_file = config_dir / f"{self.email}-credentials.json"
 
         self.service = None
@@ -222,32 +223,34 @@ class GMailAPI:
         """
         if not self.credentials_file.exists():
             click.secho(f"Credential file not found for {self.email}.", fg="bright_red")
-            click.echo("Click on the 'Enable the GMail API' button and save the JSON file as ", nl=False)
+            click.echo("Follow the steps and save the OAuth 2.0 Client-ID JSON file as ", nl=False)
             click.secho(str(self.credentials_file), fg="green")
 
             # Open the URL on the browser
-            run(["open", f"{PYTHON_QUICKSTART_URL}?email={self.email}"], check=False)
+            run(["open", f"{PYTHON_QUICKSTART_URL}?for_finickyjs={self.email}"], check=False)
+            run(["open", f"{CONSOLE_CREDENTIALS_URL}?for_finickyjs={self.email}"], check=False)
 
             # Open the folder on Finder
             run(["open", str(self.credentials_file.parent)], check=False)
             return False
 
         creds = None
+        # The file token.json stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
         if self.token_file.exists():
-            creds = pickle.load(self.token_file.open("rb"))
-
+            creds = Credentials.from_authorized_user_file(str(self.token_file), SCOPES)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(self.credentials_file, SCOPES)
-                creds = flow.run_local_server(port=0, _dummy=self.email)
-
+                flow = InstalledAppFlow.from_client_secrets_file(str(self.credentials_file), SCOPES)
+                creds = flow.run_local_server(port=0, for_finickyjs=self.email)
             # Save the credentials for the next run
-            pickle.dump(creds, self.token_file.open("wb"))
+            self.token_file.write_text(creds.to_json())
 
-        self.service = build("gmail", "v1", credentials=creds, cache_discovery=False)
+        self.service = build("gmail", "v1", credentials=creds)
         return True
 
     def fetch_labels(self) -> bool:
