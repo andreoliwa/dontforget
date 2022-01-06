@@ -19,7 +19,6 @@ help: # Display this help
 # https://click.palletsprojects.com/en/7.x/bashcomplete/#activation-script
 completion: # Install Bash completion
 	$(shell _DONTFORGET_COMPLETE=source_bash poetry run dontforget > dontforget-completion.sh)
-	$(shell _FO_COMPLETE=source_bash poetry run fo >> dontforget-completion.sh)
 	mkdir -p ~/.local/share/bash-completion/completions/
 	ln -fs ${PWD}/dontforget-completion.sh ~/.local/share/bash-completion/completions/
 	ls -l ~/.local/share/bash-completion/completions/

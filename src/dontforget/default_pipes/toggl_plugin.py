@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Union
 
 import click
-import keyring
 import maya
 from clib.files import fzf
 from click import ClickException
@@ -17,9 +16,7 @@ from toggl import api
 
 from dontforget.app import BasePlugin, DontForgetApp
 from dontforget.cli import JOBLIB_MEMORY
-from dontforget.settings import LOG_LEVEL, load_config_file
-
-KEYRING_API_TOKEN = "api_token"
+from dontforget.settings import LOG_LEVEL, TOGGL_API_TOKEN, load_config_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
@@ -110,12 +107,9 @@ class TogglPlugin(BasePlugin):
 
     def set_api_token(self):
         """Set the API token to communicate with the Toggl API."""
-        api_token = keyring.get_password(self.name, KEYRING_API_TOKEN)
+        api_token = TOGGL_API_TOKEN
         if not api_token:
-            message = (
-                "The Toggl API token is not set on the keyring."
-                f" Run this command and paste the token: keyring set {self.name} {KEYRING_API_TOKEN}"
-            )
+            message = "The Toggl API token is not set on the environment variable TOGGL_API_TOKEN."
             logger.error(message)
             click.secho(message, fg="bright_red")
             return False

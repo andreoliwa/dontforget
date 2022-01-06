@@ -32,7 +32,6 @@ appdirs = "*"
 google-api-python-client = "*"
 google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
-keyring = "*"
 #clib = { path = "../python-clib", develop = true }
 clib = { git = "https://github.com/andreoliwa/python-clib.git", branch = "develop" }
 maya = "*"
@@ -43,7 +42,6 @@ optional = true
 version = "*"
 
 [tool.poetry.scripts]
-fo = "dontforget.cli:main"
 dontforget = "dontforget.cli:main"
 pipe = "dontforget.pipes:pipe"
 
