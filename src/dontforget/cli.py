@@ -1,12 +1,14 @@
 """Command-line."""
 import sys
 from pathlib import Path
+from typing import List, Tuple
 
 import click
 import rumps
 from joblib import Memory
 
 from dontforget.app import DontForgetApp
+from dontforget.pipes import PIPE_CONFIG, Pipe, PipeType
 from dontforget.settings import DEBUG, DEFAULT_DIRS, load_config_file
 
 CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
@@ -56,3 +58,36 @@ def register_plugin_commands():
 
 
 register_plugin_commands()
+
+
+@main.group()
+def pipe():
+    """Pipes that pull data from a source and push it to a target."""
+    from dontforget.app import load_plugins
+
+    load_plugins()
+
+
+@pipe.command()
+@click.option("--all", "-a", "which", flag_value=PipeType.ALL, default=True, help="All pipes")
+@click.option("--default", "-d", "which", flag_value=PipeType.DEFAULT, help="Default pipes")
+@click.option("--user", "-u", "which", flag_value=PipeType.USER, help="User pipes")
+def ls(which: PipeType):
+    """List default and user pipes."""
+    if which == PipeType.DEFAULT or which == PipeType.ALL:
+        PIPE_CONFIG.echo("Default pipes", True)
+    if which == PipeType.USER or which == PipeType.ALL:
+        PIPE_CONFIG.echo("User pipes", False)
+
+
+@pipe.command()
+@click.argument("partial_names", nargs=-1)
+def run(partial_names: Tuple[str, ...]):
+    """Run the chosen pipes."""
+    chosen_pipes: List[Pipe] = []
+    for partial_name in partial_names:
+        chosen_pipes.extend(PIPE_CONFIG.get_pipes(partial_name))
+    if not chosen_pipes:
+        chosen_pipes = PIPE_CONFIG.user_pipes
+    for chosen_pipe in sorted(chosen_pipes):
+        chosen_pipe.run()
