@@ -43,7 +43,6 @@ version = "*"
 
 [tool.poetry.scripts]
 dontforget = "dontforget.cli:main"
-pipe = "dontforget.pipes:pipe"
 
 [tool.poetry.dev-dependencies]
 faker = "*"

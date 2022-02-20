@@ -16,15 +16,6 @@ help: # Display this help
 	@egrep '^[a-z0-9 ./-]*:.*#' $(lastword $(MAKEFILE_LIST)) | sed -E -e 's/:.+# */@ /g' -e 's/ .+@/@/g' | sort | awk -F@ '{printf "  \033[1;34m%-10s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
-# https://click.palletsprojects.com/en/7.x/bashcomplete/#activation-script
-completion: # Install Bash completion
-	$(shell _DONTFORGET_COMPLETE=source_bash poetry run dontforget > dontforget-completion.sh)
-	mkdir -p ~/.local/share/bash-completion/completions/
-	ln -fs ${PWD}/dontforget-completion.sh ~/.local/share/bash-completion/completions/
-	ls -l ~/.local/share/bash-completion/completions/
-	cat ${PWD}/dontforget-completion.sh
-.PHONY: completion
-
 install: # Install the project on ~/.local/bin using pipx
 ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
@@ -33,7 +24,6 @@ endif
 	poetry env use python3.9
 	poetry install
 
-	$(MAKE) completion
 	-pipx uninstall dontforget
 	pipx install --verbose -e .
 .PHONY: install

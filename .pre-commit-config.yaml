@@ -11,6 +11,7 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
+        args: [--py39-plus]
   - repo: https://github.com/psf/black
     rev: 21.12b0
     hooks:
@@ -20,7 +21,7 @@ repos:
     rev: v1.12.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==21.5b2]
+        additional_dependencies: [black==21.12b0]
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
