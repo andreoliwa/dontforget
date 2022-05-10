@@ -230,7 +230,7 @@ def what_i_did(date, report):
         except AttributeError:
             logger.error(f"This entry has no project: {entry}")
             continue
-        lines.add(f"- {plugin.project_store[entry.pid].name}: {entry.description}")
+        lines.add(f"  - {plugin.project_store[entry.pid].name}: {entry.description}")
 
     for line in sorted(lines):
         click.echo(line)
