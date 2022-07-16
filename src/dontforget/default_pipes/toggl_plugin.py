@@ -5,7 +5,7 @@
 """
 import logging
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import click
 import maya
@@ -15,8 +15,7 @@ from rumps import MenuItem
 from toggl import api
 
 from dontforget.app import BasePlugin, DontForgetApp
-from dontforget.cli import JOBLIB_MEMORY
-from dontforget.settings import LOG_LEVEL, TOGGL_API_TOKEN, load_config_file
+from dontforget.settings import JOBLIB_MEMORY, LOG_LEVEL, TOGGL_API_TOKEN, load_config_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
@@ -41,7 +40,7 @@ class ClientDC:
     name: str
 
 
-ClientStore = Dict[Union[int, str], ClientDC]
+ClientStore = dict[Union[int, str], ClientDC]
 
 
 @dataclass
@@ -53,7 +52,7 @@ class ProjectDC:
     client: ClientDC
 
 
-ProjectStore = Dict[Union[int, str], ProjectDC]
+ProjectStore = dict[Union[int, str], ProjectDC]
 
 
 class TogglMenuItem(MenuItem):
@@ -83,8 +82,8 @@ def fetch_all_projects() -> ProjectStore:
 class TogglPlugin(BasePlugin):
     """Toggl plugin."""
 
-    shortcuts: Dict[str, ShortcutDC] = {}
-    menu_items: Dict[str, TogglMenuItem] = {}
+    shortcuts: dict[str, ShortcutDC] = {}
+    menu_items: dict[str, TogglMenuItem] = {}
     client_store: ClientStore = {}
     project_store: ProjectStore = {}
 
@@ -131,9 +130,9 @@ class TogglPlugin(BasePlugin):
             self.menu_items[menu_key] = menuitem
         return True
 
-    def fetch_shortcuts(self) -> Dict[str, ShortcutDC]:
+    def fetch_shortcuts(self) -> dict[str, ShortcutDC]:
         """Fetch client and projects from Toggl shortcuts."""
-        self.shortcuts: Dict[str, ShortcutDC] = {}
+        self.shortcuts: dict[str, ShortcutDC] = {}
         self.fetch_clients_projects()
 
         for data in reversed(self.plugin_config["shortcuts"]):

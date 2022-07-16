@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
 from subprocess import run
-from typing import Any, Dict
+from typing import Any
 
 import rumps
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -52,7 +52,7 @@ class DontForgetApp(rumps.App):
         Quit = f"Quit {PROJECT_NAME}"
 
     def __init__(self):
-        super(DontForgetApp, self).__init__(self.DEFAULT_TITLE, quit_button=self.Menu.Quit.value)
+        super().__init__(self.DEFAULT_TITLE, quit_button=self.Menu.Quit.value)
 
         logger.debug("Creating scheduler")
         self.scheduler = BackgroundScheduler()
@@ -94,7 +94,7 @@ class BasePlugin(ABC):
         """Plugin name."""
         return ""
 
-    def __init__(self, config_yaml: Dict[str, Any]) -> None:
+    def __init__(self, config_yaml: dict[str, Any]) -> None:
         self.config_yaml = config_yaml
 
     @property
@@ -105,9 +105,7 @@ class BasePlugin(ABC):
     @abstractmethod
     def init_app(self, app: "DontForgetApp") -> bool:
         """Init the plugin with application info."""
-        pass
 
     @abstractmethod
     def reload_config(self) -> bool:
         """Actions to perform when the YAML config is reloaded."""
-        pass

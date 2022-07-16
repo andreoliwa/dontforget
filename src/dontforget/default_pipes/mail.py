@@ -1,5 +1,6 @@
 """Email sources (Fastmail, GMail, etc.)."""
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 from urllib.parse import quote_plus
 
 import pendulum

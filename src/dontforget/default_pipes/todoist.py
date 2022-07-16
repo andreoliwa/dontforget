@@ -5,7 +5,7 @@
 """
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 import jmespath
@@ -19,7 +19,7 @@ from dontforget.settings import LOG_LEVEL
 from dontforget.typedefs import JsonDict
 
 PROJECTS_NAME_ID_JMEX = jmespath.compile("projects[*].[name,id]")
-DictProjectId = Dict[str, int]
+DictProjectId = dict[str, int]
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(LOG_LEVEL)
@@ -83,7 +83,7 @@ class Todoist(SingletonMixin):
         filters: JsonDict = None,
         index: int = None,
         matching_function=all,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Fetch elements matching items that satisfy the desired parameters.
 
         :param element_name: Name of the element to search. E.g. 'projects', 'items'.
@@ -126,7 +126,7 @@ class Todoist(SingletonMixin):
             name: project_id for name, project_id in self.projects.items() if partial_name.casefold() in name.casefold()
         }
 
-    def find_project_items(self, exact_project_name: str, extra_jmes_expression: str = "") -> List[JsonDict]:
+    def find_project_items(self, exact_project_name: str, extra_jmes_expression: str = "") -> list[JsonDict]:
         """Fetch all project items by the exact project name.
 
         :param exact_project_name: Exact name of a project.
@@ -137,7 +137,7 @@ class Todoist(SingletonMixin):
             return []
         return jmespath.search(f"items[?project_id==`{project_id}`]{extra_jmes_expression}", self.data)
 
-    def find_items_by_content(self, exact_project_name: str, partial_content: str) -> List[JsonDict]:
+    def find_items_by_content(self, exact_project_name: str, partial_content: str) -> list[JsonDict]:
         """Return items of a project by partial content.
 
         :param exact_project_name: Exact name of a project.

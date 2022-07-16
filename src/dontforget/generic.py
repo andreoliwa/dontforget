@@ -1,6 +1,6 @@
 """Generic functions and classes, to be reused."""
 import collections
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 DATETIME_FORMAT = "ddd DD/MM HH:mm"
 
@@ -106,8 +106,8 @@ def unflatten(dict_, separator="."):
 
 
 def find_partial_keys(
-    list_or_dict: Union[List[str], Dict[str, Any]], partial_key: str, not_found: str = None, multiple: str = None
-) -> List[Any]:
+    list_or_dict: Union[list[str], dict[str, Any]], partial_key: str, not_found: str = None, multiple: str = None
+) -> list[Any]:
     """Find a partial string on a list of strings or on a dict with string keys.
 
     >>> my_list = ["some", "strings", "here"]
@@ -179,7 +179,7 @@ def pretty_plugin_name(class_) -> str:
     return f"{last_part}.{class_.__name__}"
 
 
-def parse_interval(text: Optional[str]) -> Dict[str, Any]:
+def parse_interval(text: Optional[str]) -> dict[str, Any]:
     """Parse an interval from text.
 
     >>> parse_interval("10 minutes")
@@ -219,7 +219,7 @@ def parse_interval(text: Optional[str]) -> Dict[str, Any]:
     return {key: number} if key and number else {}
 
 
-class ClassPropertyDescriptor(object):
+class ClassPropertyDescriptor:
     """Class property.
 
     Shamelessly copied from https://stackoverflow.com/questions/5189699/how-to-make-a-class-property#5191224.

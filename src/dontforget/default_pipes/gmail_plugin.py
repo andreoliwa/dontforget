@@ -31,7 +31,7 @@ from enum import Enum
 from pathlib import Path
 from pprint import pformat
 from subprocess import run
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import click
 import rumps
@@ -80,7 +80,7 @@ class GMailPlugin(BasePlugin):
     """GMail plugin."""
 
     # TODO: self.important: Dict[str, MessageCount] = {}
-    important: Dict[str, List[int]] = {}
+    important: dict[str, list[int]] = {}
 
     @property
     def name(self) -> str:
@@ -102,6 +102,21 @@ class GMailPlugin(BasePlugin):
             if hosts and current_host not in hosts:
                 logger.debug("%s: Ignoring email check on this host %s", data["email"], current_host)
                 continue
+
+            # TODO: the YAML file schema should be validated with pydantic/attrs/something else
+            open_apps = data.pop("open-apps", [])
+            if open_apps:
+                app_is_open = False
+                for open_app in open_apps:
+                    process = run(["pidof", open_app], capture_output=True, text=True)
+                    if process.stdout:
+                        app_is_open = True
+                        break
+                if not app_is_open:
+                    logger.debug(
+                        "%s: Ignoring email check because none of these apps are open %s", data["email"], open_apps
+                    )
+                    continue
 
             logger.debug("%s: Creating GMail job", data["email"])
             job = GMailJob(plugin=self, app=self.app, **data)
@@ -179,7 +194,7 @@ class LabelCollection:
 
     def __init__(self):
         """Init the collection with the special labels."""
-        self._labels: Dict[str, Label] = {}
+        self._labels: dict[str, Label] = {}
         for label in self.SPECIAL_LABELS:
             label.special = True
             # On special labels, only check the inbox by default
@@ -270,7 +285,7 @@ class GMailAPI:
         self.labels.fetched = True
         return True
 
-    def unread_count(self, label: Label) -> Tuple[int, int]:
+    def unread_count(self, label: Label) -> tuple[int, int]:
         """Return the unread thread/message count for a label.
 
         See https://developers.google.com/gmail/api/v1/reference/users/labels/get.
@@ -306,7 +321,7 @@ class GMailJob:
         app: DontForgetApp,
         email: str,
         check: str = None,
-        labels: List[Dict[str, str]] = None,
+        labels: list[dict[str, str]] = None,
     ):
         self.plugin = plugin
         self.app = app
@@ -316,7 +331,7 @@ class GMailJob:
         self.menu: Optional[rumps.MenuItem] = None
 
         # TODO: update the existing labels in self.gmail.labels instead
-        self.config_labels: List[Label] = []
+        self.config_labels: list[Label] = []
         for data in labels or []:
             data.setdefault("id", data.get("name", ""))
             self.config_labels.append(Label(**data))  # type: ignore

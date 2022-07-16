@@ -1,18 +1,12 @@
 """Command-line."""
 import sys
-from pathlib import Path
-from typing import List, Tuple
 
 import click
 import rumps
-from joblib import Memory
 
 from dontforget.app import DontForgetApp
 from dontforget.pipes import PIPE_CONFIG, Pipe, PipeType
-from dontforget.settings import DEBUG, DEFAULT_DIRS, load_config_file
-
-CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
-JOBLIB_MEMORY = Memory(CACHE_DIR)  # , verbose=0
+from dontforget.settings import DEBUG, JOBLIB_MEMORY, load_config_file
 
 
 @click.group()
@@ -82,12 +76,16 @@ def ls(which: PipeType):
 
 @pipe.command()
 @click.argument("partial_names", nargs=-1)
-def run(partial_names: Tuple[str, ...]):
+def run(partial_names: tuple[str]):
     """Run the chosen pipes."""
-    chosen_pipes: List[Pipe] = []
+    chosen_pipes: list[Pipe] = []
     for partial_name in partial_names:
         chosen_pipes.extend(PIPE_CONFIG.get_pipes(partial_name))
     if not chosen_pipes:
         chosen_pipes = PIPE_CONFIG.user_pipes
     for chosen_pipe in sorted(chosen_pipes):
         chosen_pipe.run()
+
+
+if __name__ == "__main__":
+    main()

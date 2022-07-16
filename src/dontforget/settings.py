@@ -4,6 +4,7 @@ from pathlib import Path
 
 from appdirs import AppDirs
 from environs import Env
+from joblib import Memory
 from ruamel.yaml import YAML
 
 from dontforget.constants import CONFIG_YAML, PROJECT_NAME
@@ -43,6 +44,8 @@ HOME_TODOIST_TASK = env("HOME_TODOIST_TASK")
 USER_PIPES_DIR = env.list("USER_PIPES_DIR")
 
 DEFAULT_DIRS = AppDirs(PROJECT_NAME)
+CACHE_DIR = Path(DEFAULT_DIRS.user_cache_dir)
+JOBLIB_MEMORY = Memory(CACHE_DIR)  # , verbose=0
 CONFIG_FILE_PATH = Path(DEFAULT_DIRS.user_config_dir) / CONFIG_YAML
 if not CONFIG_FILE_PATH.exists():
     raise RuntimeError(f"Config file not found: {CONFIG_FILE_PATH}")

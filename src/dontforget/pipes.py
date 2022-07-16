@@ -4,10 +4,11 @@ import itertools
 import json
 import logging
 import os
+from collections.abc import Iterator
 from enum import Enum
 from pathlib import Path
 from pprint import pprint
-from typing import Dict, Iterator, List, Optional, Set, Type, Union
+from typing import Optional, Union
 
 import click
 import toml
@@ -80,7 +81,7 @@ class Pipe:
     def merge_parent_pipes(self) -> JsonDict:
         """Merge parent pipes (first) into this pipe (last)."""
         original_without_pipes: JsonDict = self.original_dict.copy()
-        parent_pipes: List[str] = original_without_pipes.pop(self.Key.PIPES.value, [])
+        parent_pipes: list[str] = original_without_pipes.pop(self.Key.PIPES.value, [])
         if not parent_pipes:
             return original_without_pipes
 
@@ -161,32 +162,32 @@ class PipeConfig(SingletonMixin):
     """Pipe configuration."""
 
     @memoized_property
-    def default_pipes(self) -> Set[Pipe]:
+    def default_pipes(self) -> set[Pipe]:
         """Default pipes."""
         return self._find_pipes_in([Path(__file__).parent / DEFAULT_PIPES_DIR_NAME])
 
     @memoized_property
-    def user_pipes(self) -> Set[Pipe]:
+    def user_pipes(self) -> set[Pipe]:
         """Default pipes."""
         return self._find_pipes_in(USER_PIPES_DIR)
 
     @memoized_property
-    def pipes_by_name(self) -> Dict[str, Pipe]:
+    def pipes_by_name(self) -> dict[str, Pipe]:
         """A dict of pipes with the (case insensitive) pipe name as key."""
         return {pipe.name.casefold(): pipe for pipe in itertools.chain(self.default_pipes, self.user_pipes)}
 
     @memoized_property
-    def sources(self) -> Dict[str, Type["BaseSource"]]:
+    def sources(self) -> dict[str, type["BaseSource"]]:
         """Configured sources."""
         return {source_class.name: source_class for source_class in get_subclasses(BaseSource)}
 
     @memoized_property
-    def targets(self) -> Dict[str, Type["BaseTarget"]]:
+    def targets(self) -> dict[str, type["BaseTarget"]]:
         """Configured targets."""
         return {target_class.name: target_class for target_class in get_subclasses(BaseTarget)}
 
     @staticmethod
-    def _find_pipes_in(directories: List[Union[str, Path]]) -> Set[Pipe]:
+    def _find_pipes_in(directories: list[Union[str, Path]]) -> set[Pipe]:
         """Find pipe files in the provided list of directories."""
         valid_dirs = []
         invalid_dirs = []
@@ -218,7 +219,7 @@ class PipeConfig(SingletonMixin):
         """Get a pipe by its exact name (case insensitive comparison)."""
         return self.pipes_by_name.get(exact_name.casefold(), None)
 
-    def get_pipes(self, partial_name: str) -> List[Pipe]:
+    def get_pipes(self, partial_name: str) -> list[Pipe]:
         """Get pipes by its partial name (case insensitive comparison)."""
         return find_partial_keys(self.pipes_by_name, partial_name, not_found="There are no pipes named {!r}")
 
@@ -235,7 +236,7 @@ class BaseSource(metaclass=abc.ABCMeta):
         return cls.__name__.replace("Source", "").casefold()  # type: ignore
 
     @classmethod
-    def get_class_from(cls, class_name: str) -> Type["BaseSource"]:
+    def get_class_from(cls, class_name: str) -> type["BaseSource"]:
         """Get a source class by its case insensitive name."""
         found = find_partial_keys(
             PIPE_CONFIG.sources,
@@ -274,7 +275,7 @@ class BaseTarget(metaclass=abc.ABCMeta):
         return cls.__name__.replace("Target", "").casefold()  # type: ignore
 
     @classmethod
-    def get_class_from(cls, class_name: str) -> Type["BaseTarget"]:
+    def get_class_from(cls, class_name: str) -> type["BaseTarget"]:
         """Get a target class by its case insensitive name."""
         found = find_partial_keys(
             PIPE_CONFIG.targets,
