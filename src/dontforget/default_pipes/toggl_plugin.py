@@ -212,6 +212,7 @@ def what_i_did(date, report):
     report_config = plugin.plugin_config["what_i_did"][report]
     expected_client_names = set(report_config["clients"])
     chosen_client_ids = {client.id for client in plugin.client_store.values() if client.name in expected_client_names}
+    order_by = report_config.get("order_by", [])
 
     exclude_project_names = report_config["exclude_projects"]
     chosen_project_ids = {
@@ -229,7 +230,17 @@ def what_i_did(date, report):
         except AttributeError:
             logger.error(f"This entry has no project: {entry}")
             continue
-        lines.add(f"  - {plugin.project_store[entry.pid].name}: {entry.description}")
+        lines.add(f"{plugin.project_store[entry.pid].name}: {entry.description}")
 
-    for line in sorted(lines):
-        click.echo(line)
+    def sort_by_project(value: str):
+        """Sort lines with a pre-defined order.
+
+        If the value is not found on the ``order_by`` list, it goes to the top.
+        """
+        for project_index, project in enumerate(order_by):
+            if value.startswith(project):
+                return project_index
+        return -1
+
+    for line in sorted(lines, key=sort_by_project):
+        click.echo(f"  - {line}")
