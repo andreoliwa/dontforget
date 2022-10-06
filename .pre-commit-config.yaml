@@ -76,7 +76,7 @@ repos:
 #      - id: mypy
 #        additional_dependencies: [types-dataclasses, types-toml, types-Deprecated]
   - repo: https://github.com/openstack/bashate
-    rev: 2.1.0
+    rev: 2.1.1
     hooks:
       - id: bashate
         # https://docs.openstack.org/bashate/latest/man/bashate.html#options
