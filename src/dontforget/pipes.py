@@ -250,9 +250,11 @@ class BaseSource(metaclass=abc.ABCMeta):
     def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
         """Pull items from the source, using the provided connection info."""
 
+    @abc.abstractmethod
     def on_success(self):
         """Hook to do something when an item was pushed successfully."""
 
+    @abc.abstractmethod
     def on_failure(self):
         """Hook to do something when an item failed when pushed."""
 
