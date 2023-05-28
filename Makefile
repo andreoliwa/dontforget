@@ -25,7 +25,7 @@ endif
 	poetry install
 
 	-pipx uninstall dontforget
-	pipx install --verbose -e .
+	pipx install --python python3.10 -e .
 .PHONY: install
 
 poetry: # Update Poetry
