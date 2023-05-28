@@ -21,7 +21,7 @@ ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
 	@exit -1
 endif
-	poetry env use python3.9
+	poetry env use python3.10
 	poetry install
 
 	-pipx uninstall dontforget

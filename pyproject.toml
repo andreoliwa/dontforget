@@ -8,7 +8,7 @@ description = "Don't forget to do your chores (using Gmail, Toggl and more tools
 authors = ["W. Augusto Andreoli <andreoliwa@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 jinja2 = "*"
 click = "*"
 memoized-property = "*"
