@@ -1,3 +1,11 @@
+# https://pre-commit.com
+# https://pre-commit.com/hooks.html
+# https://pre-commit.com/#creating-new-hooks
+
+# https://pre-commit.com/#top_level-default_language_version
+default_language_version:
+  python: python3.9
+
 #ci:
 #  skip: [nitpick-fix]
 repos:
