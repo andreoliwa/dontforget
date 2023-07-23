@@ -48,6 +48,7 @@ from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL
 PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
 CONSOLE_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
 GMAIL_BASE_URL = "https://mail.google.com/"
+GMAIL_SEARCH_UNREAD_ANCHOR = "search/is%3Aunread"
 CHECK_NOW_LAST_CHECK = "Check now (last check: "
 
 # If modifying these scopes, delete the file token.pickle.
@@ -61,6 +62,7 @@ class Menu(Enum):
     """Menu items."""
 
     CheckNow = f"{CHECK_NOW_LAST_CHECK}never)"
+    OpenUnreadMessages = "Open unread messages"
     NoNewMail = "No new mail"
 
 
@@ -358,6 +360,7 @@ class GMailJob:
         self.menu = rumps.MenuItem(self.gmail.email)
 
         self.add_to_menu(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
+        self.add_to_menu(rumps.MenuItem(Menu.OpenUnreadMessages.value, callback=self.open_unread_messages_clicked))
         self.add_to_menu(rumps.separator)
 
         self.app.menu.insert_after(self.plugin.name, self.menu)
@@ -370,12 +373,21 @@ class GMailJob:
         """Callback executed when a check is manually requested."""
         self.check_unread_labels()
 
+    def open_unread_messages_clicked(self, sender: Optional[rumps.MenuItem]):
+        """Callback executed when the user wants to open the unread messages on the browser."""
+        url = self._build_gmail_url(GMAIL_SEARCH_UNREAD_ANCHOR)
+        logger.debug("Opening URL on browser: %s", url)
+        run(["open", url], check=False)
+
     def label_clicked(self, menu: LabelMenuItem):
         """Callback executed when a label menu item is clicked."""
         label: Label = menu.label
-        url = f"{GMAIL_BASE_URL}#{label.anchor}?_email={self.gmail.email}"
+        url = self._build_gmail_url(label.anchor)
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
+
+    def _build_gmail_url(self, anchor: str) -> str:
+        return f"{GMAIL_BASE_URL}#{anchor}?_email={self.gmail.email}"
 
     def check_unread_labels(self):
         """Check unread labels."""

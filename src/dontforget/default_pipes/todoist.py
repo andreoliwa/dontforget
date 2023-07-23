@@ -52,6 +52,15 @@ class Todoist(SingletonMixin):
 
         self._merge_new_data(partial_data)
 
+        # TODO: replace "todoist-python" by https://github.com/Doist/todoist-api-python
+        #  getting an error message because of a deprecated endpoint.
+        #  This endpoint is deprecated.
+        #  If you're reading this on a browser, there's a good chance you can change
+        #  the v8 part on the URL to v9 and get away with it. ;)
+        #  If you're using the API directly, please update your use case to rely
+        #  on the new API endpoints, available under /sync/v9/ or /rest/v2/ prefixes.
+        #  For more details, please see documentation at
+        #  https://developer.todoist.com/guides/#our-apis
         self.projects = dict(PROJECTS_NAME_ID_JMEX.search(self.data))
 
     def _merge_new_data(self, partial_data: JsonDict):

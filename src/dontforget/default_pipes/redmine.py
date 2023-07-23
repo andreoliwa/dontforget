@@ -10,6 +10,12 @@ from dontforget.typedefs import JsonDict
 class RedmineSource(BaseSource):
     """Redmine source."""
 
+    def on_success(self):
+        """Hook to do something when an item was pushed successfully."""
+
+    def on_failure(self):
+        """Hook to do something when an item failed when pushed."""
+
     def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
         """Pull issues from Redmine."""
         redmine = Redmine(connection_info["url"], key=connection_info["api_token"], raise_attr_exception=False)

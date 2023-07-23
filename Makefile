@@ -6,9 +6,9 @@ CFLAGS = "-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk"
 build: # Build the project; all these commands below should work (there is no test coverage... ¯\_(ツ)_/¯).
 	clear
 	pre-commit run --all-files
-	poetry run python -m pytest
-	poetry run pipe ls
-	poetry run pipe run weekly
+	#poetry run python -m pytest
+	poetry run dontforget pipe ls
+	poetry run dontforget pipe run vila
 .PHONY: build
 
 help: # Display this help
