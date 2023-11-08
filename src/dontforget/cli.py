@@ -5,6 +5,7 @@ import click
 import rumps
 
 from dontforget.app import DontForgetApp
+from dontforget.constants import PROJECT_NAME
 from dontforget.pipes import PIPE_CONFIG, Pipe, PipeType
 from dontforget.settings import DEBUG, JOBLIB_MEMORY, load_config_file
 
@@ -23,24 +24,34 @@ def menu():
     from dontforget.default_pipes.email_plugin import EmailPlugin
     from dontforget.default_pipes.toggl_plugin import TogglPlugin
 
-    if DEBUG:
-        rumps.debug_mode(True)
+    try:
+        if DEBUG:
+            rumps.debug_mode(True)
 
-    app = DontForgetApp()
-    config_yaml = load_config_file()
+        app = DontForgetApp()
+        config_yaml = load_config_file()
 
-    for plugin_class in (EmailPlugin, TogglPlugin):
-        plugin = plugin_class(config_yaml)
-        app.plugins.append(plugin)
+        for plugin_class in (EmailPlugin, TogglPlugin):
+            plugin = plugin_class(config_yaml)
+            app.plugins.append(plugin)
 
-        app.menu.add(plugin.name)
-        app.menu.add(rumps.separator)
-        if not plugin.init_app(app):
-            sys.exit(1)
-    app.create_preferences_menu()
-    if not app.start_scheduler():
-        sys.exit(2)
-    app.run()
+            app.menu.add(plugin.name)
+            app.menu.add(rumps.separator)
+            if not plugin.init_app(app):
+                sys.exit(1)
+        app.create_preferences_menu()
+        if not app.start_scheduler():
+            sys.exit(2)
+        app.run()
+    except Exception as err:  # noqa: B902
+        # TODO(AA): Fix this error when installing or setting up the app on macOS
+        #  RuntimeError: Failed to setup the notification center.
+        #  This issue occurs when the "Info.plist" file cannot be found or is missing "CFBundleIdentifier".
+        #  In this case there is no file at "/Users/aa/.local/pipx/venvs/dontforget/bin/Info.plist"
+        #  Running the following command should fix the issue:
+        #  /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string "rumps"' \
+        #  /Users/aa/.local/pipx/venvs/dontforget/bin/Info.plist
+        rumps.notification(PROJECT_NAME, "Generic error", str(err))
 
 
 def register_plugin_commands():

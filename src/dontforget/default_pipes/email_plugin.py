@@ -404,6 +404,7 @@ ALLOWED_SERVERS = [
         domains=[
             "gmail.com",
             "googlemail.com",
+            "wolt.com",
         ],
         api_class=GmailApi,
     ),
