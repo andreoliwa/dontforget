@@ -1,4 +1,4 @@
-"""GMail checker. It is not a source nor a target... yet.
+"""Email checker (Gmail/IMAP). It is not a source nor a target... yet.
 
 Parts of the code below adapted from:
 https://github.com/gsuitedevs/python-samples/blob/master/gmail/quickstart/quickstart.py
@@ -23,32 +23,31 @@ https://developers.google.com/gmail/api/v1/reference
 Old format documentation:
 https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/index.html
 """
+from __future__ import annotations
+
 import logging
 import socket
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from pprint import pformat
 from subprocess import run
-from typing import Optional
+from typing import Any
 
 import click
 import rumps
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build as build_google_api_client
+from imbox import Imbox
 
 from dontforget.app import BasePlugin, DontForgetApp
-from dontforget.constants import DELAY, MISFIRE_GRACE_TIME
+from dontforget.constants import DEFAULT_DELAY_SECONDS, MISFIRE_GRACE_TIME
 from dontforget.generic import UT, parse_interval
 from dontforget.settings import DEFAULT_DIRS, LOG_LEVEL
 
-PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
-CONSOLE_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
-GMAIL_BASE_URL = "https://mail.google.com/"
-GMAIL_SEARCH_UNREAD_ANCHOR = "search/is%3Aunread"
 CHECK_NOW_LAST_CHECK = "Check now (last check: "
 
 # If modifying these scopes, delete the file token.pickle.
@@ -78,8 +77,8 @@ def format_count(threads: int, messages: int) -> str:
     return f"{threads} ({messages})"
 
 
-class GMailPlugin(BasePlugin):
-    """GMail plugin."""
+class EmailPlugin(BasePlugin):
+    """Email plugin (Gmail/IMAP)."""
 
     # TODO: self.important: Dict[str, MessageCount] = {}
     important: dict[str, list[int]] = {}
@@ -87,18 +86,18 @@ class GMailPlugin(BasePlugin):
     @property
     def name(self) -> str:
         """Plugin name."""
-        return "GMail"
+        return "Email"
 
     def init_app(self, app: DontForgetApp) -> bool:
-        """Add GMail jobs to the background scheduler.
+        """Add email jobs to the background scheduler.
 
-        :return: True if all GMail accounts were authenticated with OAuth.
+        :return: True if all email accounts were authenticated (with OAuth in Gmail's case).
         """
         self.app = app
         current_host = socket.gethostname()
 
         all_authenticated = True
-        # Read items in reversed order because they will be added to the menu always after the "GMail" menu
+        # Read items in reversed order because they will be added to the menu always after the "Email" menu
         for data in reversed(self.plugin_config):
             hosts = data.pop("hosts", None)
             if hosts and current_host not in hosts:
@@ -120,12 +119,19 @@ class GMailPlugin(BasePlugin):
                     )
                     continue
 
-            logger.debug("%s: Creating GMail job", data["email"])
-            job = GMailJob(plugin=self, app=self.app, **data)
+            logger.debug("%s: Creating email job", data["email"])
+            job = EmailJob(plugin=self, app=self.app, **data)
             if not job.authenticated:
                 all_authenticated = False
             else:
-                self.app.scheduler.add_job(job, "interval", misfire_grace_time=MISFIRE_GRACE_TIME, **job.trigger_args)
+                self.app.scheduler.add_job(
+                    job,
+                    "interval",
+                    id=data["email"],
+                    replace_existing=True,
+                    misfire_grace_time=MISFIRE_GRACE_TIME,
+                    **job.trigger_args,
+                )
 
         return all_authenticated
 
@@ -155,11 +161,11 @@ class GMailPlugin(BasePlugin):
 
 @dataclass
 class Label:
-    """A GMail label."""
+    """An email label."""
 
     id: str
     name: str
-    anchor: Optional[str] = None
+    anchor: str | None = None
     check_unread: bool = True
     special: bool = False
     min_threads: int = 0
@@ -167,15 +173,15 @@ class Label:
 
 
 class LabelMenuItem(rumps.MenuItem):
-    """A menu item for a GMail label."""
+    """A menu item for an email label."""
 
     label: Label
 
 
 # TODO: inherit from UserList and keep internal dicts to search by id/name
 #  from collections import UserList
-class LabelCollection:
-    """A collection of GMail labels."""
+class GmailLabelCollection:
+    """A collection of Gmail labels."""
 
     SPECIAL_LABELS = (
         Label("INBOX", "Inbox", "inbox"),
@@ -220,65 +226,97 @@ class LabelCollection:
         return self._labels.items()
 
 
-class GMailAPI:
-    """GMail API wrapper."""
+@dataclass(kw_only=True)
+class Server:
+    """Server information."""
 
-    def __init__(self, email: str) -> None:
-        self.email = email.strip()
-        config_dir = Path(DEFAULT_DIRS.user_config_dir)
-        self.token_file = config_dir / f"{self.email}-token.json"
-        self.credentials_file = config_dir / f"{self.email}-credentials.json"
+    name: str
+    host: str
+    port: int
+    webmail_url: str
+    search_unread_anchor: str
+    domains: list[str] = field(default_factory=list)
+    api_class: type[ImapApi | GmailApi]
 
-        self.service = None
-        self.labels = LabelCollection()
 
-    def authenticate(self) -> bool:
-        """Authenticate using the GMail API.
+@dataclass
+class BaseApi:
+    """Base class for API wrappers."""
+
+    server: Server
+    email: str
+
+    def build_url(self, anchor: str) -> str:
+        """Build the web URL for a label."""
+        return f"{self.server.webmail_url}{anchor}?_email={self.email}"
+
+    def build_unread_url(self) -> str:
+        """Build the web URL for the unread messages."""
+        return f"{self.server.webmail_url}{self.server.search_unread_anchor}?_email={self.email}"
+
+
+@dataclass
+class GmailApi(BaseApi):
+    """Gmail API wrapper."""
+
+    gmail_client: Any | None = field(init=False)
+
+    PYTHON_QUICKSTART_URL = "https://developers.google.com/gmail/api/quickstart/python"
+    CONSOLE_CREDENTIALS_URL = "https://console.cloud.google.com/apis/credentials"
+
+    def __post_init__(self) -> None:
+        self.labels = GmailLabelCollection()
+
+    def authenticate(self, password: str | None = None) -> bool:
+        """Authenticate using the Gmail API.
 
         The file token.pickle stores the user's access and refresh tokens, and is created automatically when the
         authorization flow completes for the first time.
         """
-        if not self.credentials_file.exists():
+        config_dir = Path(DEFAULT_DIRS.user_config_dir)
+        token_file = config_dir / f"{self.email}-token.json"
+        credentials_file = config_dir / f"{self.email}-credentials.json"
+        if not credentials_file.exists():
             click.secho(f"Credential file not found for {self.email}.", fg="bright_red")
             click.echo("Follow the steps and save the OAuth 2.0 Client-ID JSON file as ", nl=False)
-            click.secho(str(self.credentials_file), fg="green")
+            click.secho(str(credentials_file), fg="green")
 
             # Open the URL on the browser
-            run(["open", f"{PYTHON_QUICKSTART_URL}?for_finickyjs={self.email}"], check=False)
-            run(["open", f"{CONSOLE_CREDENTIALS_URL}?for_finickyjs={self.email}"], check=False)
+            run(["open", f"{self.PYTHON_QUICKSTART_URL}?for_finickyjs={self.email}"], check=False)
+            run(["open", f"{self.CONSOLE_CREDENTIALS_URL}?for_finickyjs={self.email}"], check=False)
 
             # Open the folder on Finder
-            run(["open", str(self.credentials_file.parent)], check=False)
+            run(["open", str(credentials_file.parent)], check=False)
             return False
 
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if self.token_file.exists():
-            creds = Credentials.from_authorized_user_file(str(self.token_file), SCOPES)
+        if token_file.exists():
+            creds = Credentials.from_authorized_user_file(str(token_file), SCOPES)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(str(self.credentials_file), SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(str(credentials_file), SCOPES)
                 creds = flow.run_local_server(port=0, for_finickyjs=self.email)
             # Save the credentials for the next run
-            self.token_file.write_text(creds.to_json())
+            token_file.write_text(creds.to_json())
 
-        self.service = build("gmail", "v1", credentials=creds)
+        self.gmail_client = build_google_api_client("gmail", "v1", credentials=creds)
         return True
 
     def fetch_labels(self) -> bool:
-        """Fetch GMail labels.
+        """Fetch Gmail labels.
 
         :return: True if labels were fetched.
         """
-        if not self.service or self.labels.fetched:
+        if not self.gmail_client or self.labels.fetched:
             return False
 
-        request = self.service.users().labels().list(userId="me")
+        request = self.gmail_client.users().labels().list(userId="me")
         response = request.execute()
         for label in response.get("labels") or []:
             self.labels.add(Label(label["id"], label["name"]))
@@ -294,8 +332,8 @@ class GMailAPI:
 
         :return: A tuple with unread thread and unread message count.
         """
-        if self.service and self.labels and label.check_unread:
-            request = self.service.users().labels().get(id=label.id, userId="me")
+        if self.gmail_client and self.labels and label.check_unread:
+            request = self.gmail_client.users().labels().get(id=label.id, userId="me")
             response = request.execute()
             return response["threadsUnread"], response["messagesUnread"]
         return -1, -1
@@ -311,37 +349,110 @@ class GMailAPI:
         #         pprint(body.decode(), width=200)
 
 
-class GMailJob:
-    """A job to check email on GMail."""
+@dataclass
+class ImapApi(BaseApi):
+    """IMAP API wrapper."""
+
+    imbox: Imbox = field(init=False)
+    labels: dict[str, Label] = field(init=False, default_factory=dict)
+
+    def authenticate(self, password: str | None = None) -> bool:
+        """Authenticate using IMAP."""
+        self.imbox = Imbox(
+            self.server.host,
+            port=self.server.port,
+            username=self.email.strip(),
+            password=password,
+            ssl=True,
+            ssl_context=None,
+            starttls=False,
+        )
+        return True
+
+    def fetch_labels(self) -> bool:
+        """Fetch IMAP labels."""
+        self.labels["INBOX"] = Label("INBOX", "Inbox", "inbox")
+        return True
+
+    def unread_count(self, label: Label) -> tuple[int, int]:
+        """Return the unread thread/message count for a label."""
+        count = len(self.imbox.messages(folder=label.id, unread=True))
+        return count, count
+
+
+ALLOWED_SERVERS = [
+    Server(
+        name="Fastmail",
+        host="imap.fastmail.com",
+        port=993,
+        webmail_url="https://app.fastmail.com/mail/",
+        search_unread_anchor="search:is%3Aunread/",
+        domains=[
+            "fastmail.com",
+            "sent.com",
+            "fea.st",
+            "fastmail.de",
+        ],
+        api_class=ImapApi,
+    ),
+    Server(
+        name="Gmail",
+        host="",
+        port=0,
+        webmail_url="https://mail.google.com/#",
+        search_unread_anchor="search/is%3Aunread",
+        domains=[
+            "gmail.com",
+            "googlemail.com",
+        ],
+        api_class=GmailApi,
+    ),
+]
+
+
+def find_server_by_domain(email: str) -> Server:
+    """Find the IMAP server by the domain of the email address."""
+    for server in ALLOWED_SERVERS:
+        for domain in server.domains:
+            if email.endswith(domain):
+                return server
+    raise ValueError(f"IMAP server not configured for this domain: {email}")
+
+
+class EmailJob:
+    """A job to check email."""
 
     # TODO: turn this into a source... the "source" concept should be revamped and cleaned.
 
     def __init__(
         self,
         *,
-        plugin: GMailPlugin,
+        plugin: EmailPlugin,
         app: DontForgetApp,
         email: str,
         check: str = None,
         labels: list[dict[str, str]] = None,
+        password: str = None,
+        delay: int = DEFAULT_DELAY_SECONDS,
     ):
         self.plugin = plugin
         self.app = app
-        self.gmail = GMailAPI(email)
-        self.authenticated = self.gmail.authenticate()
+        server: Server = find_server_by_domain(email)
+        self.email_api: ImapApi | GmailApi = server.api_class(server, email)
+        self.authenticated = self.email_api.authenticate(password)
         self.trigger_args = parse_interval(check or "1 hour")
-        self.menu: Optional[rumps.MenuItem] = None
+        self.menu: rumps.MenuItem | None = None
 
-        # TODO: update the existing labels in self.gmail.labels instead
+        # TODO: update the existing labels in self.email_api.labels instead
         self.config_labels: list[Label] = []
         for data in labels or []:
             data.setdefault("id", data.get("name", ""))
             self.config_labels.append(Label(**data))  # type: ignore
 
-        # Add a few seconds of delay before triggering the first request to GMail
+        # Add a few seconds of delay before triggering the first request to Gmail
         # TODO: Configure the optional delay on the config.toml file
         self.trigger_args.update(
-            name=f"{self.__class__.__name__}: {email}", start_date=datetime.now() + timedelta(seconds=DELAY)
+            name=f"{self.__class__.__name__}: {email}", start_date=datetime.now() + timedelta(seconds=delay)
         )
 
     def add_to_menu(self, menuitem):
@@ -356,8 +467,8 @@ class GMailJob:
             return
 
         # Add this email to the app menu
-        logger.debug("%s: Creating GMail menu", self.gmail.email)
-        self.menu = rumps.MenuItem(self.gmail.email)
+        logger.debug("%s: Creating email menu", self.email_api.email)
+        self.menu = rumps.MenuItem(self.email_api.email)
 
         self.add_to_menu(rumps.MenuItem(Menu.CheckNow.value, callback=self.check_now_clicked))
         self.add_to_menu(rumps.MenuItem(Menu.OpenUnreadMessages.value, callback=self.open_unread_messages_clicked))
@@ -366,28 +477,25 @@ class GMailJob:
         self.app.menu.insert_after(self.plugin.name, self.menu)
 
     def __call__(self, *args, **kwargs):
-        """Check GMail for new mail on inbox and specific labels."""
+        """Check Gmail for new mail on inbox and specific labels."""
         self.check_unread_labels()
 
-    def check_now_clicked(self, sender: Optional[rumps.MenuItem]):
+    def check_now_clicked(self, sender: rumps.MenuItem | None):
         """Callback executed when a check is manually requested."""
         self.check_unread_labels()
 
-    def open_unread_messages_clicked(self, sender: Optional[rumps.MenuItem]):
+    def open_unread_messages_clicked(self, sender: rumps.MenuItem | None):
         """Callback executed when the user wants to open the unread messages on the browser."""
-        url = self._build_gmail_url(GMAIL_SEARCH_UNREAD_ANCHOR)
+        url = self.email_api.build_unread_url()
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
 
     def label_clicked(self, menu: LabelMenuItem):
         """Callback executed when a label menu item is clicked."""
         label: Label = menu.label
-        url = self._build_gmail_url(label.anchor)
+        url = self.email_api.build_url(label.anchor)
         logger.debug("Opening URL on browser: %s", url)
         run(["open", url], check=False)
-
-    def _build_gmail_url(self, anchor: str) -> str:
-        return f"{GMAIL_BASE_URL}#{anchor}?_email={self.gmail.email}"
 
     def check_unread_labels(self):
         """Check unread labels."""
@@ -397,18 +505,18 @@ class GMailJob:
 
         self.app.title = UT.Hourglass
 
-        self.gmail.fetch_labels()
+        self.email_api.fetch_labels()
 
         current_time = datetime.now().strftime("%H:%M:%S")
-        logger.debug("Checking email %s at %s", self.gmail.email, current_time)
+        logger.debug("Checking email %s at %s", self.email_api.email, current_time)
         last_checked_menu: rumps.MenuItem = self.menu[Menu.CheckNow.value]
         last_checked_menu.title = f"{CHECK_NOW_LAST_CHECK}{current_time})"
 
         new_mail = has_important = False
         total_unread_threads = total_unread_messages = 0
-        self.plugin.update_important(self.gmail.email, clear=True)
-        for _label_id, label in self.gmail.labels.items():
-            config_label: Optional[Label] = None
+        self.plugin.update_important(self.email_api.email, clear=True)
+        for _label_id, label in self.email_api.labels.items():
+            config_label: Label | None = None
             for i in self.config_labels:
                 if label.name.casefold() == i.name.casefold():
                     config_label = i
@@ -422,7 +530,7 @@ class GMailJob:
                 continue
 
             menu_already_exists = label.name in self.menu
-            unread_threads, unread_messages = self.gmail.unread_count(label)
+            unread_threads, unread_messages = self.email_api.unread_count(label)
 
             # Only show labels with unread messages
             if unread_threads <= 0 or unread_messages <= 0:
@@ -445,7 +553,7 @@ class GMailJob:
                 ):
                     important = f"{UT.HeavyExclamationMarkSymbol}"
                     has_important = True
-                    self.plugin.update_important(self.gmail.email, unread_threads, unread_messages)
+                    self.plugin.update_important(self.email_api.email, unread_threads, unread_messages)
 
             # Show unread count of threads for each label
             total_unread_threads += unread_threads
@@ -457,7 +565,7 @@ class GMailJob:
         envelope = ""
         if total_unread_threads > 0 or total_unread_messages > 0:
             envelope = f"{important}{UT.Envelope} {format_count(total_unread_threads, total_unread_messages)} | "
-        self.menu.title = f"{envelope}{self.gmail.email}"
+        self.menu.title = f"{envelope}{self.email_api.email}"
 
         if not new_mail:
             if Menu.NoNewMail.value not in self.menu:
@@ -466,4 +574,4 @@ class GMailJob:
             if Menu.NoNewMail.value in self.menu:
                 del self.menu[Menu.NoNewMail.value]
 
-        self.plugin.update_important(self.gmail.email)
+        self.plugin.update_important(self.email_api.email)

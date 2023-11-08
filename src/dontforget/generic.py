@@ -13,25 +13,30 @@ class UT:
     - http://apps.timwhitlock.info/unicode/inspect
     """
 
+    # keep-sorted start
     AnticlockwiseOpenCircleArrow = "\u21ba"
+    ClosedMailboxwithLoweredFlag = "\U0001F4EA"
     Cyclone = "\U0001F300"
     DoubleExclamationMark = "\u203C\uFE0F"
     EmptySet = "\u2205"
+    Envelope = "\u2709\ufe0f\ufe0f"
     ExclamationQuestionMark = "\u2049\uFE0F"
     Fire = "\U0001F525"
     FourLeafClover = "\U0001F340"
-    WhiteHeavyCheckMark = "\u2705"
     GreenHeart = "\U0001F49A"
     HeavyExclamationMarkSymbol = "\u2757"
+    HighVoltageSign = "\u26A1"
     Hourglass = "\u231b"
     LargeBlueCircle = "\U0001F535"
     LargeRedCircle = "\U0001F534"
     MediumWhiteCircle = "\u26AA"
+    OpenMailboxwithLoweredFlag = "\U0001F4ED"
+    ReminderRibbon = "\U0001F397"
     WarningSign = "\u26A0"
     WhiteExclamationMarkOrnament = "\u2755"
+    WhiteHeavyCheckMark = "\u2705"
     WhiteQuestionMarkOrnament = "\u2754"
-    ReminderRibbon = "\U0001F397"
-    Envelope = "\u2709\ufe0f\ufe0f"
+    # keep-sorted end
 
 
 class SingletonMixin:

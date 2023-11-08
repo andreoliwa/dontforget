@@ -9,5 +9,5 @@ DEFAULT_PIPES_DIR_NAME = "default_pipes"
 UNIQUE_SEPARATOR = "$#@"
 
 # Delay before trying to execute the job for the first time
-DELAY = 15
+DEFAULT_DELAY_SECONDS = 15
 MISFIRE_GRACE_TIME = 10

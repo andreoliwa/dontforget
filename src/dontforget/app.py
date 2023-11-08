@@ -42,7 +42,7 @@ def load_plugins():
 class DontForgetApp(rumps.App):
     """The macOS status bar application."""
 
-    DEFAULT_TITLE = UT.ReminderRibbon
+    DEFAULT_TITLE = UT.OpenMailboxwithLoweredFlag
 
     class Menu(Enum):
         """Menu items."""
@@ -59,7 +59,7 @@ class DontForgetApp(rumps.App):
         self.plugins: list = []
 
     def create_preferences_menu(self):
-        """Create the preferences menu."""
+        """Create the preference menu."""
         self.menu.add(MenuItem(self.Menu.Preferences.value, callback=self.clicked_preferences))
         self.menu.add(MenuItem(self.Menu.ReloadConfigFile.value, callback=self.clicked_reload_config_file))
         self.menu.add(rumps.separator)

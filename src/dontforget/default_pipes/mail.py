@@ -1,4 +1,4 @@
-"""Email sources (Fastmail, GMail, etc.)."""
+"""Email IMAP sources (Fastmail, Gmail, etc.)."""
 from collections.abc import Iterator
 from typing import Optional
 from urllib.parse import quote_plus
@@ -22,7 +22,7 @@ class EmailSource(BaseSource):
     archive_folder: str
 
     def pull(self, connection_info: JsonDict) -> Iterator[JsonDict]:
-        """Pull emails from GMail."""
+        """Pull emails from IMAP sources."""
         self.imbox = Imbox(
             connection_info["hostname"],
             port=connection_info.get("port", None),
