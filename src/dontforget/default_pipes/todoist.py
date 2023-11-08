@@ -50,6 +50,11 @@ class Todoist(SingletonMixin):
                 break
             LOGGER.warning(f"Retrying, attempt {attempt + 1}: partial_data is not a dict(): {partial_data!r}")
 
+        if not isinstance(partial_data, dict):
+            click.echo("Something is still wrong with the data: ", nl=False)
+            click.secho(partial_data, fg="red")
+            raise click.Abort()
+
         self._merge_new_data(partial_data)
 
         # TODO: replace "todoist-python" by https://github.com/Doist/todoist-api-python
