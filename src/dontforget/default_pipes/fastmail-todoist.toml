@@ -1,18 +1,18 @@
 [source]
-class = "email"
-hostname = "imap.fastmail.com"
-port = 993
-search_url = "https://www.fastmail.com/mail/search:"
-search_date_format = "Y-M-D"
-user = "{{ env.FASTMAIL_USER }}"
-password = "{{ env.FASTMAIL_PASSWORD }}"
-mark_read = true
 archive = true
 archive_folder = "Archive"
+class = "email"
+hostname = "imap.fastmail.com"
+mark_read = true
+password = "{{ env.FASTMAIL_PASSWORD }}"
+port = 993
+search_date_format = "Y-M-D"
+search_url = "https://www.fastmail.com/mail/search:"
+user = "{{ env.FASTMAIL_USER }}"
 
 [target]
-class = "todoist"
 api_token = "{{ env.TODOIST_API_TOKEN }}"
+class = "todoist"
+content = "{{ email.subject | escape }}"
 id = "{{ email.uid }}"
 url = "{{ email.url }}"
-content = "{{ email.subject | escape }}"

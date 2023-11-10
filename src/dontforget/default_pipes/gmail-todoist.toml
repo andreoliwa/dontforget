@@ -1,17 +1,17 @@
 [source]
-class = "email"
-hostname = "imap.gmail.com"
-search_url = "https://mail.google.com/mail/u/0/#search/"
-search_date_format = "Y/M/D"
-user = "{{ env.GMAIL_USER }}"
-password = "{{ env.GMAIL_PASSWORD }}"
-mark_read = true
 archive = true
 archive_folder = "all"
+class = "email"
+hostname = "imap.gmail.com"
+mark_read = true
+password = "{{ env.GMAIL_PASSWORD }}"
+search_date_format = "Y/M/D"
+search_url = "https://mail.google.com/mail/u/0/#search/"
+user = "{{ env.GMAIL_USER }}"
 
 [target]
-class = "todoist"
 api_token = "{{ env.TODOIST_API_TOKEN }}"
+class = "todoist"
+content = "{{ email.subject | escape }}"
 id = "{{ email.uid }}"
 url = "{{ email.url }}"
-content = "{{ email.subject | escape }}"
