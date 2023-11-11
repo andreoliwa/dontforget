@@ -1,5 +1,5 @@
 # Config file for automatic testing at travis-ci.org
-sudo: false  # http://docs.travis-ci.com/user/migrating-from-legacy/
+sudo: false # http://docs.travis-ci.com/user/migrating-from-legacy/
 os: osx
 language: python
 cache: pip
@@ -10,7 +10,7 @@ services:
 addons:
   postgresql: "9.6"
   hosts:
-  - postgresql
+    - postgresql
 install:
   - pip install -U codecov pipenv
   - pipenv install --dev

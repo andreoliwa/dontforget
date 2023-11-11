@@ -1,12 +1,12 @@
 [source]
+api_token = "{{ env.REDMINE_API_TOKEN }}"
 class = "redmine"
 url = "{{ env.REDMINE_URL }}"
-api_token = "{{ env.REDMINE_API_TOKEN }}"
 
 [target]
-class = "todoist"
 api_token = "{{ env.TODOIST_API_TOKEN }}"
-id = "{{ redmine.id }}"
-url = "{{ env.REDMINE_URL }}issues/{{ redmine.id }}"
+class = "todoist"
 content = "{{ redmine.subject }}{{ ' / Assigned to: ' + redmine.assigned_to.name if redmine.assigned_to else '' }}{{ ' / Parent: ' + redmine.parent.id|string if redmine.parent else '' }}"
 date_string = "{{ redmine.due_date }}"
+id = "{{ redmine.id }}"
+url = "{{ env.REDMINE_URL }}issues/{{ redmine.id }}"

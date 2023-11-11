@@ -1,9 +1,9 @@
 [[gmail]]
-interval = { minutes = 10 }
 email = "your.personal.email@gmail.com"
+interval = {minutes = 10}
 password = "<your app password here>"
 
 [[gmail]]
-interval = { seconds = 30 }
 email = "your.work.email@your.company.gsuite.email.com"
+interval = {seconds = 30}
 password = "<your work email app password>"
