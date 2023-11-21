@@ -4,14 +4,13 @@
 
 # https://pre-commit.com/#top_level-default_language_version
 default_language_version:
-  python: python3.10
+  python: python3.11
 
-#ci:
-#  skip: [nitpick-fix]
 repos:
   - repo: https://github.com/andreoliwa/nitpick
-    rev: 4b3e7fca653519bdd2cc3f8f9f24cba1dd061af3
+    rev: e2bca246e142b9e06766d0522e1cee24a8c1bc07
     hooks:
+      - id: nitpick-suggest
       - id: nitpick
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

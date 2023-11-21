@@ -15,12 +15,8 @@ end_of_line = lf
 [Makefile]
 indent_style = tab
 
-[*.py]
-charset = utf-8
-
-[*.{js,json}]
-charset = utf-8
+[*.{js,json,json5,yml,yaml,md,rb}]
 indent_size = 2
 
-[*.{yml,yaml,md,rb}]
-indent_size = 2
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
