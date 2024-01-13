@@ -525,13 +525,13 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "environs"
-version = "10.0.0"
+version = "10.3.0"
 description = "simplified environment variable parsing"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "environs-10.0.0-py3-none-any.whl", hash = "sha256:41aa9d9fdb52953d3083638dca76b157e32714ffc67251d855ade241dee8a3f8"},
-    {file = "environs-10.0.0.tar.gz", hash = "sha256:a8968e7d5b2b656cc17f6273d4b312654397ffa7ab0875c33c36699e1106a374"},
+    {file = "environs-10.3.0-py3-none-any.whl", hash = "sha256:feeaf28f17fd0499f9cd7c0fcf408c6d82c308e69e335eb92d09322fc9ed8138"},
+    {file = "environs-10.3.0.tar.gz", hash = "sha256:cc421ddb143fa30183568164755aa113a160e555cd19e97e664c478662032c24"},
 ]
 
 [package.dependencies]
@@ -541,7 +541,7 @@ python-dotenv = "*"
 [package.extras]
 dev = ["environs[lint,tests]", "tox"]
 django = ["dj-database-url", "dj-email-url", "django-cache-url"]
-lint = ["flake8 (==6.1.0)", "flake8-bugbear (==23.11.28)", "mypy (==0.910)", "pre-commit (>=3.6,<4.0)"]
+lint = ["flake8 (==7.0.0)", "flake8-bugbear (==23.11.28)", "mypy (==1.8.0)", "pre-commit (>=3.6,<4.0)"]
 tests = ["environs[django]", "pytest"]
 
 [[package]]
