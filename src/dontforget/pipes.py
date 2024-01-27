@@ -1,4 +1,5 @@
 """Pipes."""
+
 import abc
 import itertools
 import json

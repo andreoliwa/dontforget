@@ -3,6 +3,7 @@
 - `Docs <https://developer.todoist.com/sync/v7/>`_
 - `Python module <https://github.com/Doist/todoist-python>`_
 """
+
 import logging
 from datetime import datetime
 from typing import Any, Optional

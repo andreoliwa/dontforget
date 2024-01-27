@@ -1,4 +1,5 @@
 """Command-line."""
+
 import sys
 
 import click
