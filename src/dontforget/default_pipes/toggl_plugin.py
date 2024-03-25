@@ -3,6 +3,7 @@
 * https://github.com/toggl/toggl_api_docs#python
 * https://github.com/AuHau/toggl-cli/blob/master/toggl/api/models.py
 """
+
 import logging
 from dataclasses import dataclass
 from typing import Optional, Union
