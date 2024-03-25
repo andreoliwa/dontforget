@@ -1,4 +1,5 @@
 """Main application package."""
+
 import warnings
 
 # TODO Safely ignore apscheduler warnings. This should be fixed when version 4.x is released.

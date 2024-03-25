@@ -1,4 +1,5 @@
 """Generic functions and classes, to be reused."""
+
 import collections
 from typing import Any, Optional, Union
 
