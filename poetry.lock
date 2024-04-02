@@ -1797,17 +1797,17 @@ files = [
 
 [[package]]
 name = "python-redmine"
-version = "2.4.0"
+version = "2.5.0"
 description = "Library for communicating with a Redmine project management application"
 optional = false
-python-versions = ">=3.7, <4"
+python-versions = "<4,>=3.7"
 files = [
-    {file = "python-redmine-2.4.0.tar.gz", hash = "sha256:29e1c479e6bedc4b193f84dda25121a1a0fcc30969c7f0f6e729c5638749e9d8"},
-    {file = "python_redmine-2.4.0-py3-none-any.whl", hash = "sha256:c9b6ee4465516c1794fe8038b98ddc8bf9d8caa3c0564cf2bc6ea7d4637a2d3a"},
+    {file = "python-redmine-2.5.0.tar.gz", hash = "sha256:81bdc529aaf188658e2d07488096c795d03d4e256711bfa3fa3f17b1eecc471b"},
+    {file = "python_redmine-2.5.0-py3-none-any.whl", hash = "sha256:4b9c1dbcf46f96bed963ab48eab432f06c7ae342df9751d04cb54d268e2e8055"},
 ]
 
 [package.dependencies]
-requests = ">=2.28.2"
+requests = ">=2.31.0"
 
 [[package]]
 name = "python-slugify"
