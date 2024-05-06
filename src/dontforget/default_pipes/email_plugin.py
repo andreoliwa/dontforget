@@ -23,6 +23,7 @@ https://developers.google.com/gmail/api/v1/reference
 Old format documentation:
 https://developers.google.com/resources/api-libraries/documentation/gmail/v1/python/latest/index.html
 """
+
 from __future__ import annotations
 
 import logging

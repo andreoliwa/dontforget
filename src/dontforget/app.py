@@ -1,4 +1,5 @@
 """The app module, containing the app factory function."""
+
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum

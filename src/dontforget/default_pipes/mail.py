@@ -1,4 +1,5 @@
 """Email IMAP sources (Fastmail, Gmail, etc.)."""
+
 from collections.abc import Iterator
 from typing import Optional
 from urllib.parse import quote_plus
