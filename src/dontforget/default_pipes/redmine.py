@@ -1,4 +1,5 @@
 """Redmine."""
+
 from collections.abc import Iterator
 
 from redminelib import Redmine

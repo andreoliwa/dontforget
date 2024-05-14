@@ -1,4 +1,5 @@
 """Constants."""
+
 PROJECT_NAME = "dontforget"
 CONFIG_YAML = "config.yaml"
 
