@@ -9,7 +9,7 @@ line-length = 120
 ignore_styles = [
   "py://nitpick/resources/any/commitlint",
   "py://nitpick/resources/any/git-legal",
-  "py://nitpick/resources/python/311",
+  "py://nitpick/resources/python/310",
   "py://nitpick/resources/python/312",
   "py://nitpick/resources/python/38",
   "py://nitpick/resources/python/39",
@@ -37,7 +37,7 @@ style = [
   "py://nitpick/resources/any/pre-commit-hooks",
   "py://nitpick/resources/any/prettier",
   "py://nitpick/resources/markdown/markdownlint",
-  "py://nitpick/resources/python/310",
+  "py://nitpick/resources/python/311",
   "py://nitpick/resources/python/absent",
   "py://nitpick/resources/python/ipython",
   "py://nitpick/resources/python/isort",
@@ -45,6 +45,9 @@ style = [
   "py://nitpick/resources/python/poetry-editable",
   "py://nitpick/resources/python/poetry-venv",
   "py://nitpick/resources/python/pre-commit-hooks",
+  "py://nitpick/resources/shell/bashate",
+  "py://nitpick/resources/shell/shellcheck",
+  "py://nitpick/resources/shell/shfmt",
   "py://nitpick/resources/toml/toml-sort",
 ]
 
@@ -76,17 +79,12 @@ maya = "*"
 memoized-property = "*"
 pendulum = "*"
 pluginbase = "*"
-python = "^3.10"
+python = "^3.11"
 python-redmine = "*"
 "ruamel.yaml" = "*"
 rumps = "*"
 todoist-python = "*"
-# TODO(AA): changing to togglCli = "*" causes the following error on "poetry update"
-# OverrideNeeded
-# ({Package('pylint', '3.0.2'): {'dill': <Dependency dill (>=0.2)>}}, {Package('pylint', '3.0.2'): {'dill': <Dependency dill (>=0.3.7)>}}, {Package('pylint', '3.0.2'): {'dill': <Dependency dill (>=0.3.6)>}})
-# The following error occurred when trying to handle this error:
-# AssertionError
-togglCli = "==2.4.4"
+togglCli = "*"
 toml = "*"
 
 [tool.poetry.dependencies.pylint]
@@ -99,6 +97,9 @@ factory-boy = "*"
 faker = "*"
 ipdb = "*"
 ipython = "*"
+# TODO: build: "poetry update" fails with OverrideNeeded
+# ({Package('pylint', '3.2.0'): {'dill': <Dependency dill (>=0.3.7)>}}, {Package('pylint', '3.2.0'): {'dill': <Dependency dill (>=0.3.6)>}})
+# I ran with "poetry update togglCli" to update only the package I needed
 pylint = "*"
 pytest = "*"
 pytest-cov = "*"

@@ -21,12 +21,16 @@ ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 	@echo "The directory $(BIN_DIR) should be in the PATH for this to work. Change your .bashrc or similar file."
 	@exit -1
 endif
-	poetry env use python3.10
+	poetry env use python3.11
 	poetry install
 
-	-pipx uninstall dontforget
-	pipx install --python python3.10 -e .
+	-$(MAKE) uninstall
+	pipx install --python python3.11 -e .
 .PHONY: install
+
+uninstall: # Uninstall the project from ~/.local/bin using pipx
+	-pipx uninstall dontforget
+.PHONY: uninstall
 
 poetry: # Update Poetry
 	poetry update
