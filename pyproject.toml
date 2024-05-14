@@ -87,10 +87,6 @@ todoist-python = "*"
 togglCli = "*"
 toml = "*"
 
-[tool.poetry.dependencies.pylint]
-optional = true
-version = "*"
-
 [tool.poetry.dev-dependencies]
 coverage = "*"
 factory-boy = "*"
