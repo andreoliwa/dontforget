@@ -108,3 +108,9 @@ repos:
     hooks:
       - id: toml-sort-fix
         exclude: poetry.lock
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    hooks:
+      - id: shfmt
