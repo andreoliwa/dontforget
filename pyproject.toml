@@ -84,7 +84,8 @@ python-redmine = "*"
 "ruamel.yaml" = "*"
 rumps = "*"
 todoist-python = "*"
-togglCli = "*"
+# TODO: waiting for this PR to be merged: https://github.com/AuHau/toggl-cli/pull/320
+togglCli = {branch = "feat/api-v9", git = "https://github.com/andreabak/toggl-cli"}
 toml = "*"
 
 [tool.poetry.dev-dependencies]

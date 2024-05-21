@@ -6,6 +6,7 @@
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, Union
 
 import click
@@ -75,7 +76,11 @@ def fetch_all_clients() -> ClientStore:
 def fetch_all_projects() -> ProjectStore:
     """Cache all Toggl projects."""
     all_clients = fetch_all_clients()
-    rv = {p.id: ProjectDC(p.id, p.name, all_clients[p.cid]) for p in api.Project.objects.all()}
+    rv = {}
+    for p in api.Project.objects.all():
+        proj = ProjectDC(p.id, p.name, all_clients[p.client_id])
+        click.echo(f"Project: {p} Client: {p.client} - {proj}")
+        rv[p.id] = proj
     rv.update({value.name: value for key, value in rv.items()})
     return rv
 
@@ -184,7 +189,7 @@ class TogglPlugin(BasePlugin):
         if echo:
             click.echo(msg)
         logger.debug(msg)
-        api.TimeEntry.start_and_save(description=entry.name, pid=self.shortcuts[entry.name].project_id)
+        api.TimeEntry.start_and_save(description=entry.name, project=self.shortcuts[entry.name].project_id)
 
 
 @click.command()
@@ -223,15 +228,19 @@ def what_i_did(date, report):
     }
 
     start_date = maya.when(date).datetime()
+    datetime.now()
     lines = set()
-    for entry in api.TimeEntry.objects.filter(start=start_date):
+    for entry in api.TimeEntry.objects.filter():
+        # TODO: The filters are not working: start_date=start_date,end_date=end_date
+        if entry.start < start_date:
+            continue
         try:
-            if entry.pid not in chosen_project_ids:
+            if entry.project_id not in chosen_project_ids:
                 continue
         except AttributeError:
             logger.error(f"This entry has no project: {entry}")
             continue
-        lines.add(f"{plugin.project_store[entry.pid].name}: {entry.description}")
+        lines.add(f"{plugin.project_store[entry.project_id].name}: {entry.description}")
 
     def sort_by_project(value: str):
         """Sort lines with a pre-defined order.
