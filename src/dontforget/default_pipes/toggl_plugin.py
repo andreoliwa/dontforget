@@ -228,10 +228,22 @@ def what_i_did(date, report):
     }
 
     start_date = maya.when(date).datetime()
-    datetime.now()
+    end_date = datetime.now()
     lines = set()
-    for entry in api.TimeEntry.objects.filter():
-        # TODO: The filters are not working: start_date=start_date,end_date=end_date
+    filtered_entries = api.TimeEntry.objects.all(start_date=start_date, end_date=end_date)
+
+    # togglCli, Toggl API and Maya have bugs at the moment, so let's log always
+    logger.warning(
+        "Start date '%s' parsed by Maya: %s / End date: %s / Filtered entries: %s / Chosen projects: %s",
+        date,
+        start_date,
+        end_date,
+        len(filtered_entries),
+        len(chosen_project_ids),
+    )
+    for entry in filtered_entries:
+        logger.debug("Entry: %s", entry)
+        # TODO: The start_date and end_date filters are not working; all recent entries are being returned
         if entry.start < start_date:
             continue
         try:

@@ -75,7 +75,10 @@ jinja2 = "*"
 jmespath = "*"
 joblib = "*"
 marshmallow = "*"
-maya = "*"
+# TODO: waiting for a new release since 2019: https://github.com/kennethreitz/maya/releases
+# Today is Monday, June 3rd 2024. maya.when("Friday") returned "2024-12-31" instead of "2024-05-31"
+# The master branch still doesn't fix this issue but it has some other bug fixes.
+maya = {branch = "master", git = "https://github.com/kennethreitz/maya"}
 memoized-property = "*"
 pendulum = "*"
 pluginbase = "*"
@@ -84,7 +87,8 @@ python-redmine = "*"
 "ruamel.yaml" = "*"
 rumps = "*"
 todoist-python = "*"
-# TODO: waiting for this PR to be merged: https://github.com/AuHau/toggl-cli/pull/320
+# TODO: waiting for a new release: https://github.com/AuHau/toggl-cli/releases
+# Thie branch didn't work when I tried to start an entry with "dontforget track xxx": https://github.com/AuHau/toggl-cli/tree/feat/new-api-version
 togglCli = {branch = "feat/api-v9", git = "https://github.com/andreabak/toggl-cli"}
 toml = "*"
 
