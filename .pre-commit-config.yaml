@@ -104,7 +104,7 @@ repos:
         stages:
           - commit
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.23.1
+    rev: v0.24.2
     hooks:
       - id: toml-sort-fix
         exclude: poetry.lock
