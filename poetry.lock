@@ -533,13 +533,13 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "environs"
-version = "14.0.0"
+version = "14.1.0"
 description = "simplified environment variable parsing"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "environs-14.0.0-py3-none-any.whl", hash = "sha256:7b19816c2766b683a40946dc030fdee97eb108751ea1789a0850e93ee4aa1d6f"},
-    {file = "environs-14.0.0.tar.gz", hash = "sha256:02c50088c459a2b21d6530cacd173c7528c38a723aae2791a863266ca41d9eeb"},
+    {file = "environs-14.1.0-py3-none-any.whl", hash = "sha256:a7edda1668ddf1fbfcb7662bdc242dac25648eff2c7fdbaa5d959693afed7a3e"},
+    {file = "environs-14.1.0.tar.gz", hash = "sha256:a5f2afe9d5a21b468e74a3cceacf5d2371fd67dbb9a7e54fe62290c75a09cdfa"},
 ]
 
 [package.dependencies]
@@ -549,7 +549,7 @@ python-dotenv = "*"
 [package.extras]
 dev = ["environs[tests]", "pre-commit (>=4.0,<5.0)", "tox"]
 django = ["dj-database-url", "dj-email-url", "django-cache-url"]
-tests = ["environs[django]", "packaging", "pytest"]
+tests = ["backports.strenum", "environs[django]", "packaging", "pytest"]
 
 [[package]]
 name = "executing"
