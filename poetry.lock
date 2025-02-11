@@ -528,13 +528,13 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "environs"
-version = "14.1.0"
+version = "14.1.1"
 description = "simplified environment variable parsing"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "environs-14.1.0-py3-none-any.whl", hash = "sha256:a7edda1668ddf1fbfcb7662bdc242dac25648eff2c7fdbaa5d959693afed7a3e"},
-    {file = "environs-14.1.0.tar.gz", hash = "sha256:a5f2afe9d5a21b468e74a3cceacf5d2371fd67dbb9a7e54fe62290c75a09cdfa"},
+    {file = "environs-14.1.1-py3-none-any.whl", hash = "sha256:45bc56f1d53bbc59d8dd69bba97377dd88ec28b8229d81cedbd455b21789445b"},
+    {file = "environs-14.1.1.tar.gz", hash = "sha256:03db7ee2d50ec697b68814cd175a3a05a7c7954804e4e419ca8b570dc5a835cf"},
 ]
 
 [package.dependencies]
