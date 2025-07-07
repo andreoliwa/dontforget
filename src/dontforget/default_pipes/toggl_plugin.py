@@ -78,6 +78,10 @@ def fetch_all_projects() -> ProjectStore:
     all_clients = fetch_all_clients()
     rv = {}
     for p in api.Project.objects.all():
+        if p.client_id not in all_clients:
+            # Probably an archived project with entries
+            continue
+
         proj = ProjectDC(p.id, p.name, all_clients[p.client_id])
         click.echo(f"Project: {p} Client: {p.client} - {proj}")
         rv[p.id] = proj
