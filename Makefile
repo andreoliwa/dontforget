@@ -17,8 +17,8 @@ build: # Build the project; all these commands below should work (there is no te
 
 .PHONY: dev
 dev: # Setup the development environment
-	pyenv local 3.11.8
-	poetry env use python3.11
+	pyenv local 3.13.8
+	poetry env use python3.13
 	poetry install
 
 .PHONY: install
@@ -29,7 +29,7 @@ ifeq ($(strip $(shell echo $(PATH) | grep $(BIN_DIR) -o)),)
 endif
 	$(MAKE) dev
 	-$(MAKE) uninstall
-	pipx install --python python3.11 -e .
+	pipx install --python python3.13 -e .
 
 .PHONY: uninstall
 uninstall: # Uninstall the project from ~/.local/bin using pipx

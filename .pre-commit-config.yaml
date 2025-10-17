@@ -8,7 +8,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/andreoliwa/nitpick
-    rev: v0.37.0
+    rev: v0.38.0
     hooks:
       - id: nitpick-suggest
       - id: nitpick
@@ -92,7 +92,7 @@ repos:
         # https://docs.openstack.org/bashate/latest/man/bashate.html#options
         args: [-i, E006]
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.2.0
+    rev: v4.9.1
     hooks:
       - id: commitizen
         stages:
@@ -109,7 +109,7 @@ repos:
       - id: toml-sort-fix
         exclude: poetry.lock
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
