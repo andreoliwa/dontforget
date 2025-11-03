@@ -2645,14 +2645,14 @@ requests = "*"
 
 [[package]]
 name = "togglcli"
-version = "4.0.0"
+version = "4.0.1"
 description = "Command line tool and set of Python wrapper classes for interacting with toggl's API"
 optional = false
 python-versions = ">=3.9.0"
 groups = ["main"]
 files = [
-    {file = "togglcli-4.0.0-py2.py3-none-any.whl", hash = "sha256:3405c634e7078374c3322e9aa011473f47244ce18d7442c033adae8276529d84"},
-    {file = "togglcli-4.0.0.tar.gz", hash = "sha256:5951b1a63b2002806453f872f552afc32c9278c2f44b8aa2b3295bad4c3d675c"},
+    {file = "togglcli-4.0.1-py2.py3-none-any.whl", hash = "sha256:527a396bd9321a5dc4158248a840ca7e831e0a0214997ba177d958f3cc30f238"},
+    {file = "togglcli-4.0.1.tar.gz", hash = "sha256:cb2bd8ba999204dd1ee9a81e57fad9cc1240812ec5532dd897d162d3c4ee666e"},
 ]
 
 [package.dependencies]
