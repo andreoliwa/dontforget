@@ -106,6 +106,10 @@ pytest-runfailed = "*"
 [tool.poetry.extras]
 lint = ["pylint"]
 
+[tool.poetry.group.dev.dependencies]
+ipdb = "*"
+ipython = "*"
+
 [tool.poetry.scripts]
 dontforget = "dontforget.cli:main"
 
