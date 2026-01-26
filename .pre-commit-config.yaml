@@ -39,7 +39,7 @@ repos:
             --remove-duplicate-keys,
             --ignore-init-module-imports,
           ]
-  - repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 26.1.0
     hooks:
       - id: black
@@ -92,7 +92,7 @@ repos:
         # https://docs.openstack.org/bashate/latest/man/bashate.html#options
         args: [-i, E006]
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.9.1
+    rev: v4.12.1
     hooks:
       - id: commitizen
         stages:
