@@ -918,14 +918,14 @@ all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2
 
 [[package]]
 name = "imbox"
-version = "0.10.0"
+version = "0.10.1"
 description = "Library for reading IMAP mailboxes and converting email content to machine readable data"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "imbox-0.10.0-py3-none-any.whl", hash = "sha256:3d591c30c62337f376c87ca406245fa5624d3ec7378374a8b14e38ca7f89ba4b"},
-    {file = "imbox-0.10.0.tar.gz", hash = "sha256:380c2e138ceb1b89216a9f0ea8da4766064317d0029ea50c48b85a5897f643b2"},
+    {file = "imbox-0.10.1-py3-none-any.whl", hash = "sha256:b32e24aa011942911b551ceeca7e1ccea25ee2925d7245ac4f5c0b8dd2db05c6"},
+    {file = "imbox-0.10.1.tar.gz", hash = "sha256:00ae16a231c0703637bac58e0965cc9cea65351106b095531a81f1bc360d54fc"},
 ]
 
 [package.dependencies]
