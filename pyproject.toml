@@ -65,7 +65,7 @@ apscheduler = "*"
 arrow = "*" # TODO: replace by pendulum
 autorepr = "*"
 # clib = { path = "../python-clib", develop = true }
-clib = {branch = "develop", git = "https://github.com/andreoliwa/python-clib.git"}
+clib = { branch = "develop", git = "https://github.com/andreoliwa/python-clib.git" }
 click = "*"
 deprecated = "*"
 environs = "*"
@@ -80,7 +80,7 @@ marshmallow = "*"
 # TODO: waiting for a new release since 2019: https://github.com/kennethreitz/maya/releases
 # Today is Monday, June 3rd 2024. maya.when("Friday") returned "2024-12-31" instead of "2024-05-31"
 # The master branch still doesn't fix this issue but it has some other bug fixes.
-maya = {branch = "master", git = "https://github.com/kennethreitz/maya"}
+maya = { branch = "master", git = "https://github.com/kennethreitz/maya" }
 memoized-property = "*"
 pendulum = "*"
 pluginbase = "*"
