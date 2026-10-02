@@ -843,14 +843,14 @@ urllib3 = ["packaging", "urllib3"]
 
 [[package]]
 name = "google-auth-httplib2"
-version = "0.4.2"
+version = "0.4.4"
 description = "Google Authentication Library: httplib2 transport"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "google_auth_httplib2-0.4.2-py3-none-any.whl", hash = "sha256:4298dd6b1415972d0c464b7177e6a69a595e7aec5b972222ecdca342f6009647"},
-    {file = "google_auth_httplib2-0.4.2.tar.gz", hash = "sha256:916225a6367e613c9af44d83f41688a599d3f687777846b8b91bec65085ed1f1"},
+    {file = "google_auth_httplib2-0.4.4-py3-none-any.whl", hash = "sha256:bbe5d7b2401bb3a4017f4720e1e91bd273ab9a2bb60b84e65edbc0de127852da"},
+    {file = "google_auth_httplib2-0.4.4.tar.gz", hash = "sha256:b931de392c20cfaa351cd789274922bd8cdc001e0e9e96de31b39d71347f8e16"},
 ]
 
 [package.dependencies]
